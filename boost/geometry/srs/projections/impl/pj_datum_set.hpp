@@ -3,8 +3,8 @@
 
 // Copyright (c) 2008-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2017, 2018.
-// Modifications copyright (c) 2017-2018, Oracle and/or its affiliates.
+// This file was modified by Oracle on 2017, 2018, 2019.
+// Modifications copyright (c) 2017-2019, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -125,17 +125,17 @@ inline const pj_datums_type<T>* pj_datum_find_datum(srs::dpar::parameters<T> con
 template
 <
     typename Params,
-    typename Param = typename srs::spar::detail::tuples_find_if
+    typename Param = typename geometry::tuples::find_if
         <
             Params,
             srs::spar::detail::is_param_tr<srs::spar::detail::datum_traits>::pred
         >::type,
-    bool IsFound = srs::spar::detail::tuples_is_found<Param>::value
+    bool IsFound = geometry::tuples::is_found<Param>::value
 >
 struct pj_datum_find_datum_static
 {
     template <typename T>
-    static const pj_datums_type<T>* apply(Params const& params)
+    static const pj_datums_type<T>* apply(Params const& )
     {
         const pj_datums_type<T>* pj_datums = pj_get_datums<T>().first;
         const int n = pj_get_datums<T>().second;
@@ -214,7 +214,7 @@ inline bool pj_datum_find_nadgrids(srs::dpar::parameters<T> const& params,
 template
 <
     typename Params,
-    int I = srs::spar::detail::tuples_find_index_if
+    int I = geometry::tuples::find_index_if
         <
             Params,
             srs::spar::detail::is_param<srs::spar::nadgrids>::pred
@@ -225,7 +225,7 @@ struct pj_datum_find_nadgrids_static
 {
     static void apply(Params const& params, srs::detail::nadgrids & out)
     {
-        out = boost::tuples::get<I>();
+        out = boost::tuples::get<I>(params);
     }
 };
 template <typename Params, int N>
@@ -309,7 +309,7 @@ inline bool pj_datum_find_towgs84(srs::dpar::parameters<T> const& params,
 template
 <
     typename Params,
-    int I = srs::spar::detail::tuples_find_index_if
+    int I = geometry::tuples::find_index_if
         <
             Params,
             srs::spar::detail::is_param_t<srs::spar::towgs84>::pred
@@ -322,7 +322,7 @@ struct pj_datum_find_towgs84_static
     static void apply(Params const& params, srs::detail::towgs84<T> & out)
     {
         typename boost::tuples::element<I, Params>::type const&
-            towgs84 = boost::tuples::get<I>();
+            towgs84 = boost::tuples::get<I>(params);
 
         std::size_t n = (std::min<std::size_t>)(towgs84.size(), 7u);
         std::size_t z = n <= 3 ? 3 : 7;

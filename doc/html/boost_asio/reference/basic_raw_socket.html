@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>basic_raw_socket</title>
 <link rel="stylesheet" href="../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
@@ -30,9 +30,10 @@
         Provides raw-oriented socket functionality.
       </p>
 <pre class="programlisting">template&lt;
-    typename <a class="link" href="Protocol.html" title="Protocol requirements">Protocol</a>&gt;
+    typename <a class="link" href="Protocol.html" title="Protocol requirements">Protocol</a>,
+    typename <a class="link" href="Executor1.html" title="Executor requirements">Executor</a>&gt;
 class basic_raw_socket :
-  public basic_socket&lt; Protocol &gt;
+  public basic_socket&lt; Protocol, Executor &gt;
 </pre>
 <h5>
 <a name="boost_asio.reference.basic_raw_socket.h0"></a>
@@ -56,6 +57,18 @@ class basic_raw_socket :
               </th>
 </tr></thead>
 <tbody>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="basic_raw_socket__rebind_executor.html" title="basic_raw_socket::rebind_executor"><span class="bold"><strong>rebind_executor</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Rebinds the socket type to another executor.
+                </p>
+              </td>
+</tr>
 <tr>
 <td>
                 <p>
@@ -447,17 +460,17 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/basic_raw_socket.html" title="basic_raw_socket::basic_raw_socket"><span class="bold"><strong>basic_raw_socket</strong></span></a>
+                  <a class="link" href="basic_raw_socket/basic_raw_socket.html" title="basic_raw_socket::basic_raw_socket"><span class="bold"><strong>basic_raw_socket</strong></span></a> <span class="silver">[constructor]</span>
                 </p>
               </td>
 <td>
                 <p>
-                  Construct a basic_raw_socket without opening it. <br> <span class="silver"> &#8212;</span><br>
-                  Construct and open a basic_raw_socket. <br> <span class="silver"> &#8212;</span><br> Construct
+                  Construct a basic_raw_socket without opening it. <br> <span class="silver"> —</span><br>
+                  Construct and open a basic_raw_socket. <br> <span class="silver"> —</span><br> Construct
                   a basic_raw_socket, opening it and binding it to the given local
-                  endpoint. <br> <span class="silver"> &#8212;</span><br> Construct a basic_raw_socket on an existing
-                  native socket. <br> <span class="silver"> &#8212;</span><br> Move-construct a basic_raw_socket
-                  from another. <br> <span class="silver"> &#8212;</span><br> Move-construct a basic_raw_socket from
+                  endpoint. <br> <span class="silver"> —</span><br> Construct a basic_raw_socket on an existing
+                  native socket. <br> <span class="silver"> —</span><br> Move-construct a basic_raw_socket
+                  from another. <br> <span class="silver"> —</span><br> Move-construct a basic_raw_socket from
                   a socket of another protocol type.
                 </p>
               </td>
@@ -525,32 +538,6 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/get_io_context.html" title="basic_raw_socket::get_io_context"><span class="bold"><strong>get_io_context</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  (Deprecated: Use get_executor().) Get the io_context associated
-                  with the object.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="basic_raw_socket/get_io_service.html" title="basic_raw_socket::get_io_service"><span class="bold"><strong>get_io_service</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  (Deprecated: Use get_executor().) Get the io_context associated
-                  with the object.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
                   <a class="link" href="basic_raw_socket/get_option.html" title="basic_raw_socket::get_option"><span class="bold"><strong>get_option</strong></span></a>
                 </p>
               </td>
@@ -604,7 +591,7 @@ class basic_raw_socket :
               </td>
 <td>
                 <p>
-                  Get a reference to the lowest layer. <br> <span class="silver"> &#8212;</span><br> Get a const
+                  Get a reference to the lowest layer. <br> <span class="silver"> —</span><br> Get a const
                   reference to the lowest layer.
                 </p>
               </td>
@@ -630,7 +617,7 @@ class basic_raw_socket :
 <td>
                 <p>
                   Gets the non-blocking mode of the native socket implementation.
-                  <br> <span class="silver"> &#8212;</span><br> Sets the non-blocking mode of the native socket implementation.
+                  <br> <span class="silver"> —</span><br> Sets the non-blocking mode of the native socket implementation.
                 </p>
               </td>
 </tr>
@@ -642,7 +629,7 @@ class basic_raw_socket :
               </td>
 <td>
                 <p>
-                  Gets the non-blocking mode of the socket. <br> <span class="silver"> &#8212;</span><br> Sets the
+                  Gets the non-blocking mode of the socket. <br> <span class="silver"> —</span><br> Sets the
                   non-blocking mode of the socket.
                 </p>
               </td>
@@ -667,7 +654,7 @@ class basic_raw_socket :
               </td>
 <td>
                 <p>
-                  Move-assign a basic_raw_socket from another. <br> <span class="silver"> &#8212;</span><br> Move-assign
+                  Move-assign a basic_raw_socket from another. <br> <span class="silver"> —</span><br> Move-assign
                   a basic_raw_socket from a socket of another protocol type.
                 </p>
               </td>
@@ -784,7 +771,7 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/_basic_raw_socket.html" title="basic_raw_socket::~basic_raw_socket"><span class="bold"><strong>~basic_raw_socket</strong></span></a>
+                  <a class="link" href="basic_raw_socket/_basic_raw_socket.html" title="basic_raw_socket::~basic_raw_socket"><span class="bold"><strong>~basic_raw_socket</strong></span></a> <span class="silver">[destructor]</span>
                 </p>
               </td>
 <td>
@@ -821,7 +808,7 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/max_connections.html" title="basic_raw_socket::max_connections"><span class="bold"><strong>max_connections</strong></span></a>
+                  <a class="link" href="basic_raw_socket/max_connections.html" title="basic_raw_socket::max_connections"><span class="bold"><strong>max_connections</strong></span></a> <span class="silver">[static]</span>
                 </p>
               </td>
 <td>
@@ -834,7 +821,7 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/max_listen_connections.html" title="basic_raw_socket::max_listen_connections"><span class="bold"><strong>max_listen_connections</strong></span></a>
+                  <a class="link" href="basic_raw_socket/max_listen_connections.html" title="basic_raw_socket::max_listen_connections"><span class="bold"><strong>max_listen_connections</strong></span></a> <span class="silver">[static]</span>
                 </p>
               </td>
 <td>
@@ -846,7 +833,7 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/message_do_not_route.html" title="basic_raw_socket::message_do_not_route"><span class="bold"><strong>message_do_not_route</strong></span></a>
+                  <a class="link" href="basic_raw_socket/message_do_not_route.html" title="basic_raw_socket::message_do_not_route"><span class="bold"><strong>message_do_not_route</strong></span></a> <span class="silver">[static]</span>
                 </p>
               </td>
 <td>
@@ -858,7 +845,7 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/message_end_of_record.html" title="basic_raw_socket::message_end_of_record"><span class="bold"><strong>message_end_of_record</strong></span></a>
+                  <a class="link" href="basic_raw_socket/message_end_of_record.html" title="basic_raw_socket::message_end_of_record"><span class="bold"><strong>message_end_of_record</strong></span></a> <span class="silver">[static]</span>
                 </p>
               </td>
 <td>
@@ -870,7 +857,7 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/message_out_of_band.html" title="basic_raw_socket::message_out_of_band"><span class="bold"><strong>message_out_of_band</strong></span></a>
+                  <a class="link" href="basic_raw_socket/message_out_of_band.html" title="basic_raw_socket::message_out_of_band"><span class="bold"><strong>message_out_of_band</strong></span></a> <span class="silver">[static]</span>
                 </p>
               </td>
 <td>
@@ -882,7 +869,7 @@ class basic_raw_socket :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="basic_raw_socket/message_peek.html" title="basic_raw_socket::message_peek"><span class="bold"><strong>message_peek</strong></span></a>
+                  <a class="link" href="basic_raw_socket/message_peek.html" title="basic_raw_socket::message_peek"><span class="bold"><strong>message_peek</strong></span></a> <span class="silver">[static]</span>
                 </p>
               </td>
 <td>
@@ -921,7 +908,8 @@ class basic_raw_socket :
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2003-2018 Christopher M. Kohlhoff<p>
+<td align="right"><div class="copyright-footer">Copyright © 2003-2020 Christopher M.
+      Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>

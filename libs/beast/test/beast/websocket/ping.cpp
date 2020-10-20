@@ -1,5 +1,5 @@
 //
-// Copyright (w) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,10 +10,17 @@
 // Test that header file is self-contained.
 #include <boost/beast/websocket/stream.hpp>
 
+#include <boost/beast/_experimental/test/tcp.hpp>
+
 #include "test.hpp"
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
+
+#if BOOST_ASIO_HAS_CO_AWAIT
+#include <boost/asio/use_awaitable.hpp>
+#endif
 
 namespace boost {
 namespace beast {
@@ -57,7 +64,7 @@ public:
             catch(system_error const& se)
             {
                 BEAST_EXPECTS(
-                    se.code() == boost::asio::error::operation_aborted,
+                    se.code() == net::error::operation_aborted,
                     se.code().message());
             }
         }
@@ -77,7 +84,7 @@ public:
             catch(system_error const& se)
             {
                 BEAST_EXPECTS(
-                    se.code() == boost::asio::error::operation_aborted,
+                    se.code() == net::error::operation_aborted,
                     se.code().message());
             }
         }
@@ -101,7 +108,7 @@ public:
         doFailLoop([&](test::fail_count& fc)
         {
             echo_server es{log};
-            boost::asio::io_context ioc;
+            net::io_context ioc;
             stream<test::stream> ws{ioc, fc};
             ws.next_layer().connect(es.stream());
             ws.handshake("localhost", "/");
@@ -115,7 +122,7 @@ public:
                             system_error{ec});
                     BEAST_EXPECT(n == 12);
                 });
-            BEAST_EXPECT(ws.wr_block_.is_locked());
+            BEAST_EXPECT(ws.impl_->wr_block.is_locked());
             BEAST_EXPECT(count == 0);
             ws.async_ping({},
                 [&](error_code ec)
@@ -134,7 +141,7 @@ public:
         doFailLoop([&](test::fail_count& fc)
         {
             echo_server es{log};
-            boost::asio::io_context ioc;
+            net::io_context ioc;
             stream<test::stream> ws{ioc, fc};
             ws.next_layer().connect(es.stream());
             ws.handshake("localhost", "/");
@@ -147,13 +154,13 @@ public:
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
-            BEAST_EXPECT(ws.wr_block_.is_locked());
+            BEAST_EXPECT(ws.impl_->wr_block.is_locked());
             BEAST_EXPECT(count == 0);
             ws.async_ping({},
                 [&](error_code ec)
                 {
                     ++count;
-                    if(ec != boost::asio::error::operation_aborted)
+                    if(ec != net::error::operation_aborted)
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
@@ -166,7 +173,7 @@ public:
         doFailLoop([&](test::fail_count& fc)
         {
             echo_server es{log};
-            boost::asio::io_context ioc;
+            net::io_context ioc;
             stream<test::stream> ws{ioc, fc};
             ws.next_layer().connect(es.stream());
             ws.handshake("localhost", "/");
@@ -183,7 +190,7 @@ public:
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
-            while(! ws.wr_block_.is_locked())
+            while(! ws.impl_->wr_block.is_locked())
             {
                 ioc.run_one();
                 if(! BEAST_EXPECT(! ioc.stopped()))
@@ -207,7 +214,7 @@ public:
         doFailLoop([&](test::fail_count& fc)
         {
             echo_server es{log};
-            boost::asio::io_context ioc;
+            net::io_context ioc;
             stream<test::stream> ws{ioc, fc};
             ws.next_layer().connect(es.stream());
             ws.handshake("localhost", "/");
@@ -225,7 +232,7 @@ public:
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
-            while(! ws.wr_block_.is_locked())
+            while(! ws.impl_->wr_block.is_locked())
             {
                 ioc.run_one();
                 if(! BEAST_EXPECT(! ioc.stopped()))
@@ -236,7 +243,7 @@ public:
                 [&](error_code ec)
                 {
                     ++count;
-                    if(ec != boost::asio::error::operation_aborted)
+                    if(ec != net::error::operation_aborted)
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
@@ -249,7 +256,7 @@ public:
         doFailLoop([&](test::fail_count& fc)
         {
             echo_server es{log};
-            boost::asio::io_context ioc;
+            net::io_context ioc;
             stream<test::stream> ws{ioc, fc};
             ws.next_layer().connect(es.stream());
             ws.handshake("localhost", "/");
@@ -266,7 +273,7 @@ public:
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
-            while(! ws.wr_block_.is_locked())
+            while(! ws.impl_->wr_block.is_locked())
             {
                 ioc.run_one();
                 if(! BEAST_EXPECT(! ioc.stopped()))
@@ -277,7 +284,7 @@ public:
                 [&](error_code ec)
                 {
                     ++count;
-                    if(ec != boost::asio::error::operation_aborted)
+                    if(ec != net::error::operation_aborted)
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
@@ -290,7 +297,7 @@ public:
         doFailLoop([&](test::fail_count& fc)
         {
             echo_server es{log, kind::async};
-            boost::asio::io_context ioc;
+            net::io_context ioc;
             stream<test::stream> ws{ioc, fc};
             ws.next_layer().connect(es.stream());
             ws.handshake("localhost", "/");
@@ -306,7 +313,7 @@ public:
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
-            while(! ws.wr_block_.is_locked())
+            while(! ws.impl_->wr_block.is_locked())
             {
                 ioc.run_one();
                 if(! BEAST_EXPECT(! ioc.stopped()))
@@ -317,7 +324,7 @@ public:
                 [&](error_code ec)
                 {
                     ++count;
-                    if(ec != boost::asio::error::operation_aborted)
+                    if(ec != net::error::operation_aborted)
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
@@ -331,7 +338,7 @@ public:
         {
             echo_server es{log};
             error_code ec;
-            boost::asio::io_context ioc;
+            net::io_context ioc;
             stream<test::stream> ws{ioc, fc};
             ws.next_layer().connect(es.stream());
             ws.handshake("localhost", "/");
@@ -345,12 +352,12 @@ public:
                             system_error{ec});
                     BEAST_EXPECT(n == 1);
                 });
-            BEAST_EXPECT(ws.wr_block_.is_locked());
+            BEAST_EXPECT(ws.impl_->wr_block.is_locked());
             ws.async_ping("",
                 [&](error_code ec)
                 {
                     ++count;
-                    if(ec != boost::asio::error::operation_aborted)
+                    if(ec != net::error::operation_aborted)
                         BOOST_THROW_EXCEPTION(
                             system_error{ec});
                 });
@@ -366,9 +373,49 @@ public:
             BEAST_EXPECT(count == 3);
         });
 
+        // suspend idle ping
+        {
+            using socket_type =
+                net::basic_stream_socket<
+                    net::ip::tcp,
+                    net::any_io_executor>;
+            net::io_context ioc;
+            stream<socket_type> ws1(ioc);
+            stream<socket_type> ws2(ioc);
+            ws1.set_option(stream_base::timeout{
+                stream_base::none(),
+                std::chrono::seconds(0),
+                true});
+            test::connect(
+                ws1.next_layer(),
+                ws2.next_layer());
+            ws1.async_handshake("localhost", "/",
+                [](error_code){});
+            ws2.async_accept([](error_code){});
+            ioc.run();
+            ioc.restart();
+            flat_buffer b1;
+            auto mb = b1.prepare(65536);
+            std::memset(mb.data(), 0, mb.size());
+            b1.commit(65536);
+            ws1.async_write(b1.data(),
+                [&](error_code, std::size_t){});
+            BEAST_EXPECT(
+                ws1.impl_->wr_block.is_locked());
+            ws1.async_read_some(net::mutable_buffer{},
+                [&](error_code, std::size_t){});
+            ioc.run();
+            ioc.restart();
+            flat_buffer b2;
+            ws2.async_read(b2,
+                [&](error_code, std::size_t){});
+            ioc.run();
+        }
+        //);
+
         {
             echo_server es{log, kind::async};
-            boost::asio::io_context ioc;
+            net::io_context ioc;
             stream<test::stream> ws{ioc};
             ws.next_layer().connect(es.stream());
             ws.handshake("localhost", "/");
@@ -389,7 +436,7 @@ public:
                         ec.message());
                 });
             if(! BEAST_EXPECT(run_until(ioc, 100,
-                    [&]{ return ws.wr_close_; })))
+                    [&]{ return ws.impl_->wr_close; })))
                 return;
             // Try to ping
             ws.async_ping("payload",
@@ -397,7 +444,7 @@ public:
                 {
                     // Pings after a close are aborted
                     ++count;
-                    BEAST_EXPECTS(ec == boost::asio::
+                    BEAST_EXPECTS(ec == net::
                         error::operation_aborted,
                             ec.message());
                     // Subsequent calls to close are aborted
@@ -405,7 +452,7 @@ public:
                         [&](error_code ec)
                         {
                             ++count;
-                            BEAST_EXPECTS(ec == boost::asio::
+                            BEAST_EXPECTS(ec == net::
                                 error::operation_aborted,
                                     ec.message());
                         });
@@ -424,24 +471,9 @@ public:
     }
 
     void
-    testContHook()
-    {
-        struct handler
-        {
-            void operator()(error_code) {}
-        };
-
-        stream<test::stream> ws{ioc_};
-        stream<test::stream>::ping_op<handler> op{
-            handler{}, ws, detail::opcode::ping, {}};
-        using boost::asio::asio_handler_is_continuation;
-        asio_handler_is_continuation(&op);
-    }
-
-    void
     testMoveOnly()
     {
-        boost::asio::io_context ioc;
+        net::io_context ioc;
         stream<test::stream> ws{ioc};
         ws.async_ping({}, move_only_handler{});
     }
@@ -455,26 +487,30 @@ public:
         }
     };
 
-    void
-    testAsioHandlerInvoke()
+#if BOOST_ASIO_HAS_CO_AWAIT
+    void testAwaitableCompiles(
+        stream<test::stream>& s,
+        ping_data& pdat)
     {
-        // make sure things compile, also can set a
-        // breakpoint in asio_handler_invoke to make sure
-        // it is instantiated.
-        boost::asio::io_context ioc;
-        boost::asio::io_service::strand s{ioc};
-        stream<test::stream> ws{ioc};
-        ws.async_ping({}, s.wrap(copyable_handler{}));
+        static_assert(std::is_same_v<
+            net::awaitable<void>, decltype(
+            s.async_ping(pdat, net::use_awaitable))>);
+
+        static_assert(std::is_same_v<
+            net::awaitable<void>, decltype(
+            s.async_pong(pdat, net::use_awaitable))>);
     }
+#endif
 
     void
     run() override
     {
         testPing();
         testSuspend();
-        testContHook();
         testMoveOnly();
-        testAsioHandlerInvoke();
+#if BOOST_ASIO_HAS_CO_AWAIT
+        boost::ignore_unused(&ping_test::testAwaitableCompiles);
+#endif
     }
 };
 

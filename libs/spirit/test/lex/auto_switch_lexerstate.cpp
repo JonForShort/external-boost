@@ -10,14 +10,13 @@
 // Additionally this test makes sure the syntax 'self("state", "targetstate")'
 // works properly.
 
-// #define BOOST_SPIRIT_LEXERTL_DEBUG 1
-
 #include <boost/config/warning_disable.hpp>
 #include <boost/detail/lightweight_test.hpp>
 
 #include <boost/spirit/include/support_multi_pass.hpp>
 #include <boost/spirit/include/classic_position_iterator.hpp>
 #include <boost/spirit/include/lex_lexertl.hpp>
+#include <boost/phoenix/operator/self.hpp>
 
 namespace spirit = boost::spirit;
 namespace lex = spirit::lex;

@@ -1,11 +1,6 @@
 #ifndef BOOST_NUMERIC_INTERVAL_HPP
 #define BOOST_NUMERIC_INTERVAL_HPP
 
-// MS compatible compilers support #pragma once
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
-# pragma once
-#endif
-
 //  Copyright (c) 2012 Robert Ramey
 //
 // Distributed under the Boost Software License, Version 1.0. (See
@@ -69,7 +64,7 @@ struct interval {
     constexpr tribool excludes(const R & t) const {
         return t < l || t > u;
     }
-    // if this interval contains every point found in some other inteval t
+    // if this interval excludes every point found in some other inteval t
     //  return true
     // otherwise
     //  return false or indeterminate

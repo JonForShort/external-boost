@@ -1,5 +1,5 @@
 [/
- / Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+ / Copyright (c) 2003-2020 Christopher M. Kohlhoff (chris at kohlhoff dot com)
  /
  / Distributed under the Boost Software License, Version 1.0. (See accompanying
  / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,6 +14,10 @@ examples make use of selected Boost C++ libraries.
 
 * [link boost_asio.examples.cpp11_examples C++11 Examples]: Contains a limited set of
 the C++03 Boost.Asio examples, updated to use only C++11 library and language
+facilities. These examples do not make direct use of Boost C++ libraries.
+
+* [link boost_asio.examples.cpp14_examples C++14 Examples]: Contains a limited set of
+the C++03 Boost.Asio examples, updated to use only C++14 library and language
 facilities. These examples do not make direct use of Boost C++ libraries.
 
 * [link boost_asio.examples.cpp17_examples C++17 Examples]: Selected examples
@@ -394,9 +398,14 @@ Boost.Asio's asynchronous operations.
 
 [heading Handler Tracking]
 
-This example shows how to implement custom handler tracking.
+This example header file shows how to implement custom handler tracking.
 
 * [@boost_asio/example/cpp11/handler_tracking/custom_tracking.hpp]
+
+This example program shows how to include source location information in
+the handler tracking output.
+
+* [@boost_asio/example/cpp11/handler_tracking/async_tcp_echo_server.cpp]
 
 
 [heading HTTP Server]
@@ -450,6 +459,9 @@ Examples showing how to implement composed asynchronous operations as reusable l
 * [@boost_asio/example/cpp11/operations/composed_3.cpp]
 * [@boost_asio/example/cpp11/operations/composed_4.cpp]
 * [@boost_asio/example/cpp11/operations/composed_5.cpp]
+* [@boost_asio/example/cpp11/operations/composed_6.cpp]
+* [@boost_asio/example/cpp11/operations/composed_7.cpp]
+* [@boost_asio/example/cpp11/operations/composed_8.cpp]
 
 
 [heading SOCKS 4]
@@ -507,6 +519,26 @@ Examples showing how to use UNIX domain (local) sockets.
 * [@boost_asio/example/cpp11/local/iostream_client.cpp]
 * [@boost_asio/example/cpp11/local/stream_server.cpp]
 * [@boost_asio/example/cpp11/local/stream_client.cpp]
+
+
+[endsect]
+
+
+[section:cpp14_examples C++14 Examples]
+
+
+[heading Operations]
+
+Examples showing how to implement composed asynchronous operations as reusable library functions.
+
+* [@boost_asio/example/cpp14/operations/composed_1.cpp]
+* [@boost_asio/example/cpp14/operations/composed_2.cpp]
+* [@boost_asio/example/cpp14/operations/composed_3.cpp]
+* [@boost_asio/example/cpp14/operations/composed_4.cpp]
+* [@boost_asio/example/cpp14/operations/composed_5.cpp]
+* [@boost_asio/example/cpp14/operations/composed_6.cpp]
+* [@boost_asio/example/cpp14/operations/composed_7.cpp]
+* [@boost_asio/example/cpp14/operations/composed_8.cpp]
 
 
 [endsect]
