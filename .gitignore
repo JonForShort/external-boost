@@ -1,7 +1,0 @@
-b2
-bin.v2
-project-config.jam*
-tools/build
-libs/config/checks/architecture/bin
-bjam
-bootstrap.log
