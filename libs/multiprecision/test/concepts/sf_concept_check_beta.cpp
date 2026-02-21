@@ -7,6 +7,8 @@
 // This tests that cpp_dec_float_50 meets our
 // conceptual requirements when used with Boost.Math.
 //
+#ifdef BOOST_MP_SF_CONCEPT_TESTS
+
 #ifdef _MSC_VER
 #define _SCL_SECURE_NO_WARNINGS
 #pragma warning(disable : 4800)
@@ -17,7 +19,7 @@
 #endif
 
 #include <boost/container_hash/hash.hpp>
-#include <libs/math/test/compile_test/poison.hpp>
+#include <compile_test/poison.hpp>
 
 #if !defined(TEST_MPF_50) && !defined(TEST_BACKEND) && !defined(TEST_MPZ) && !defined(TEST_CPP_DEC_FLOAT) && !defined(TEST_MPFR_50) && !defined(TEST_MPFR_6) && !defined(TEST_MPFR_15) && !defined(TEST_MPFR_17) && !defined(TEST_MPFR_30) && !defined(TEST_CPP_DEC_FLOAT_NO_ET) && !defined(TEST_LOGGED_ADAPTER) && !defined(TEST_CPP_BIN_FLOAT)
 #define TEST_MPF_50
@@ -117,3 +119,12 @@ int main()
 {
    foo();
 }
+
+#else
+
+int main()
+{
+   return 0;
+}
+
+#endif

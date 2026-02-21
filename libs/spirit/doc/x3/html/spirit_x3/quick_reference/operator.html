@@ -4,10 +4,11 @@
 <title>Parser Operators</title>
 <link rel="stylesheet" href="../../../../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Spirit X3 3.0.4">
+<link rel="home" href="../../index.html" title="Spirit X3 3.10">
 <link rel="up" href="../quick_reference.html" title="Quick Reference">
 <link rel="prev" href="directive.html" title="Parser Directives">
 <link rel="next" href="action.html" title="Parser Semantic Actions">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -53,7 +54,7 @@
 <tr>
 <td>
                 <p>
-                  Not Predicate
+                  Not Predicate <code class="computeroutput"><span class="special">!</span><span class="identifier">a</span></code>
                 </p>
               </td>
 <td>
@@ -71,7 +72,7 @@
 <tr>
 <td>
                 <p>
-                  And Predicate
+                  And Predicate <code class="computeroutput"><span class="special">&amp;</span><span class="identifier">a</span></code>
                 </p>
               </td>
 <td>
@@ -89,7 +90,7 @@
 <tr>
 <td>
                 <p>
-                  Optional
+                  Optional <code class="computeroutput"><span class="special">-</span><span class="identifier">a</span></code>
                 </p>
               </td>
 <td>
@@ -107,7 +108,7 @@
 <tr>
 <td>
                 <p>
-                  Kleene
+                  Kleene <code class="computeroutput"><span class="special">*</span><span class="identifier">a</span></code>
                 </p>
               </td>
 <td>
@@ -125,7 +126,7 @@
 <tr>
 <td>
                 <p>
-                  Plus
+                  Plus <code class="computeroutput"><span class="special">+</span><span class="identifier">a</span></code>
                 </p>
               </td>
 <td>
@@ -143,7 +144,7 @@
 <tr>
 <td>
                 <p>
-                  Alternative
+                  Alternative <code class="computeroutput"><span class="identifier">a</span> <span class="special">|</span> <span class="identifier">b</span></code>
                 </p>
               </td>
 <td>
@@ -162,7 +163,8 @@
 <tr>
 <td>
                 <p>
-                  Sequence
+                  Sequence <code class="computeroutput"><span class="identifier">a</span> <span class="special">&gt;&gt;</span>
+                  <span class="identifier">b</span></code>
                 </p>
               </td>
 <td>
@@ -181,7 +183,8 @@
 <tr>
 <td>
                 <p>
-                  Expectation operator
+                  Expectation operator <code class="computeroutput"><span class="identifier">a</span>
+                  <span class="special">&gt;</span> <span class="identifier">b</span></code>
                 </p>
               </td>
 <td>
@@ -204,7 +207,8 @@
 <tr>
 <td>
                 <p>
-                  Difference
+                  Difference <code class="computeroutput"><span class="identifier">a</span> <span class="special">-</span>
+                  <span class="identifier">b</span></code>
                 </p>
               </td>
 <td>
@@ -222,7 +226,8 @@
 <tr>
 <td>
                 <p>
-                  List
+                  List <code class="computeroutput"><span class="identifier">a</span> <span class="special">%</span>
+                  <span class="identifier">b</span></code>
                 </p>
               </td>
 <td>
@@ -240,15 +245,12 @@
 </tbody>
 </table></div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2001-2018 Joel de Guzman,
+<div class="copyright-footer">Copyright © 2001-2018 Joel de Guzman,
       Hartmut Kaiser<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="directive.html"><img src="../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../quick_reference.html"><img src="../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="action.html"><img src="../../../../../../../doc/src/images/next.png" alt="Next"></a>

@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.5...3.16)
 
 project(cmake_subdir_test LANGUAGES CXX)
 
-add_subdirectory(../../../assert boostorg/assert)
+add_subdirectory(../.. boostorg/assert)
 add_subdirectory(../../../config boostorg/config)
 
 add_executable(main main.cpp)
@@ -15,4 +15,4 @@ target_link_libraries(main Boost::assert)
 enable_testing()
 add_test(NAME main COMMAND main)
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>)
+add_custom_target(check VERBATIM COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>)

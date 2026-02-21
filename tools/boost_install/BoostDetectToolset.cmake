@@ -2,6 +2,13 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE_1_0.txt or copy at http://boost.org/LICENSE_1_0.txt)
 
+if(NOT DEFINED CMAKE_CXX_COMPILER_VERSION)
+
+  message(SEND_ERROR "Boost requires C++, but no C++ compiler is configured; add LANGUAGES CXX to your project() declaration")
+  return()
+
+endif()
+
 string(REGEX MATCHALL "[0-9]+" _BOOST_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
 
 list(GET _BOOST_COMPILER_VERSION 0 _BOOST_COMPILER_VERSION_MAJOR)
@@ -20,9 +27,15 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
 
   set(BOOST_DETECTED_TOOLSET "clang-darwin")
 
+  # Match clang-darwin.jam
+
+  if(_BOOST_COMPILER_VERSION_MAJOR GREATER 3)
+    set(_BOOST_COMPILER_VERSION_MINOR)
+  endif()
+
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
-  if(MSVC)
+  if(MSVC_VERSION)
     set(BOOST_DETECTED_TOOLSET "clangw")
   else()
     set(BOOST_DETECTED_TOOLSET "clang")
@@ -32,7 +45,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(_BOOST_COMPILER_VERSION_MINOR)
   endif()
 
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" OR CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
 
   if(WIN32)
 
@@ -83,7 +96,11 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
 
 elseif(MSVC)
 
-  if((MSVC_VERSION GREATER 1919) AND (MSVC_VERSION LESS 1930))
+  if((MSVC_VERSION GREATER 1929) AND (MSVC_VERSION LESS 1950))
+
+    set(BOOST_DETECTED_TOOLSET "vc143")
+
+  elseif((MSVC_VERSION GREATER 1919) AND (MSVC_VERSION LESS 1930))
 
     set(BOOST_DETECTED_TOOLSET "vc142")
 

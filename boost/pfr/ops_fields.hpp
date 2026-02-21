@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2020 Antony Polukhin
+// Copyright (c) 2016-2025 Antony Polukhin
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -8,6 +8,8 @@
 #pragma once
 
 #include <boost/pfr/detail/config.hpp>
+
+#if !defined(BOOST_USE_MODULES) || defined(BOOST_PFR_INTERFACE_UNIT)
 
 #include <boost/pfr/core.hpp>
 #include <boost/pfr/detail/functional.hpp>
@@ -33,13 +35,15 @@
 /// \b Synopsis:
 namespace boost { namespace pfr {
 
+BOOST_PFR_BEGIN_MODULE_EXPORT
+
     /// Does a field-by-field equality comparison.
     ///
     /// \returns `L == R && tuple_size_v<T> == tuple_size_v<U>`, where `L` and
     /// `R` are the results of calling `std::tie` on first `N` fields of `lhs` and
     // `rhs` respectively; `N` is `std::min(tuple_size_v<T>, tuple_size_v<U>)`.
     template <class T, class U>
-    bool eq_fields(const T& lhs, const U& rhs) noexcept {
+    constexpr bool eq_fields(const T& lhs, const U& rhs) noexcept {
         return detail::binary_visit<detail::equal_impl>(lhs, rhs);
     }
 
@@ -50,7 +54,7 @@ namespace boost { namespace pfr {
     /// `R` are the results of calling `std::tie` on first `N` fields of `lhs` and
     // `rhs` respectively; `N` is `std::min(tuple_size_v<T>, tuple_size_v<U>)`.
     template <class T, class U>
-    bool ne_fields(const T& lhs, const U& rhs) noexcept {
+    constexpr bool ne_fields(const T& lhs, const U& rhs) noexcept {
         return detail::binary_visit<detail::not_equal_impl>(lhs, rhs);
     }
 
@@ -60,7 +64,7 @@ namespace boost { namespace pfr {
     /// `R` are the results of calling `std::tie` on first `N` fields of `lhs` and
     // `rhs` respectively; `N` is `std::min(tuple_size_v<T>, tuple_size_v<U>)`.
     template <class T, class U>
-    bool gt_fields(const T& lhs, const U& rhs) noexcept {
+    constexpr bool gt_fields(const T& lhs, const U& rhs) noexcept {
         return detail::binary_visit<detail::greater_impl>(lhs, rhs);
     }
 
@@ -71,7 +75,7 @@ namespace boost { namespace pfr {
     /// `R` are the results of calling `std::tie` on first `N` fields of `lhs` and
     // `rhs` respectively; `N` is `std::min(tuple_size_v<T>, tuple_size_v<U>)`.
     template <class T, class U>
-    bool lt_fields(const T& lhs, const U& rhs) noexcept {
+    constexpr bool lt_fields(const T& lhs, const U& rhs) noexcept {
         return detail::binary_visit<detail::less_impl>(lhs, rhs);
     }
 
@@ -82,7 +86,7 @@ namespace boost { namespace pfr {
     /// `R` are the results of calling `std::tie` on first `N` fields of `lhs` and
     // `rhs` respectively; `N` is `std::min(tuple_size_v<T>, tuple_size_v<U>)`.
     template <class T, class U>
-    bool ge_fields(const T& lhs, const U& rhs) noexcept {
+    constexpr bool ge_fields(const T& lhs, const U& rhs) noexcept {
         return detail::binary_visit<detail::greater_equal_impl>(lhs, rhs);
     }
 
@@ -93,7 +97,7 @@ namespace boost { namespace pfr {
     /// `R` are the results of calling `std::tie` on first `N` fields of `lhs` and
     // `rhs` respectively; `N` is `std::min(tuple_size_v<T>, tuple_size_v<U>)`.
     template <class T, class U>
-    bool le_fields(const T& lhs, const U& rhs) noexcept {
+    constexpr bool le_fields(const T& lhs, const U& rhs) noexcept {
         return detail::binary_visit<detail::less_equal_impl>(lhs, rhs);
     }
 
@@ -122,6 +126,11 @@ namespace boost { namespace pfr {
         return result;
 #endif
     }
+
+BOOST_PFR_END_MODULE_EXPORT
+
 }} // namespace boost::pfr
+
+#endif  // #if !defined(BOOST_USE_MODULES) || defined(BOOST_PFR_INTERFACE_UNIT)
 
 #endif // BOOST_PFR_OPS_HPP

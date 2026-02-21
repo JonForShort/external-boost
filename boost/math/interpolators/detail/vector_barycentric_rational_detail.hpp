@@ -8,12 +8,15 @@
 #ifndef BOOST_MATH_INTERPOLATORS_VECTOR_BARYCENTRIC_RATIONAL_DETAIL_HPP
 #define BOOST_MATH_INTERPOLATORS_VECTOR_BARYCENTRIC_RATIONAL_DETAIL_HPP
 
+#include <cstdint>
+#include <cmath>
 #include <vector>
 #include <utility> // for std::move
 #include <limits>
-#include <boost/assert.hpp>
+#include <algorithm>
+#include <boost/math/tools/assert.hpp>
 
-namespace boost{ namespace math{ namespace detail{
+namespace boost{ namespace math{ namespace interpolators{ namespace detail{
 
 template <class TimeContainer, class SpaceContainer>
 class vector_barycentric_rational_imp
@@ -47,11 +50,11 @@ vector_barycentric_rational_imp<TimeContainer, SpaceContainer>::vector_barycentr
     t_ = std::move(t);
     y_ = std::move(y);
 
-    BOOST_ASSERT_MSG(t_.size() == y_.size(), "There must be the same number of time points as space points.");
-    BOOST_ASSERT_MSG(approximation_order < y_.size(), "Approximation order must be < data length.");
+    BOOST_MATH_ASSERT_MSG(t_.size() == y_.size(), "There must be the same number of time points as space points.");
+    BOOST_MATH_ASSERT_MSG(approximation_order < y_.size(), "Approximation order must be < data length.");
     for (size_t i = 1; i < t_.size(); ++i)
     {
-        BOOST_ASSERT_MSG(t_[i] - t_[i-1] >  (numeric_limits<typename TimeContainer::value_type>::min)(), "The abscissas must be listed in strictly increasing order t[0] < t[1] < ... < t[n-1].");
+        BOOST_MATH_ASSERT_MSG(t_[i] - t_[i-1] >  (numeric_limits<typename TimeContainer::value_type>::min)(), "The abscissas must be listed in strictly increasing order t[0] < t[1] < ... < t[n-1].");
     }
     calculate_weights(approximation_order);
 }
@@ -62,22 +65,22 @@ void vector_barycentric_rational_imp<TimeContainer, SpaceContainer>::calculate_w
 {
     using Real = typename TimeContainer::value_type;
     using std::abs;
-    int64_t n = t_.size();
+    std::int64_t n = t_.size();
     w_.resize(n, Real(0));
-    for(int64_t k = 0; k < n; ++k)
+    for(std::int64_t k = 0; k < n; ++k)
     {
-        int64_t i_min = (std::max)(k - (int64_t) approximation_order, (int64_t) 0);
-        int64_t i_max = k;
+        std::int64_t i_min = (std::max)(k - static_cast<std::int64_t>(approximation_order), static_cast<std::int64_t>(0));
+        std::int64_t i_max = k;
         if (k >= n - (std::ptrdiff_t)approximation_order)
         {
             i_max = n - approximation_order - 1;
         }
 
-        for(int64_t i = i_min; i <= i_max; ++i)
+        for(std::int64_t i = i_min; i <= i_max; ++i)
         {
             Real inv_product = 1;
-            int64_t j_max = (std::min)(static_cast<int64_t>(i + approximation_order), static_cast<int64_t>(n - 1));
-            for(int64_t j = i; j <= j_max; ++j)
+            std::int64_t j_max = (std::min)(static_cast<std::int64_t>(i + approximation_order), static_cast<std::int64_t>(n - 1));
+            for(std::int64_t j = i; j <= j_max; ++j)
             {
                 if (j == k)
                 {
@@ -189,5 +192,5 @@ void vector_barycentric_rational_imp<TimeContainer, SpaceContainer>::eval_with_p
     return;
 }
 
-}}}
+}}}}
 #endif

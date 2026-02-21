@@ -44,8 +44,8 @@ as a full file system or incorrect permissions).
 # Copyright 2002-2003 Dave Abrahams.
 # Copyright 2006 Rene Rivera.
 # Distributed under the Boost Software License, Version 1.0.
-#    (See accompanying file LICENSE_1_0.txt or copy at
-#         http://www.boost.org/LICENSE_1_0.txt)
+#    (See accompanying file LICENSE.txt or copy at
+#         https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 from __future__ import print_function
 
@@ -300,7 +300,7 @@ class TestCmd:
             list.reverse()
             for dir in list:
                 self.writable(dir, 1)
-                shutil.rmtree(dir, ignore_errors=1)
+                shutil.rmtree(dir, ignore_errors=True)
 
         self._dirlist = []
         self.workdir = None
@@ -362,7 +362,7 @@ class TestCmd:
         directories to be preserved for all conditions.
 
         """
-        if conditions is ():
+        if conditions == ():
             conditions = ('pass_test', 'fail_test', 'no_result')
         for cond in conditions:
             self._preserve[cond] = 1
@@ -533,8 +533,8 @@ class TestCmd:
         else:
             if path != None:
                 if path == '':
-                    path = tempfile.mktemp()
-                if path != None:
+                    path = tempfile.mkdtemp(prefix="b2")
+                elif path != None:
                     os.mkdir(path)
                 self._dirlist.append(path)
                 global _Cleanup

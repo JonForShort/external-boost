@@ -1,14 +1,19 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/detail/config.hpp>
+#include <boost/leaf/config.hpp>
 #include <boost/leaf/handle_errors.hpp>
+#include <boost/leaf/on_error.hpp>
 
-#include <boost/leaf/result.hpp>
-#include <exception>
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/result.hpp>
+#endif
+
 #include "lightweight_test.hpp"
+#include <exception>
 
 namespace leaf = boost::leaf;
 
@@ -63,12 +68,36 @@ int main()
             {
                 try
                 {
-                    throw leaf::exception(info<4>{4});
+                    leaf::throw_exception(info<4>{4});
                 }
                 catch(...)
                 {
                 }
                 throw std::exception{};
+            },
+            []( std::exception const &, info<4> )
+            {
+                return 1;
+            },
+            []( std::exception const & )
+            {
+                return 2;
+            } );
+        BOOST_TEST_EQ(r, 2);
+    }
+    {
+        int r = leaf::try_catch(
+            []() -> int
+            {
+                try
+                {
+                    auto load = leaf::on_error(info<4>{4});
+                    throw std::exception();
+                }
+                catch(...)
+                {
+                }
+                leaf::throw_exception();
             },
             []( std::exception const &, info<4> )
             {

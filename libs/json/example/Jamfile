@@ -7,43 +7,22 @@
 # Official repository: https://github.com/boostorg/json
 #
 
-import os ;
+project : requirements <library>/boost/json//boost_json ;
 
-STANDALONE = [ os.environ STANDALONE ] ;
-if $(STANDALONE)
-{
-    LIB =
-        <define>BOOST_JSON_STANDALONE=1
-        <source>../src/src.cpp
-        ;
-}
-else
-{
-    LIB = <library>/boost/json//boost_json ;
-}
+exe path : path.cpp ;
 
-project : requirements $(c11-requires) ;
+exe parse_into : parse_into.cpp ;
 
-exe path :
-    path.cpp
-    : :
-    $(LIB)
-    ;
+exe parse_into_canada : parse_into_canada.cpp ;
 
-exe pretty :
-    pretty.cpp
-    : :
-    $(LIB)
-    ;
+exe parse_into_citm_catalog : parse_into_citm_catalog.cpp ;
 
-exe proxy :
-    proxy.cpp
-    : :
-    $(LIB)
-    ;
+exe pretty : pretty.cpp ;
 
-exe validate :
-    validate.cpp
-    : :
-    $(LIB)
-    ;
+exe proxy : proxy.cpp ;
+
+exe validate : validate.cpp ;
+
+exe use_allocator : use_allocator.cpp ;
+
+exe cbor : cbor.cpp ;

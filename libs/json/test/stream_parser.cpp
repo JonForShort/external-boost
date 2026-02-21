@@ -11,20 +11,23 @@
 // Test that header file is self-contained.
 #include <boost/json/stream_parser.hpp>
 
+#include <boost/core/detail/static_assert.hpp>
 #include <boost/json/monotonic_resource.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
 #include "parse-vectors.hpp"
 #include "test.hpp"
 #include "test_suite.hpp"
 
-BOOST_JSON_NS_BEGIN
+namespace boost {
+namespace json {
 
-BOOST_STATIC_ASSERT( std::is_nothrow_destructible<stream_parser>::value );
+BOOST_CORE_STATIC_ASSERT( std::is_nothrow_destructible<stream_parser>::value );
 
 class stream_parser_test
 {
@@ -37,11 +40,11 @@ public:
     testCtors()
     {
         // stream_parser(stream_parser const&)
-        BOOST_STATIC_ASSERT(
+        BOOST_CORE_STATIC_ASSERT(
             ! std::is_copy_constructible<stream_parser>::value);
 
         // operator=(stream_parser const&)
-        BOOST_STATIC_ASSERT(
+        BOOST_CORE_STATIC_ASSERT(
             ! std::is_copy_assignable<stream_parser>::value);
 
         // ~stream_parser()
@@ -138,19 +141,35 @@ public:
     void
     testMembers()
     {
-        // write_some(char const*, size_t, error_code&)
-        // write_some(string_view, error_code&)
+        // write_some(char const*, size_t, system::error_code&)
+        // write_some(char const*, size_t, std::error_code&)
+        // write_some(string_view, system::error_code&)
+        // write_some(string_view, std::error_code&)
         {
             {
                 stream_parser p;
-                error_code ec;
+                system::error_code ec;
                 BOOST_TEST(p.write_some(
                     "[]*", ec) == 2);
                 BOOST_TEST(! ec);
             }
             {
                 stream_parser p;
-                error_code ec;
+                std::error_code ec;
+                BOOST_TEST(p.write_some(
+                    "[]*", ec) == 2);
+                BOOST_TEST(! ec);
+            }
+            {
+                stream_parser p;
+                system::error_code ec;
+                BOOST_TEST(p.write_some(
+                    "[*", ec) == 1);
+                BOOST_TEST(ec);
+            }
+            {
+                stream_parser p;
+                std::error_code ec;
                 BOOST_TEST(p.write_some(
                     "[*", ec) == 1);
                 BOOST_TEST(ec);
@@ -167,28 +186,42 @@ public:
             }
             {
                 stream_parser p;
-                BOOST_TEST_THROWS(
-                    p.write_some("[*"),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( p.write_some("[*") );
             }
         }
 
-        // write(char const*, size_t, error_code&)
-        // write(string_view, error_code&)
+        // write(char const*, size_t, system::error_code&)
+        // write(char const*, size_t, std::error_code&)
+        // write(string_view, system::error_code&)
+        // write(string_view, std::error_code&)
         {
             {
                 stream_parser p;
-                error_code ec;
+                system::error_code ec;
                 BOOST_TEST(p.write(
                     "null", ec) == 4);
                 BOOST_TEST(! ec);
             }
             {
                 stream_parser p;
-                error_code ec;
+                std::error_code ec;
+                BOOST_TEST(p.write(
+                    "null", ec) == 4);
+                BOOST_TEST(! ec);
+            }
+            {
+                stream_parser p;
+                system::error_code ec;
                 p.write("[]*", ec),
                 BOOST_TEST(
                     ec == error::extra_data);
+                BOOST_TEST(ec.has_location());
+            }
+            {
+                stream_parser p;
+                std::error_code ec;
+                p.write("[]*", ec),
+                BOOST_TEST(ec == error::extra_data);
             }
         }
 
@@ -202,14 +235,13 @@ public:
             }
             {
                 stream_parser p;
-                BOOST_TEST_THROWS(
-                    p.write("[]*"),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( p.write("[]*") );
             }
         }
 
-        // finish(error_code&)
         // finish()
+        // finish(error_code&)
+        // finish(std::error_code&)
         {
             {
                 stream_parser p;
@@ -222,26 +254,37 @@ public:
                 stream_parser p;
                 BOOST_TEST(! p.done());
                 p.write("1.");
-                BOOST_TEST_THROWS(
-                    p.finish(),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( p.finish() );
             }
             {
                 stream_parser p;
                 p.write("[1,2");
-                error_code ec;
+                system::error_code ec;
                 p.finish(ec);
                 BOOST_TEST(
                     ec == error::incomplete);
+                BOOST_TEST(ec.has_location());
             }
             {
                 stream_parser p;
                 p.write("[1,2");
-                error_code ec;
+                system::error_code ec;
                 p.finish(ec);
-                BOOST_TEST_THROWS(
-                    p.finish(),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( p.finish() );
+            }
+            {
+                stream_parser p;
+                p.write("[1,2");
+                std::error_code ec;
+                p.finish(ec);
+                BOOST_TEST(ec == error::incomplete);
+            }
+            {
+                stream_parser p;
+                p.write("[1,2");
+                std::error_code ec;
+                p.finish(ec);
+                BOOST_TEST_THROWS_WITH_LOCATION( p.finish() );
             }
         }
 
@@ -252,9 +295,7 @@ public:
                 BOOST_TEST(
                     p.write_some("[") == 1);
                 BOOST_TEST(! p.done());
-                BOOST_TEST_THROWS(
-                    p.release(),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( p.release() );
             }
             {
                 stream_parser p;
@@ -267,20 +308,17 @@ public:
                 stream_parser p;
                 p.write("[");
                 BOOST_TEST(! p.done());
-                BOOST_TEST_THROWS(
-                    p.release(),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( p.release() );
             }
             {
                 stream_parser p;
-                error_code ec;
+                system::error_code ec;
                 p.write("[]*", ec);
                 BOOST_TEST(
                     ec == error::extra_data);
+                BOOST_TEST(ec.has_location());
                 BOOST_TEST(! p.done());
-                BOOST_TEST_THROWS(
-                    p.release(),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( p.release() );
             }
         }
     }
@@ -295,7 +333,7 @@ public:
         const parse_options& po = parse_options())
     {
         stream_parser p(storage_ptr(), po);
-        error_code ec;
+        system::error_code ec;
         p.reset(std::move(sp));
         p.write(s.data(), s.size(), ec);
         if(BOOST_TEST(! ec))
@@ -306,7 +344,7 @@ public:
 
     void
     static
-    check_round_trip(value const& jv1, 
+    check_round_trip(value const& jv1,
         const parse_options& po = parse_options())
     {
         auto const s2 =
@@ -343,7 +381,7 @@ public:
     template<class F>
     static
     void
-    grind(string_view s, F const& f, 
+    grind(string_view s, F const& f,
         const parse_options& po = parse_options())
     {
         try
@@ -365,7 +403,7 @@ public:
                     fail_resource mr;
                     mr.fail_max = 0;
                     stream_parser p(storage_ptr(), po);
-                    error_code ec;
+                    system::error_code ec;
                     p.reset(&mr);
                     p.write(s.data(), i, ec);
                     if(BOOST_TEST(! ec))
@@ -387,7 +425,7 @@ public:
 
     static
     void
-    grind(string_view s, 
+    grind(string_view s,
         const parse_options& po = parse_options())
     {
         grind(s,
@@ -425,15 +463,19 @@ public:
 
     static
     void
-    grind_double(string_view s, double v)
+    grind_double( string_view s, double v, parse_options const& po = {} )
     {
         grind(s,
             [v](value const& jv, const parse_options&)
             {
                 if(! BOOST_TEST(jv.is_double()))
                     return;
-                BOOST_TEST(jv.get_double() == v);
-            });
+                if( std::isnan(v) )
+                    BOOST_TEST( std::isnan(jv.get_double()) );
+                else
+                    BOOST_TEST( jv.get_double() == v );
+            },
+            po);
     }
 
     //------------------------------------------------------
@@ -521,7 +563,7 @@ public:
                 std::string js;
                 js = "\"" + big + "\"";
                 auto const N = js.size() / 2;
-                error_code ec;
+                system::error_code ec;
                 stream_parser p;
                 p.write(js.data(), N, ec);
                 if(BOOST_TEST(! ec))
@@ -533,13 +575,13 @@ public:
                     if(BOOST_TEST(! ec))
                         check_round_trip(
                             p.release());
-                }   
+                }
             }
         }
     }
 
     //------------------------------------------------------
-    
+
     struct f_boost
     {
         static
@@ -553,7 +595,7 @@ public:
         operator()(string_view s) const
         {
             BOOST_TEST_CHECKPOINT();
-            error_code ec;
+            system::error_code ec;
             stream_parser p;
             p.write(s.data(), s.size(), ec);
             if(BOOST_TEST(! ec))
@@ -849,13 +891,14 @@ public:
 
         // depth
         {
-            error_code ec;
+            system::error_code ec;
             parse_options opt;
             opt.max_depth = 0;
             stream_parser p(storage_ptr(), opt);
             p.write("[]", 2, ec);
             BOOST_TEST(
                 ec == error::too_deep);
+            BOOST_TEST(ec.has_location());
         }
     }
 
@@ -915,13 +958,14 @@ public:
 
         // depth
         {
-            error_code ec;
+            system::error_code ec;
             parse_options opt;
             opt.max_depth = 0;
             stream_parser p(storage_ptr(), opt);
             p.write("{}", 2, ec);
             BOOST_TEST(
                 ec == error::too_deep);
+            BOOST_TEST(ec.has_location());
         }
     }
 
@@ -934,26 +978,27 @@ public:
             "{\"1\":{},\"2\":[],\"3\":\"x\",\"4\":1,"
             "\"5\":-1,\"6\":1.0,\"7\":false,\"8\":null}";
 
-        // parse(string_view, error_code)
+        // parse(string_view, system::error_code)
         {
             {
-                error_code ec;
+                system::error_code ec;
                 auto jv = parse(js, ec);
                 BOOST_TEST(! ec);
                 check_round_trip(jv);
             }
             {
-                error_code ec;
+                system::error_code ec;
                 auto jv = parse("xxx", ec);
                 BOOST_TEST(ec);
+                BOOST_TEST(ec.has_location());
                 BOOST_TEST(jv.is_null());
             }
         }
 
-        // parse(string_view, storage_ptr, error_code)
+        // parse(string_view, storage_ptr, system::error_code)
         {
             {
-                error_code ec;
+                system::error_code ec;
                 monotonic_resource mr;
                 auto jv = parse(js, ec, &mr);
                 BOOST_TEST(! ec);
@@ -961,10 +1006,11 @@ public:
             }
 
             {
-                error_code ec;
+                system::error_code ec;
                 monotonic_resource mr;
                 auto jv = parse("xxx", ec, &mr);
                 BOOST_TEST(ec);
+                BOOST_TEST(ec.has_location());
                 BOOST_TEST(jv.is_null());
             }
         }
@@ -978,9 +1024,7 @@ public:
 
             {
                 value jv;
-                BOOST_TEST_THROWS(
-                    jv = parse("{,"),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( jv = parse("{,") );
             }
         }
 
@@ -994,9 +1038,7 @@ public:
             {
                 monotonic_resource mr;
                 value jv;
-                BOOST_TEST_THROWS(
-                    jv = parse("xxx", &mr),
-                    system_error);
+                BOOST_TEST_THROWS_WITH_LOCATION( jv = parse("xxx", &mr) );
             }
         }
     }
@@ -1027,7 +1069,7 @@ R"xx({
         }
     }
 })xx";
-        string_view out = 
+        string_view out =
             "{\"glossary\":{\"title\":\"example glossary\",\"GlossDiv\":"
             "{\"title\":\"S\",\"GlossList\":{\"GlossEntry\":{\"ID\":\"SGML\","
             "\"SortAs\":\"SGML\",\"GlossTerm\":\"Standard Generalized Markup "
@@ -1035,10 +1077,10 @@ R"xx({
             "\"GlossDef\":{\"para\":\"A meta-markup language, used to create "
             "markup languages such as DocBook.\",\"GlossSeeAlso\":[\"GML\",\"XML\"]},"
             "\"GlossSee\":\"markup\"}}}}}";
-        storage_ptr sp = 
+        storage_ptr sp =
             make_shared_resource<monotonic_resource>();
         stream_parser p(sp);
-        error_code ec;
+        system::error_code ec;
         p.write(in.data(), in.size(), ec);
         if(BOOST_TEST(! ec))
             p.finish(ec);
@@ -1046,7 +1088,7 @@ R"xx({
             BOOST_TEST(serialize(p.release()) == out);
     }
 
-    void 
+    void
     testTrailingCommas()
     {
         parse_options enabled;
@@ -1096,7 +1138,7 @@ R"xx({
         grind("{\"a\":1// c++ \n, \"b\":2}", enabled);
         grind("{\"a\":1, // c++ \n \"b\":2}", enabled);
         grind("{\"a\"// c++ \n:1}", enabled);
-        grind("{\"a\":// c++ \n1}", enabled);   
+        grind("{\"a\":// c++ \n1}", enabled);
     }
 
     void
@@ -1198,6 +1240,140 @@ R"xx({
         BOOST_TEST(serialize(t.jv) == "[]");
     }
 
+    void
+    testIssue876()
+    {
+        stream_parser p;
+        p.write_some( R"("\u20")", 5 );
+
+        std::string s = "19";
+        for( std::size_t i = 0; i < BOOST_JSON_STACK_BUFFER_SIZE; ++i )
+            s += " ";
+        s += "\"";
+        p.write_some( s.data(), s.size() ); // this asserted because of a bug
+        BOOST_TEST( p.release().is_string() );
+    }
+
+    // https://github.com/boostorg/json/pull/814
+    void
+    testSentinelOverlap()
+    {
+        struct {
+            char buffer[8];
+            boost::json::stream_parser p;
+        } s;
+        memcpy(s.buffer, "{\"12345\"", 8);
+        s.p.write(s.buffer, sizeof(s.buffer));
+        s.p.write(":0}", 3);
+    }
+
+    void
+    testSpecialNumbers()
+    {
+        parse_options with_special_numbers;
+        with_special_numbers.allow_infinity_and_nan = true;
+
+        grind_double(
+            "Infinity",
+            std::numeric_limits<double>::infinity(),
+            with_special_numbers);
+
+        grind_double(
+            "-Infinity",
+            -std::numeric_limits<double>::infinity(),
+            with_special_numbers);
+        grind_double(
+            "-Infinity                         ", // long enough for fast path
+            -std::numeric_limits<double>::infinity(),
+            with_special_numbers);
+
+
+        grind_double(
+            "NaN",
+            std::numeric_limits<double>::quiet_NaN(),
+            with_special_numbers);
+    }
+
+    //------------------------------------------------------
+
+    void
+    testLongNumberOverlfow()
+    {
+#ifdef BOOST_JSON_EXPENSIVE_TESTS
+        std::array<char, 1000> zeroes;
+        zeroes.fill('0');
+
+        stream_parser p;
+        {
+            p.write("1", 1);
+
+            std::size_t count = 0;
+            while( static_cast<std::size_t>( INT_MAX - zeroes.size() ) > count )
+                count += p.write( zeroes.data(), zeroes.size() );
+
+            system::error_code ec;
+            p.write(zeroes.data(), zeroes.size(), ec);
+            BOOST_TEST( ec == error::exponent_overflow );
+        }
+
+        p.reset();
+        {
+            p.write("0.", 2);
+
+            std::size_t count = 0;
+            while( static_cast<std::size_t>( INT_MAX - zeroes.size() ) > count )
+                count += p.write( zeroes.data(), zeroes.size() );
+
+            system::error_code ec;
+            p.write(zeroes.data(), zeroes.size(), ec);
+            BOOST_TEST( ec == error::exponent_overflow );
+        }
+
+        p.reset();
+        {
+            p.write("0.", 2);
+
+            int count = INT_MIN;
+            while( static_cast<int>( count + zeroes.size() ) < 0 )
+                count += static_cast<int>(
+                    p.write( zeroes.data(), zeroes.size() ));
+
+            p.write(zeroes.data(), -2 - count);
+            p.write("1e", 2);
+            // at this point we've filled bias to the brim
+
+            std::string const int_min = std::to_string(INT_MIN);
+            p.write( int_min.data(), int_min.size() );
+
+            system::error_code ec;
+            p.finish(ec);
+            BOOST_TEST( ec == error::exponent_overflow );
+        }
+
+        p.reset();
+        {
+            std::string const uint64_max
+                = std::to_string(18446744073709551615U);
+            p.write( uint64_max.data(), uint64_max.size() );
+
+            std::size_t count = INT_MAX;
+            while( static_cast<int>( count - zeroes.size() ) > 0 )
+                count -= p.write( zeroes.data(), zeroes.size() );
+
+            p.write(zeroes.data(), count - 1);
+            // at this point we've filled bias to the brim
+
+            p.write("e", 1);
+            std::string const int_max = std::to_string(INT_MAX);
+            p.write( int_max.data(), int_max.size() );
+
+            system::error_code ec;
+            p.finish(ec);
+            BOOST_TEST( ec == error::exponent_overflow );
+        }
+#endif
+    }
+
     //------------------------------------------------------
 
     void
@@ -1221,9 +1397,14 @@ R"xx({
         testDupeKeys();
         testIssue15();
         testIssue45();
+        testIssue876();
+        testSentinelOverlap();
+        testSpecialNumbers();
+        testLongNumberOverlfow();
     }
 };
 
 TEST_SUITE(stream_parser_test, "boost.json.stream_parser");
 
-BOOST_JSON_NS_END
+} // namespace json
+} // namespace boost

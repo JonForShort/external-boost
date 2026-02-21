@@ -8,6 +8,7 @@
 <link rel="up" href="../test_case_generation.html" title="Data-driven test cases">
 <link rel="prev" href="../test_case_generation.html" title="Data-driven test cases">
 <link rel="next" href="datasets_auto_registration.html" title="Declaring and registering test cases with datasets">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -109,12 +110,14 @@
 <li class="listitem">
                   <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">unit_test</span><span class="special">::</span><span class="identifier">data</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">size</span><span class="special">()</span> <span class="keyword">const</span></code>
                   indicates the size of the dataset. The returned type is a dedicated
-                  class <code class="computeroutput"><a class="link" href="../../../../boost/unit_test/data/size_t.html" title="Class size_t">size_t</a></code>
+                  class <code class="computeroutput"><a class="link" href="../../../../doxygen/a01096.html" title="Class size_t">size_t</a></code>
                   that can indicate an <span class="emphasis"><em>infinite</em></span> dataset size.
                 </li>
 <li class="listitem">
-                  an enum called <code class="computeroutput"><span class="identifier">arity</span></code>
-                  indicating the arity of the samples returned by the dataset
+                  a <code class="computeroutput"><span class="keyword">static</span> <span class="keyword">const</span>
+                  <span class="keyword">int</span></code> data member called
+                  <code class="computeroutput"><span class="identifier">arity</span></code> indicating
+                  the arity of the samples returned by the dataset
                 </li>
 </ul></div>
 <p>
@@ -147,7 +150,7 @@
                       </p>
                     </th></tr></thead>
 <tbody><tr><td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="preprocessor">#define</span> <span class="identifier">BOOST_TEST_MODULE</span> <span class="identifier">dataset_example68</span>
+<pre class="table-programlisting"><span class="preprocessor">#define</span> <span class="identifier">BOOST_TEST_MODULE</span> <span class="identifier">dataset_example68</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">test</span><span class="special">/</span><span class="identifier">included</span><span class="special">/</span><span class="identifier">unit_test</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">test</span><span class="special">/</span><span class="identifier">data</span><span class="special">/</span><span class="identifier">test_case</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">test</span><span class="special">/</span><span class="identifier">data</span><span class="special">/</span><span class="identifier">monomorphic</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
@@ -159,7 +162,7 @@
 <span class="keyword">class</span> <span class="identifier">fibonacci_dataset</span> <span class="special">{</span>
 <span class="keyword">public</span><span class="special">:</span>
     <span class="comment">// the type of the samples is deduced</span>
-    <span class="keyword">enum</span> <span class="special">{</span> <span class="identifier">arity</span> <span class="special">=</span> <span class="number">1</span> <span class="special">};</span>
+    <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> <span class="identifier">arity</span> <span class="special">=</span> <span class="number">1</span><span class="special">;</span>
 
     <span class="keyword">struct</span> <span class="identifier">iterator</span> <span class="special">{</span>
 
@@ -210,7 +213,7 @@
                       </p>
                     </th></tr></thead>
 <tbody><tr><td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="special">&gt;</span> <span class="identifier">example68</span>
+<pre class="table-programlisting"><span class="special">&gt;</span> <span class="identifier">example68</span>
 <span class="identifier">Running</span> <span class="number">9</span> <span class="identifier">test</span> <span class="identifier">cases</span><span class="special">...</span>
 <span class="identifier">test</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">(</span><span class="number">60</span><span class="special">):</span> <span class="identifier">error</span><span class="special">:</span> <span class="identifier">in</span> <span class="string">"test1/_7"</span><span class="special">:</span> <span class="identifier">check</span> <span class="identifier">fib_sample</span> <span class="special">==</span> <span class="identifier">exp</span> <span class="identifier">has</span> <span class="identifier">failed</span> <span class="special">[</span><span class="number">34</span> <span class="special">!=</span> <span class="number">35</span><span class="special">]</span>
 <span class="identifier">Failure</span> <span class="identifier">occurred</span> <span class="identifier">in</span> <span class="identifier">a</span> <span class="identifier">following</span> <span class="identifier">context</span><span class="special">:</span>
@@ -277,7 +280,7 @@
 <th align="left">Tip</th>
 </tr>
 <tr><td align="left" valign="top"><p>
-                See the class <code class="computeroutput"><a class="link" href="../../../../boost/unit_test/data/monomorphic/delayed_dataset.html" title="Class template delayed_dataset">monomorphic::delayed_dataset</a></code> for
+                See the class <code class="computeroutput"><a class="link" href="../../../../doxygen/a01104.html" title="Class template delayed_dataset">monomorphic::delayed_dataset</a></code> for
                 more details on the wrapping object.
               </p></td></tr>
 </table></div>
@@ -291,14 +294,11 @@
               </p></div>
 </div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2001-2020 Boost.Test contributors<p>
+<div class="copyright-footer">Copyright © 2001-2022 Boost.Test contributors<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="../test_case_generation.html"><img src="../../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../test_case_generation.html"><img src="../../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="datasets_auto_registration.html"><img src="../../../../../../../../doc/src/images/next.png" alt="Next"></a>

@@ -365,6 +365,18 @@ public:
     {
         parsegrind<test_parser<true>>(
             "GET / HTTP/1.1\r\n"
+            "\r\n",
+            [&](test_parser<true> const& p)
+            {
+                BEAST_EXPECT(p.got_on_begin     == 1);
+                BEAST_EXPECT(p.got_on_field     == 0);
+                BEAST_EXPECT(p.got_on_header    == 1);
+                BEAST_EXPECT(p.got_on_body      == 0);
+                BEAST_EXPECT(p.got_on_chunk     == 0);
+                BEAST_EXPECT(p.got_on_complete  == 1);
+            });
+        parsegrind<test_parser<true>>(
+            "GET / HTTP/1.1\r\n"
             "User-Agent: test\r\n"
             "Content-Length: 1\r\n"
             "\r\n"
@@ -375,6 +387,18 @@ public:
                 BEAST_EXPECT(p.got_on_field     == 2);
                 BEAST_EXPECT(p.got_on_header    == 1);
                 BEAST_EXPECT(p.got_on_body      == 1);
+                BEAST_EXPECT(p.got_on_chunk     == 0);
+                BEAST_EXPECT(p.got_on_complete  == 1);
+            });
+        parsegrind<test_parser<false>>(
+            "HTTP/1.1 100 Continue\r\n"
+            "\r\n",
+            [&](test_parser<false> const& p)
+            {
+                BEAST_EXPECT(p.got_on_begin     == 1);
+                BEAST_EXPECT(p.got_on_field     == 0);
+                BEAST_EXPECT(p.got_on_header    == 1);
+                BEAST_EXPECT(p.got_on_body      == 0);
                 BEAST_EXPECT(p.got_on_chunk     == 0);
                 BEAST_EXPECT(p.got_on_complete  == 1);
             });
@@ -703,7 +727,7 @@ public:
         failgrind<P>(c(",\r\n"),                            error::bad_content_length);
         failgrind<P>(c("0,\r\n"),                           error::bad_content_length);
         failgrind<P>(m("Content-Length: 0\r\n"
-                        "Content-Length: 100\r\n"),         error::bad_content_length);
+                        "Content-Length: 100\r\n"),         error::multiple_content_length);
     }
 
     void
@@ -841,6 +865,42 @@ public:
             p.header_limit(10);
             p.eager(true);
             p.put(b.data(), ec);
+            BEAST_EXPECTS(ec == error::header_limit, ec.message());
+        }
+        {
+            multi_buffer b;
+            ostream(b) <<
+                "POST / HTTP/1.1\r\n";
+            error_code ec;
+            test_parser<true> p;
+            p.header_limit(18);
+            p.eager(true);
+            b.consume(p.put(b.data(), ec));
+            BEAST_EXPECTS(ec == error::need_more, ec.message());
+            ostream(b) <<
+                "field: value\r\n";
+            b.consume(p.put(b.data(), ec));
+            BEAST_EXPECT(! p.is_done());
+            BEAST_EXPECTS(ec == error::header_limit, ec.message());
+        }
+        {
+            multi_buffer b;
+            ostream(b) <<
+                "POST / HTTP/1.1\r\n"
+                "Transfer-Encoding: chunked\r\n"
+                "\r\n"
+                "0\r\n";
+            error_code ec;
+            test_parser<true> p;
+            p.header_limit(47);
+            p.eager(true);
+            b.consume(p.put(b.data(), ec));
+            BEAST_EXPECTS(ec == error::need_more, ec.message());
+            ostream(b) <<
+                "field: value\r\n"
+                "\r\n";
+            b.consume(p.put(b.data(), ec));
+            BEAST_EXPECT(! p.is_done());
             BEAST_EXPECTS(ec == error::header_limit, ec.message());
         }
         {
@@ -1136,7 +1196,7 @@ public:
         auto const grind =
         [&](string_view s)
         {
-            static_string<100> ss{s};
+            static_string<100> ss(s.data(), s.size());
             test::fuzz_rand r;
             test::fuzz(ss, 4, 5, r,
             [&](string_view s)
@@ -1517,6 +1577,23 @@ public:
         BEAST_EXPECTS(!ec, ec.message());
     }
 
+    void
+    testIssue2201()
+    {
+        const char data[] =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Length: 5\r\n"
+            "\r\n"
+            "*****";
+
+        test_parser<false> p;
+        p.eager(true);
+        p.body_limit(3);
+        error_code ec;
+        p.put(net::buffer(data, strlen(data)), ec);
+        BEAST_EXPECT(ec == error::body_limit);
+    }
+
     //--------------------------------------------------------------------------
 
     void
@@ -1546,6 +1623,7 @@ public:
         testChunkedOverflow();
         testChunkedBodySize();
         testUnlimitedBody();
+        testIssue2201();
     }
 };
 

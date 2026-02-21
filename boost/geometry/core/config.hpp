@@ -1,8 +1,9 @@
 // Boost.Geometry
 
-// Copyright (c) 2019 Barend Gehrels, Amsterdam, the Netherlands.
+// Copyright (c) 2019-2021 Barend Gehrels, Amsterdam, the Netherlands.
 
-// Copyright (c) 2018-2020 Oracle and/or its affiliates.
+// Copyright (c) 2018-2024 Oracle and/or its affiliates.
+// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -14,23 +15,18 @@
 
 #include <boost/config.hpp>
 
-// NOTE: workaround for VC++ 12 (aka 2013): cannot specify explicit initializer for arrays
-#if !defined(BOOST_NO_CXX11_UNIFIED_INITIALIZATION_SYNTAX) && (!defined(_MSC_VER) || (_MSC_VER >= 1900))
-#define BOOST_GEOMETRY_CXX11_ARRAY_UNIFIED_INITIALIZATION
+#if    defined(BOOST_GEOMETRY_DEFAULT_STRATEGY_SIDE_USE_SIDE_BY_TRIANGLE) \
+    && defined(BOOST_GEOMETRY_DEFAULT_STRATEGY_SIDE_USE_SIDE_ROBUST)
+#error "Both BOOST_GEOMETRY_DEFAULT_STRATEGY_SIDE_USE_SIDE_BY_TRIANGLE" \
+    " and BOOST_GEOMETRY_DEFAULT_STRATEGY_SIDE_USE_SIDE_ROBUST are defined." \
+    " Only one of them should be defined."
 #endif
 
-#if !defined(BOOST_NO_CXX11_HDR_TUPLE) && !defined(BOOST_NO_VARIADIC_TEMPLATES)
-#define BOOST_GEOMETRY_CXX11_TUPLE
-#endif
-
-// Defining this selects Kramer rule for segment-intersection
-// That is default behaviour.
-#define BOOST_GEOMETRY_USE_KRAMER_RULE
-
-// Rescaling is turned on, unless NO_ROBUSTNESS is defined
-// In future versions of Boost.Geometry, it will be turned off by default
-#if ! defined(BOOST_GEOMETRY_NO_ROBUSTNESS)
-#define BOOST_GEOMETRY_USE_RESCALING
+// Define default side strategy, if not defined by the user.
+// Until Boost 1.88.0, the default strategy is side_by_triangle.
+#if    ! defined(BOOST_GEOMETRY_DEFAULT_STRATEGY_SIDE_USE_SIDE_BY_TRIANGLE) \
+    && ! defined(BOOST_GEOMETRY_DEFAULT_STRATEGY_SIDE_USE_SIDE_ROBUST)
+#define BOOST_GEOMETRY_DEFAULT_STRATEGY_SIDE_USE_SIDE_BY_TRIANGLE
 #endif
 
 #endif // BOOST_GEOMETRY_CORE_CONFIG_HPP

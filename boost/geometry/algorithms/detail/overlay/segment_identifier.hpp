@@ -10,7 +10,7 @@
 #define BOOST_GEOMETRY_ALGORITHMS_DETAIL_OVERLAY_SEGMENT_IDENTIFIER_HPP
 
 
-#if defined(BOOST_GEOMETRY_DEBUG_OVERLAY)
+#if defined(BOOST_GEOMETRY_DEBUG_OVERLAY) || defined(BOOST_GEOMETRY_DEBUG_TRAVERSE_GRAPH)
 #  define BOOST_GEOMETRY_DEBUG_SEGMENT_IDENTIFIER
 #endif
 
@@ -27,11 +27,11 @@ namespace boost { namespace geometry
 {
 
 
-
 // Internal struct to uniquely identify a segment
 // on a linestring,ring
 // or polygon (needs ring_index)
 // or multi-geometry (needs multi_index)
+// It is always used for clockwise indication (even if the original is anticlockwise)
 struct segment_identifier
 {
     inline segment_identifier()
@@ -76,13 +76,11 @@ struct segment_identifier
 #if defined(BOOST_GEOMETRY_DEBUG_SEGMENT_IDENTIFIER)
     friend std::ostream& operator<<(std::ostream &os, segment_identifier const& seg_id)
     {
-        os
-            << "s:" << seg_id.source_index
-            << ", v:" << seg_id.segment_index // v:vertex because s is used for source
-            ;
-        if (seg_id.ring_index >= 0) os << ", r:" << seg_id.ring_index;
+        os << "g:" << seg_id.source_index; // ('geometry' i/o source)
         if (seg_id.multi_index >= 0) os << ", m:" << seg_id.multi_index;
         if (seg_id.piece_index >= 0) os << ", p:" << seg_id.piece_index;
+        os << ", r:" << seg_id.ring_index;
+        os << ", s:" << seg_id.segment_index;
         return os;
     }
 #endif

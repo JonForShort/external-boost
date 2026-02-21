@@ -17,7 +17,10 @@
 #include <numeric>
 #include <random>
 
-#include "zlib-1.2.11/zlib.h"
+#include "zlib-1.3.1/zlib.h"
+
+#include "fixtures/CVE_2018_25032/default.hpp"
+#include "fixtures/CVE_2018_25032/fixed.hpp"
 
 namespace boost {
 namespace beast {
@@ -73,11 +76,11 @@ class deflate_stream_test : public beast::unit_test::suite
         }
 
         virtual std::size_t avail_in() const noexcept override  { return zs.avail_in; }
-        virtual void avail_in(std::size_t n) noexcept override { zs.avail_in = n; }
+        virtual void avail_in(std::size_t n) noexcept override { zs.avail_in = static_cast<uInt>(n); }
         virtual void const* next_in() const noexcept override { return zs.next_in; }
         virtual void next_in(const void* ptr) noexcept override { zs.next_in = const_cast<Bytef*>(static_cast<const Bytef*>(ptr)); }
         virtual std::size_t avail_out() const noexcept override { return zs.avail_out; }
-        virtual void avail_out(std::size_t n_out) noexcept override { zs.avail_out = n_out; }
+        virtual void avail_out(std::size_t n_out) noexcept override { zs.avail_out = static_cast<uInt>(n_out); }
         virtual void* next_out() const noexcept override { return zs.next_out; }
         virtual void next_out(void* ptr) noexcept override { zs.next_out = (Bytef*)ptr; }
         virtual std::size_t total_out() const noexcept override { return zs.total_out; }
@@ -605,12 +608,36 @@ public:
     }
 
     void
+    testCVE(char const* in, int l, Strategy s)
+    {
+        deflate_stream ds;
+        ds.reset(l, 15, 1, s);
+        z_params p;
+        p.next_in = in;
+        p.avail_in = std::strlen(in);
+        std::size_t n = deflate_upper_bound(p.avail_in);
+        std::vector<unsigned char> out(n);
+        p.next_out = out.data();
+        p.avail_out = n;
+        error_code ec;
+        BEAST_NO_THROW(ds.write(p, Flush::finish, ec));
+        BEAST_EXPECT(ec == zlib::error::end_of_stream);
+    }
+
+    void
+    testCVE()
+    {
+        testCVE(CVE_2018_25032_default, 1, Strategy::fixed);
+        testCVE(CVE_2018_25032_default, 2, Strategy::fixed);
+        testCVE(CVE_2018_25032_default, 6, Strategy::fixed);
+        testCVE(CVE_2018_25032_fixed, 1, Strategy::normal);
+        testCVE(CVE_2018_25032_fixed, 2, Strategy::normal);
+        testCVE(CVE_2018_25032_fixed, 6, Strategy::normal);
+    }
+
+    void
     run() override
     {
-        log <<
-            "sizeof(deflate_stream) == " <<
-            sizeof(deflate_stream) << std::endl;
-
         testDeflate(zlib_compressor);
         testDeflate(beast_compressor);
         testInvalidSettings(zlib_compressor);
@@ -625,6 +652,7 @@ public:
         testRLEMatchLengthExceedLookahead(beast_compressor);
         testFlushAfterDistMatch(zlib_compressor);
         testFlushAfterDistMatch(beast_compressor);
+        testCVE();
     }
 };
 

@@ -4,16 +4,342 @@ weight = 80
 +++
 
 ---
-## v2.1.5 ??? (Boost 1.75) [[release]](https://github.com/ned14/outcome/releases/tag/v2.1.5)
+## v2.2.14 ? (Boost 1.90) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.14)
 
-{{% notice note %}}
-The v2.1 branch is expected to be retired end of 2020 with the Boost 1.75 release, with the v2.2 branch
-becoming the default for Boost 1.76 onwards. You can use the future v2.2 branch now using
-[`better_optimisation`](https://github.com/ned14/outcome/tree/better_optimisation),
-how to upgrade your code is described in [the v2.1 => v2.2 upgrade guide]({{% relref "/changelog/upgrade_v21_v22" %}}).
+### Enhancements:
+
+[#314](https://github.com/ned14/outcome/issues/314)
+- Bump Boost min cmake required to 3.10 to match standalone Outcome. Also bump minium cmake to 3.10
+everywhere else in Outcome, as CI is now failing due to us requested too old a cmake.
+
+### Bug fixes:
+
+
+---
+## v2.2.13 6th August 2025 (Boost 1.89) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.13)
+
+### Enhancements:
+
+[#312](https://github.com/ned14/outcome/issues/312)
+- `iostream_support.hpp` has been split into `iostream_support_result.hpp` and `iostream_support.hpp`.
+
+[#313](https://github.com/ned14/outcome/issues/313)
+- Bump min cmake required to 3.10 amongst other cmake modernisation fixes to please cmake 4.0.
+
+---
+## v2.2.12 10th April 2025 (Boost 1.88) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.12)
+
+### Bug fixes:
+
+- The Android build had become broken, fixed.
+
+---
+## v2.2.11 12th December 2024 (Boost 1.87) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.11)
+
+### Enhancements:
+
+- Outcome.Experimental has had C representation support since the beginning, however it had
+been mainly intended that C++ would originate Results, they would pass through C, and back
+into C++. It hadn't really been expected that C would want to do much with Results other than
+inspect them for happy or sad path.
+
+ It turns out there is more demand than expected for a more functional Result from within C,
+so this release adds the power to create Results in success and two types of failure, semantic
+comparison of Results, and printing of Result messages. You can also wrap a C enum into a
+quick status code from enum, allowing easy custom C error coding from 100% within C.
+
+ [The documentation for the C support]({{% relref "../experimental/c-api" %}}) has been updated
+to reflect the new facilities.
+
+### Bug fixes:
+
+- This was fixed in Standalone Outcome in the last release, but the fix came too late for Boost.Outcome
+which ended up shipping with inline GDB pretty printers with the wrong escaping which caused
+failure to load.
+
+---
+## v2.2.10 14th August 2024 (Boost 1.86) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.10)
+
+### Enhancements:
+
+- Something I've been meaning to do for far too long now is make the GDB pretty printers
+auto-loading so you don't have to set up `.gdbinit`. This is now done. I also improved
+the pretty printers to also pretty print the C result type which can be very useful if
+working with that type, as it will print the error message in GDB.
+
+ Experimental Outcome's `status_code` has also gained its own auto-loading GDB pretty printer
+with display of `strerror()` if the code domain is POSIX or generic.
+
+### Bug fixes:
+
+- The `status` enumeration used to track state internally did not list all possible enum
+values. This caused static analysers to complain.
+
+---
+## v2.2.9 15th April 2024 (Boost 1.85) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.9)
+
+### Enhancements:
+
+[#293](https://github.com/ned14/outcome/issues/293)
+- Some users wished that Outcome would be clean with `-Wpedantic`, this is now turned on for
+the test suite.
+
+[#294](https://github.com/ned14/outcome/issues/294)
+- All use of `assert()` has been replaced with `BOOST_OUTCOME_ASSERT`, which can be user overridden
+at compile time.
+
+[#295](https://github.com/ned14/outcome/issues/295)
+- In git commit 12b14e1533848e9a0f7f3c38e41da0ee4e819770 (Aug 11 2022) status code had its
+paths changed due to its headers not previously having the right path convention. It was not
+realised at the time that in Boost.Outcome this resulted in
+`<boost/outcome/experimental/status-code/status-code/headers.hpp>` which is not desirable.
+This has now been remedied to remove the double `status-code`, which will obviously break
+any Boost.Outcome code which relies on the double `status-code`. Standalone Outcome is unaffected.
+
+---
+## v2.2.8 13th December 2023 (Boost 1.84) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.8)
+
+### Enhancements:
+
+- cmake 3.9 is now the minimum required for standalone Outcome. This fixes a long standing
+cmake issue with probing for standard library facilities. cmake 3.9 is what RHEL7 ships with,
+when RHEL7 EOLs we may raise the minimum cmake version at that point.
+
+### Bug fixes:
+
+- There was a bug in the Outcome C++ coroutine awaitables whereby we were over eagerly resuming
+execution of coroutines which return one of our awaitables. It is surprising how many years have
+passed before this was noticed, but it is now fixed. It is believed that this has been fixed
+without affecting ABI stability, however mixing old Outcome and new Outcome in the same binary
+without recompiling all the C++ coroutine code to use new Outcome will not fix the bug.
+
+[#291](https://github.com/ned14/outcome/issues/291)
+- A Result or Outcome with `void` value type and move-only non-value type was only usable in
+const use cases, due to the lack of provision of non-const member functions in relevant observers
+injection layers for the `void` specialisation. The missing non-const member functions have now
+been added.
+
+---
+## v2.2.7 13th August 2023 (Boost 1.83) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.7)
+
+### Enhancements:
+
+- Update the list of known compiler issues in the docs.
+
+- Update Outcome.Experimental to match latest changes requested of `status_code` by WG21.
+This as usual will cause minor breakage due to LEWG renaming of things.
+
+- Outcome previously took addresses of things not using `std::addressof()`, and until now
+nobody complained because custom `operator&` which doesn't return an address is an
+abomination not used in much modern C++. But finally someone did complain, so
+for both normal Outcome and Experimental.Outcome, if you set `BOOST_OUTCOME_USE_STD_ADDRESSOF = 1`,
+Outcome will use `std::addressof()`
+
+### Bug fixes:
+
+[#273](https://github.com/ned14/outcome/issues/273)
+- Changes to other Boost libraries had caused Boost.Outcome's test suite to fail to compile for some
+compiler and C++ language configurations in recent releases. Thanks to work contributed by @alandefreitas
+and @pdimov, Boost.Outcome now CI tests a wide range of compilers and configurations and it
+is believed all those corner case issues have been fixed or worked around, for the compilers
+and configurations within that CI matrix.
+
+ Standalone Outcome's test suite was never affected, as it did not have Boost changing underneath it.
+Nevertheless, a few of the compiler parse bug workarounds will have improved compatibility there
+too for atyical toolchain choices.
+
+- Experimental.Outcome now supports big endian architectures. Implementation for them simply wasn't done
+before under the assumption that nobody would be using Experimental.Outcome on big endian architectures.
+Turns out that was a wrong assumption!
+
+---
+## v2.2.6 24th March 2023 (Boost 1.82) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.6)
+
+### Enhancements:
+
+- Update to latest `status-code` in Experimental.Outcome, which relocates its header files and may
+cause some end user inclusions to need path changes.
+
+### Bug fixes:
+
+- Latest `status-code` fixes a number of nasty bugs, some mild build breakage in Experimental.Outcome
+may occur as a result. See its commit log for more information.
+
+---
+## v2.2.4 11th August 2022 (Boost 1.80) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.4)
+
+### Enhancements:
+
+- Update to latest `status-code` in Experimental.Outcome, which has some breaking changes and important
+bug fixes.
+
+- Add {{<api "generator<T, Executor = void>" >}} to coroutine awaitables.
+
+- Add optional `Executor` template parameter to all Outcome awaitable types for improved compatibility
+with third party software such as [ASIO](https://think-async.com/Asio/).
+
+- To Experimental.Outcome add `clone()` for `basic_result` and `basic_outcome` types whose `EC` is
+a `status_code`. Erased status codes are move-only which makes the Result/Outcome type move-only, but
+they provide a cloning function, so this convenience function both clones the status code and propagates
+the spare storage so stack backtraces etc are also cloned.
+
+- Add type constraints to `success()` and `failure()` to disable them if they aren't available.
+
+- Work around a bug in GCC's C++ Coroutines implementation whereby one gets an ICE from `gimplify_expr`
+in any `BOOST_OUTCOME_CO_TRY` taking even a mildly complex expression, which obviously is a showstopper.
+The work around assigns the failure type to a stack temporary before `co_return`-ing that
+temporary. Thanks to RVO pre-17 and copy elision since, this should add no runtime overhead.
+
+### Bug fixes:
+
+[#261](https://github.com/ned14/outcome/issues/261)
+: Move assignable with move constructible not available did not work with `void`.
+
+---
+## v2.2.3 17th March 2022 (Boost 1.79) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.3)
+
+### Enhancements:
+
+Standalone Outcome permanently locks ABI to v2.2.3 release
+: From this release onwards, you are guaranteed that any code compiled with v2.2.3 Outcome
+or newer will link without issue with any code compiled with a different version of Outcome
+after v2.2.3. As a result, `BOOST_OUTCOME_UNSTABLE_VERSION` is no longer defined by default, and
+therefore `BOOST_OUTCOME_V2_NAMESPACE` is now hard coded to `outcome_v2` rather than a namespace
+which permutes per commit.
+
+### Bug fixes:
+
+[#255](https://github.com/ned14/outcome/issues/259)
+: Fix enabling of move assignable was not calculated correctly.
+
+---
+## v2.2.2 8th December 2021 (Boost 1.78) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.2)
+
+### Enhancements:
+
+[#255](https://github.com/ned14/outcome/issues/255)
+: Restore Experimental Outcome constexpr compatibility in C++ 20 which was an undocumented
+property of the Outcome v2.1 series, and which had been dropped in the v2.2 series.
+
+GCC Coroutines support
+: Coroutine support in GCCs after 10 is now correctly detected.
+
+### Bug fixes:
+
+- None.
+
+---
+## v2.2.1 13th August 2021 (Boost 1.77) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.1)
+
+### Bug fixes:
+
+[#251](https://github.com/ned14/outcome/issues/251)
+: Fix failure to compile Boost.Outcome when the compiler declares support for C++ modules.
+
+- Don't use `[[likely]]` in GCCs before 9.
+
+[#251](https://github.com/ned14/outcome/issues/253)
+: Make support for C++ modules opt-in.
+
+---
+## v2.2.0 16th April 2021 (Boost 1.76) [[release]](https://github.com/ned14/outcome/releases/tag/v2.2.0)
+
+BREAKING CHANGE As announced for a year and three Boost releases, Outcome v2.2 became the default, replacing v2.1.
+: All v2.1 Outcome code will need to be upgraded as described in [the v2.1 => v2.2 upgrade guide]({{% relref "/changelog/upgrade_v21_v22" %}}).
 This branch has a number of major breaking changes to Outcome v2.1, see
 [the list of v2.2 major changes]({{% relref "/changelog/v22" %}}).
-{{% /notice %}}
+
+### Enhancements:
+
+VS2019.8 compatibility
+: VS2019.8 changed how to enable Coroutines, which caused Outcome to not compile on that compiler.
+
+[#237](https://github.com/ned14/outcome/issues/237)
+: If on C++ 20, we now use C++ 20 `[[likely]]` instead of compiler-specific markup to indicate
+when TRY has likely success or failure.
+
+BREAKING CHANGE [#247](https://github.com/ned14/outcome/issues/247)
+: Previously the value of {{% api "spare_storage(const basic_result|basic_outcome *) noexcept" %}} was
+not propagated over `BOOST_OUTCOME_TRY`, which causes things like stack backtraces captured at the point of
+construction of an errored result to get dropped at every `TRY` point. This has been fixed by adding
+an optional `spare_storage` to {{% api "success_type<T>" %}} and {{% api "failure_type<T>" %}}, as well
+as to {{% api "auto success(T &&, ...)" %}} and {{% api "auto failure(T &&, ...)" %}}.
+
+    You should not notice this in your code, except that where before spare storage values did not
+    propagate through TRY, now they do, which is a breaking change.
+
+### Bug fixes:
+
+BREAKING CHANGE [#244](https://github.com/ned14/outcome/issues/244)
+: It came as a shock to learn that `BOOST_OUTCOME_TRY` had been broken since the inception of this
+library for certain corner case code:
+
+    ```c++
+    outcome::result<Foo>    get_foo();
+    outcome::result<Foo>    filter1(outcome::result<Foo> &&);
+    outcome::result<Foo> && filter2(outcome::result<Foo> &&);
+
+    // This works fine, and always has
+    BOOST_OUTCOME_TRY(auto v, filter1(get_foo()))
+
+    // This causes UB due to result<Foo> being destructed before move of value into v
+    BOOST_OUTCOME_TRY(auto v, filter2(get_foo()))
+    ```
+
+    Whilst reference passthrough filter functions are not common, they can turn up in highly generic
+    code, where destruction before copy/move is not helpful.
+
+    The cause is that TRY used to work by binding the result of the expression to an `auto &&unique`,
+    testing if that unique if successful or not, and if successful then moving from `unique.value()`
+    into the user's output variable. If the expression returned is a prvalue, the Result's lifetime is
+    extended by the bound reference to outside of the statement, and all is good. If the expression
+    returned is an xvalue or lvalue, then the lifetime extension does not exceed that of the statement,
+    and the Result is destructed after the semicolon succeeding the assignment to `auto &&unique`.
+
+    This bug has been fixed by TRY deducing the [value category](https://en.cppreference.com/w/cpp/language/value_category)
+    of its input expression as follows:
+
+    - prvalues => `auto unique = (expr)`   (breaking change)
+    - xvalue => `auto unique = (expr)`     (breaking change)
+    - lvalue => `auto unique = (expr)`     (breaking change)
+
+    This ensures that xvalue and lvalue inputs do not cause unhelpfully early lifetime end, though it
+    does silently change the behaviour of existing code which relied on rvalues and lvalues being passed
+    through, as a new construct-move-destruct or construct-copy-destruct cycle is introduced to where
+    there was none before. Also, before C++ 17, there is now an added copy/move for prvalue inputs,
+    which does not affect runtime codegen due to Return Value Optimisation (RVO), but does cause
+    Results containing non-copying non-moving types to fail to compile, which is a breaking change
+    from beforehand.
+
+    If one wishes rvalues or lvalues to be passed through, one can avail of a new TRY syntax based on
+    preprocessor overloading:
+
+    - `BOOST_OUTCOME_TRY((refspec, varname), expr)`
+    - `BOOST_OUTCOME_TRYV2(refspec, expr)`
+
+    Here `refspec` is the storage to be used for **both** the internal temporary unique, AND `varname`.
+    So if you write:
+
+    ```c++
+    Foo &&foo;
+    BOOST_OUTCOME_TRY((auto &&, v), filter2(foo))
+    ```
+    ... then the internal unique is declared as `auto &&unique = (filter2(foo))`, and the output variable
+    is declared as `auto &&v = std::move(unique).assume_value()`. This passes through the rvalue referencing,
+    and completely avoids copies and moves of `Foo`. If you wish to not extract the value but also
+    specify unique storage, there is a new `BOOST_OUTCOME_TRYV2(refspec, expr)`.
+
+    My thanks to KamilCuk from https://stackoverflow.com/questions/66069152/token-detection-within-a-c-preprocessor-macro-argument
+    for all their help in designing the new overloaded TRY syntax. My thanks also to vasama for reporting this
+    issue and working through how best to fix it with me.
+
+[#249](https://github.com/ned14/outcome/issues/249)
+: The preprocessor logic for choosing when to use `bool` with `concept` on GCC was yet again refactored.
+This should fix those choices of GCC configuration which caused failure due to the wrong combination
+being chosen.
+
+---
+## v2.1.5 11th December 2020 (Boost 1.75) [[release]](https://github.com/ned14/outcome/releases/tag/v2.1.5)
 
 ### Enhancements:
 
@@ -93,6 +419,10 @@ with the fixes to LLVM clang that fix `noexcept(std::is_constructible<T, void>)`
 failing to compile which I originally submitted years ago. So give up waiting on
 Apple to fix their clang, add a workaround to Outcome.
 
+Use of `void` in `T` or `E` caused `noexcept(false)`
+: Direct traits examination of `void` was causing nothrow detection to return false,
+fixed.
+
 Spare storage could not be used from within no-value policy classes
 : Due to an obvious brain fart when writing the code at the time, the spare storage
 APIs had the wrong prototype which prevented them working from within policy classes.
@@ -118,7 +448,7 @@ use cases.
 Precompiled headers are automatically enabled on new enough cmake's for standalone Outcome
 : If on cmake 3.16 or later, its new precompiled headers build support is used
 to tell consumers of the `outcome::hl` cmake target to precompile Outcome, **if
-and only if** `PROJECT_IS_DEPENDENCY` is false. `PROJECT_IS_DEPENDENCY` is set
+and only if** `outcome_IS_DEPENDENCY` is false. `outcome_IS_DEPENDENCY` is set
 by Outcome's CMakeLists.txt if it detects that it was included using
 `add_subdirectory()`, so for the vast majority of Outcome end users, the use
 of precompiled headers will NOT be enabled.

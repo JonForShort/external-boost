@@ -1,9 +1,13 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/detail/function_traits.hpp>
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/detail/function_traits.hpp>
+#endif
+
 #include <functional>
 
 namespace leaf = boost::leaf;
@@ -11,9 +15,9 @@ namespace leaf = boost::leaf;
 template <class F>
 void check_traits( F )
 {
-    using namespace leaf::leaf_detail;
+    using namespace leaf::detail;
     using leaf::leaf_detail_mp11::mp_list;
-    static_assert(function_traits<F>::arity==4,"arity");
+    static_assert(function_traits<F>::arity == 4,"arity");
     static_assert(std::is_same<fn_return_type<F>,double>::value,"return_type");
     static_assert(std::is_same<fn_arg_type<F,0>,int>::value,"arg<0>");
     static_assert(std::is_same<fn_arg_type<F,1>,float>::value,"arg<1>");
@@ -35,6 +39,10 @@ int main()
         {
             return 42;
         } );
-    static_assert(leaf::leaf_detail::function_traits<int>::arity==-1, "int arity");
+    check_traits( []( int const volatile, float const, int const &, float && ) noexcept -> double
+        {
+            return 42;
+        } );
+    static_assert(leaf::detail::function_traits<int>::arity == -1, "int arity");
     return 0;
 }

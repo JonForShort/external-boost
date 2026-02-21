@@ -15,7 +15,6 @@
 
 #include <cmath>
 #include <boost/container_hash/detail/limits.hpp>
-#include <boost/container_hash/detail/float_functions.hpp>
 #include <boost/config/workaround.hpp>
 
 #include <iostream>
@@ -30,8 +29,13 @@
 #endif
 #endif
 
-#if defined(__GNUC__) && !defined(BOOST_INTEL_CXX_VERSION)
+#if ( defined(__GNUC__) || defined(__clang__) ) && !defined(BOOST_INTEL_CXX_VERSION)
 #pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
+#if defined(__clang__)
+// P2614 deprecates has_denorm in C++23
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
 char const* float_type(float*) { return "float"; }
@@ -53,19 +57,6 @@ void float_tests(char const* name, T* = 0)
         <<  boost::hash_detail::limits<int>::digits<< "\n"
         <<  "boost::hash_detail::limits<std::size_t>::digits = "
         <<  boost::hash_detail::limits<std::size_t>::digits
-        <<  "\n"
-        <<  "\n"
-        <<  "boost::hash_detail::call_ldexp<T>::float_type = "
-        <<  float_type(static_cast<BOOST_DEDUCED_TYPENAME
-                boost::hash_detail::call_ldexp<T>::float_type*>(0))
-        <<  "\n"
-        <<  "boost::hash_detail::call_frexp<T>::float_type = "
-        <<  float_type(static_cast<BOOST_DEDUCED_TYPENAME
-                boost::hash_detail::call_frexp<T>::float_type*>(0))
-        <<  "\n"
-        <<  "boost::hash_detail::select_hash_type<T>::type = "
-        <<  float_type(static_cast<BOOST_DEDUCED_TYPENAME
-                boost::hash_detail::select_hash_type<T>::type*>(0))
         <<  "\n"
         <<  "\n"
         ;

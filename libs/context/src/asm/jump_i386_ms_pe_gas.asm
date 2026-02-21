@@ -73,7 +73,7 @@ _jump_fcontext:
 
     /* firstarg of jump_fcontext() == fcontext to jump to */
     movl  0x30(%esp), %ecx
-    
+
     /* restore ESP (pointing to context-data) from ECX */
     movl  %ecx, %esp
 
@@ -120,4 +120,4 @@ _jump_fcontext:
     jmp *%ecx
 
 .section .drectve
-.ascii " -export:\"_jump_fcontext\""
+.ascii " -export:\"jump_fcontext\""

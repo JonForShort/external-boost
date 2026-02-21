@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright (C) 2013 Steven Watanabe
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt)
+# (See accompanying file LICENSE.txt or copy at
+# https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 import sys
 
@@ -195,7 +195,7 @@ import modules ;
 import common ;
 import type ;
 
-.python-cmd = "\"%s\"" ;
+.python-cmd = "%s" ;
 
 # Behave the same as gcc on Windows, because that's what
 # the test system expects
@@ -206,7 +206,7 @@ rule init ( )
 {
     local here = [ path.make [ modules.binding $(__name__) ] ] ;
     here = [ path.native [ path.root [ path.parent $(here) ] [ path.pwd ] ] ] ;
-    .config-cmd = [ common.variable-setting-command JAM_CWD : $(here) ] $(.python-cmd) -B ;
+    .config-cmd = [ common.variable-setting-command JAM_CWD : $(here) ] "\\"$(.python-cmd:J= )\\"" -B ;
 }
 
 feature.extend toolset : mock ;
@@ -253,7 +253,7 @@ actions link.dll
     $(.config-cmd) mock.py --dll "$(>)" -o "$(<)" $(USER_OPTIONS) -L"$(LINK_PATH)" --static-lib=$(FINDLIBS-STATIC) --shared-lib=$(FINDLIBS-SHARED)
 }
 
-''' % sys.executable.replace('\\', '\\\\'))
+''' % sys.executable.replace('\\', '/'))
 
 def set_expected(t, markup):
   verbose = "True" if t.verbose else "False"

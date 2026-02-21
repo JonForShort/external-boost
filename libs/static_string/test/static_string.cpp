@@ -9,13 +9,15 @@
 //
 
 // Test that header file is self-contained.
-#include <boost/static_string/static_string.hpp>
+#include <boost/static_string.hpp>
 #include "constexpr_tests.hpp"
 #include "compile_fail.hpp"
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <cstdlib>
 #include <cwchar>
+#include <cctype>
 #include <sstream>
 #include <string>
 
@@ -23,8 +25,16 @@ namespace boost {
 namespace static_strings {
 
 template class basic_static_string<420, char>;
-  
+
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
 using string_view = basic_string_view<char, std::char_traits<char>>;
+#endif
+
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
+using string_like = basic_string_view<char, std::char_traits<char>>;
+#else
+using string_like = std::string;
+#endif
 
 template <class S>
 bool
@@ -49,13 +59,21 @@ testSV(const S& s, typename S::size_type pos, typename S::size_type n)
 {
   if (pos <= s.size())
   {
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
     typename S::string_view_type str = s.subview(pos, n);
+#else
+    auto str = s.substr(pos, n);
+#endif
     typename S::size_type rlen = (std::min)(n, s.size() - pos);
     return (S::traits_type::compare(s.data() + pos, str.data(), rlen) == 0);
   }
   else
   {
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
     BOOST_TEST_THROWS((s.subview(pos, n)), std::out_of_range);
+#else
+    BOOST_TEST_THROWS((s.substr(pos, n)), std::out_of_range);
+#endif
     return true;
   }
 }
@@ -109,7 +127,7 @@ testA(S s, const typename S::value_type* str, typename S::size_type n, S expecte
   return s.append(str, n) == expected;
 }
 
-int 
+int
 sign(int x)
 {
   if (x == 0)
@@ -174,22 +192,24 @@ testFLN(const S& s, const typename S::value_type* str, typename S::size_type pos
   return s.find_last_not_of(str, pos, n) == x;
 }
 
-template <class S>
+template <std::size_t N1, std::size_t N2>
 bool
-testR(S s, typename S::size_type pos1, typename S::size_type n1, const typename S::value_type* str, S expected)
+testR(const char (&s_in)[N1], std::size_t pos1, std::size_t n1, const char* str, const char (&expected)[N2])
 {
+  using S = static_string<400>;
+  S s(s_in);
   typename S::const_iterator first = s.begin() + pos1;
   typename S::const_iterator last = s.begin() + pos1 + n1;
   s.replace(first, last, str);
   return s == expected;
 }
 
-template <class S>
+template <std::size_t N1, std::size_t N2>
 bool
-testR(S s, typename S::size_type pos, typename S::size_type n1, typename S::size_type n2, typename S::value_type c, S expected)
+testR(const char (&s_in)[N1], std::size_t pos, std::size_t n1, std::size_t n2, char c, const char (&expected)[N2])
 {
-  const typename S::size_type old_size = s.size();
-  if (pos <= old_size)
+  static_string<400> s(s_in);
+  if (pos <= s.size())
   {
     s.replace(pos, n1, n2, c);
     return s == expected;
@@ -201,21 +221,19 @@ testR(S s, typename S::size_type pos, typename S::size_type n1, typename S::size
   }
 }
 
-template <class S>
+template <std::size_t N1, std::size_t N2>
 bool
-testR(S s, typename S::size_type pos, typename S::size_type n1, const typename S::value_type* str, typename S::size_type n2, S expected)
+testR(const char (&s_in)[N1], std::size_t pos, std::size_t n1, const char* str, std::size_t n2, const char (&expected)[N2])
 {
-  const typename S::size_type old_size = s.size();
-  S s0 = s;
-  if (n1 > old_size)
-    s.size();
-  if (pos <= old_size)
+  static_string<400> s(s_in);
+  if (pos <= s.size())
   {
+    auto s0 = s;
     if (pos + n1 > s0.size())
       // this is a precondition violation for the const_iterator overload
       return s.replace(pos, n1, str, n2) == expected;
     else
-      return s.replace(pos, n1, str, n2) == expected && 
+      return s.replace(pos, n1, str, n2) == expected &&
         s0.replace(s0.begin() + pos, s0.begin() + pos + n1, str, str + n2) == expected;
   }
   else
@@ -227,31 +245,106 @@ testR(S s, typename S::size_type pos, typename S::size_type n1, const typename S
 
 template<typename Arithmetic>
 bool
-testTS(Arithmetic value, const char* str_expected = "", const wchar_t* wstr_expected = L"", bool test_expected = false)
+testTS(Arithmetic value, const char* str_expected = nullptr)
 {
   const auto str = to_static_string(value);
-  const auto wstr = to_static_wstring(value);
   if (std::is_floating_point<Arithmetic>::value)
   {
     const auto std_res = std::to_string(value);
-    const auto wstd_res = std::to_wstring(value);
-    return str == std_res.data() && wstr == wstd_res.data();
+    return str == std_res.data();
   }
   else
   {
     if (std::is_signed<Arithmetic>::value)
     {
-      return Arithmetic(std::strtoll(str.begin(), nullptr, 10)) == value &&
-        Arithmetic(std::wcstoll(wstr.begin(), nullptr, 10)) == value &&
-        (test_expected ? str == str_expected && wstr == wstr_expected : true);
+      return
+        Arithmetic(std::strtoll(str.begin(), nullptr, 10)) == value &&
+        (! str_expected || str == str_expected);
     }
     else
     {
       return Arithmetic(std::strtoull(str.begin(), nullptr, 10)) == value &&
-        Arithmetic(std::wcstoull(wstr.begin(), nullptr, 10)) == value &&
-        (test_expected ? str == str_expected && wstr == wstr_expected : true);
+        (! str_expected || str == str_expected);
     }
   }
+}
+
+#define TEST_TO_STATIC_STRING(value) do { \
+  const auto str = to_static_string(value); \
+  const auto std_res = std::to_string(value); \
+  BOOST_TEST_EQ(str, std_res); \
+} while(0)
+
+template<typename Arithmetic>
+bool
+testTWS(Arithmetic value, const wchar_t* wstr_expected = nullptr)
+{
+  const auto wstr = to_static_wstring(value);
+  if (std::is_floating_point<Arithmetic>::value)
+  {
+    const auto wstd_res = std::to_wstring(value);
+    return wstr == wstd_res.data();
+  }
+  else
+  {
+    if (std::is_signed<Arithmetic>::value)
+    {
+      return
+        Arithmetic(std::wcstoll(wstr.begin(), nullptr, 10)) == value &&
+        (! wstr_expected || wstr == wstr_expected);
+    }
+    else
+    {
+      return Arithmetic(std::wcstoull(wstr.begin(), nullptr, 10)) == value &&
+        (! wstr_expected || wstr == wstr_expected);
+    }
+  }
+}
+
+static
+void
+testTypeTraits()
+{
+    {
+        using S = static_string<0>;
+        static_assert(std::is_trivially_copyable<S>::value, "");
+        static_assert(!std::is_trivially_default_constructible<S>::value, "");
+        static_assert(std::is_trivially_copy_constructible<S>::value, "");
+        static_assert(std::is_trivially_move_constructible<S>::value, "");
+        static_assert(std::is_trivially_copy_assignable<S>::value, "");
+        static_assert(std::is_trivially_move_assignable<S>::value, "");
+        static_assert(std::is_trivially_destructible<S>::value, "");
+    }
+    {
+        using S = static_string<1>;
+        static_assert(std::is_trivially_copyable<S>::value, "");
+        static_assert(!std::is_trivially_default_constructible<S>::value, "");
+        static_assert(std::is_trivially_copy_constructible<S>::value, "");
+        static_assert(std::is_trivially_move_constructible<S>::value, "");
+        static_assert(std::is_trivially_copy_assignable<S>::value, "");
+        static_assert(std::is_trivially_move_assignable<S>::value, "");
+        static_assert(std::is_trivially_destructible<S>::value, "");
+    }
+    {
+        using S = static_string<20>;
+        static_assert(std::is_trivially_copyable<S>::value, "");
+        static_assert(!std::is_trivially_default_constructible<S>::value, "");
+        static_assert(std::is_trivially_copy_constructible<S>::value, "");
+        static_assert(std::is_trivially_move_constructible<S>::value, "");
+        static_assert(std::is_trivially_copy_assignable<S>::value, "");
+        static_assert(std::is_trivially_move_assignable<S>::value, "");
+        static_assert(std::is_trivially_destructible<S>::value, "");
+    }
+    {
+        using S = static_string<400>;
+        static_assert(std::is_trivially_copyable<S>::value, "");
+        static_assert(!std::is_trivially_default_constructible<S>::value, "");
+        static_assert(std::is_trivially_copy_constructible<S>::value, "");
+        static_assert(std::is_trivially_move_constructible<S>::value, "");
+        static_assert(std::is_trivially_copy_assignable<S>::value, "");
+        static_assert(std::is_trivially_move_assignable<S>::value, "");
+        static_assert(std::is_trivially_destructible<S>::value, "");
+    }
 }
 
 // done
@@ -340,11 +433,11 @@ testConstruct()
     }
     {
         static_string<3> s1(
-            string_view("123"));
+            string_like("123"));
         BOOST_TEST(s1 == "123");
         BOOST_TEST(*s1.end() == 0);
         BOOST_TEST_THROWS(
-            (static_string<2>(string_view("123"))),
+            (static_string<2>(string_like("123"))),
             std::length_error);
     }
     {
@@ -398,7 +491,7 @@ testAssignment()
     BOOST_TEST(static_string<3>{}.assign("abc", 3) == "abc");
     BOOST_TEST(static_string<3>{"*"}.assign("abc", 3) == "abc");
     BOOST_TEST_THROWS(static_string<1>{}.assign("abc", 3), std::length_error);
-    
+
     // assign(CharT const* s)
     BOOST_TEST(static_string<3>{}.assign("abc") == "abc");
     BOOST_TEST(static_string<3>{"*"}.assign("abc") == "abc");
@@ -411,8 +504,9 @@ testAssignment()
         BOOST_TEST(static_string<4>{}.assign(cs.begin(), cs.end()) == "abcd");
         BOOST_TEST(static_string<4>{"*"}.assign(cs.begin(), cs.end()) == "abcd");
         BOOST_TEST_THROWS(static_string<2>{"*"}.assign(cs.begin(), cs.end()), std::length_error);
+        ignore_unused(s);
     }
-    
+
     // assign(std::initializer_list<CharT> ilist)
     BOOST_TEST(static_string<3>{}.assign({'a', 'b', 'c'}) == "abc");
     BOOST_TEST(static_string<3>{"*"}.assign({'a', 'b', 'c'}) == "abc");
@@ -421,6 +515,7 @@ testAssignment()
 
     // assign(T const& t)
     {
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
         struct T
         {
             operator string_view() const noexcept
@@ -428,6 +523,21 @@ testAssignment()
                 return "abc";
             }
         };
+#else
+      struct T
+      {
+        char const* data() const noexcept
+        {
+          static char p[] = "abc";
+          return p;
+        }
+
+        std::size_t size() const noexcept
+        {
+          return 3;
+        }
+      };
+#endif
         BOOST_TEST(static_string<3>{}.assign(T{}) == "abc");
         BOOST_TEST(static_string<3>{"*"}.assign(T{}) == "abc");
         BOOST_TEST(static_string<3>{"***"}.assign(T{}) == "abc");
@@ -436,6 +546,7 @@ testAssignment()
 
     // assign(T const& t, size_type pos, size_type count = npos)
     {
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
         struct T
         {
             operator string_view() const noexcept
@@ -443,6 +554,23 @@ testAssignment()
                 return "abcde";
             }
         };
+#else
+      struct T
+        {
+            char const*
+            data() const noexcept
+            {
+                static char p[] = "abcde";
+                return p;
+            }
+
+            std::size_t
+            size() const
+            {
+                return 5;
+            }
+        };
+#endif
         BOOST_TEST(static_string<5>{}.assign(T{}, 0) == "abcde");
         BOOST_TEST(static_string<5>{}.assign(T{}, 0, 5) == "abcde");
         BOOST_TEST(static_string<5>{}.assign(T{}, 1, 3) == "bcd");
@@ -450,7 +578,7 @@ testAssignment()
         BOOST_TEST_THROWS(static_string<2>{"**"}.assign(T{}, 6, 3), std::out_of_range);
         BOOST_TEST_THROWS(static_string<2>{"**"}.assign(T{}, 1, 3), std::length_error);
     }
-    
+
     //---
 
     {
@@ -471,7 +599,7 @@ testAssignment()
             s3 = s1,
             std::length_error);
     }
-    
+
     {
         static_string<3> s1;
         s1 = "123";
@@ -504,15 +632,14 @@ testAssignment()
     }
     {
         static_string<3> s1;
-        s1 = string_view("123");
+        s1 = string_like("123");
         BOOST_TEST(s1 == "123");
         BOOST_TEST(*s1.end() == 0);
         static_string<1> s2;
         BOOST_TEST_THROWS(
-            s2 = string_view("123"),
+            s2 = string_like("123"),
             std::length_error);
     }
-
     {
         static_string<4> s1;
         s1.assign(3, 'x');
@@ -600,14 +727,14 @@ testAssignment()
     }
     {
         static_string<5> s1;
-        s1.assign(string_view("123"));
+        s1.assign(string_like("123"));
         BOOST_TEST(s1 == "123");
         BOOST_TEST(*s1.end() == 0);
-        s1.assign(string_view("12345"));
+        s1.assign(string_like("12345"));
         BOOST_TEST(s1 == "12345");
         BOOST_TEST(*s1.end() == 0);
         BOOST_TEST_THROWS(
-            s1.assign(string_view("1234567")),
+            s1.assign(string_like("1234567")),
             std::length_error);
     }
     {
@@ -671,6 +798,13 @@ testAssignment()
 
     s_long.assign(s_long.data() + 2, 8);
     BOOST_TEST(s_long == "rem ipsu");
+
+    // issue #41
+    {
+        boost::static_strings::static_string<0> a;
+        auto b = a;
+        BOOST_TEST(b == "");
+    }
 }
 
 // done
@@ -685,7 +819,7 @@ testElements()
     BOOST_TEST(static_string<3>{"abc"}.at(2) == 'c');
     BOOST_TEST_THROWS(static_string<3>{""}.at(0), std::out_of_range);
     BOOST_TEST_THROWS(static_string<3>{"abc"}.at(4), std::out_of_range);
-    
+
     // at(size_type pos) const
     BOOST_TEST(cfs3{"abc"}.at(0) == 'a');
     BOOST_TEST(cfs3{"abc"}.at(2) == 'c');
@@ -716,7 +850,7 @@ testElements()
     BOOST_TEST(static_string<3>{"a"}.back() == 'a');
     BOOST_TEST(static_string<3>{"abc"}.back() == 'c');
 
-    // back() const 
+    // back() const
     BOOST_TEST(cfs3{"a"}.back() == 'a');
     BOOST_TEST(cfs3{"abc"}.back() == 'c');
 
@@ -785,11 +919,20 @@ testElements()
         BOOST_TEST(std::memcmp(
             s.c_str(), "123\0", 4) == 0);
     }
+#ifdef BOOST_STATIC_STRING_HAS_STRING_VIEW
     {
         static_string<3> s("123");
         string_view sv = s;
         BOOST_TEST(static_string<5>(sv) == "123");
     }
+#endif
+#ifdef BOOST_STATIC_STRING_HAS_STD_STRING_VIEW
+    {
+        static_string<3> s("123");
+        std::string_view sv = s;
+        BOOST_TEST(static_string<5>(sv) == "123");
+    }
+#endif
 }
 
 // done
@@ -896,12 +1039,17 @@ testClear()
     BOOST_TEST(*s.end() == 0);
 }
 
+#if defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC diagnostic push // false positives
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 // done
 static
 void
 testInsert()
 {
-    using sv = string_view;
+    using sv = string_like;
     using S = static_string<100>;
 
     // insert(size_type index, size_type count, CharT ch)
@@ -923,7 +1071,7 @@ testInsert()
     BOOST_TEST(static_string<4>{"ad"}.insert(1, "bcd", 2) == "abcd");
     BOOST_TEST_THROWS(static_string<4>{"abc"}.insert(4, "*"), std::out_of_range);
     BOOST_TEST_THROWS(static_string<3>{"abc"}.insert(1, "*"), std::length_error);
-    
+
     // insert(size_type index, string_view_type sv)
     BOOST_TEST(static_string<3>{"ac"}.insert(1, sv{"b"}) == "abc");
     BOOST_TEST_THROWS(static_string<4>{"abc"}.insert(4, sv{"*"}), std::out_of_range);
@@ -982,6 +1130,7 @@ testInsert()
 
     // insert(size_type index, T const& t)
     {
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
         struct T
         {
             operator string_view() const noexcept
@@ -989,6 +1138,23 @@ testInsert()
                 return "b";
             }
         };
+#else
+        struct T
+        {
+            char const*
+            data() const noexcept
+            {
+                static char p[] = "b";
+                return p;
+            }
+
+            std::size_t
+            size() const
+            {
+                return 1;
+            }
+        };
+#endif
         BOOST_TEST(static_string<3>{"ac"}.insert(1, T{}) == "abc");
         BOOST_TEST_THROWS(static_string<4>{"abc"}.insert(4, T{}), std::out_of_range);
         BOOST_TEST_THROWS(static_string<3>{"abc"}.insert(1, T{}), std::length_error);
@@ -996,6 +1162,7 @@ testInsert()
 
     // insert(size_type index, T const& t, size_type index_str, size_type count = npos)
     {
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
         struct T
         {
             operator string_view() const noexcept
@@ -1003,6 +1170,23 @@ testInsert()
                 return "abcd";
             }
         };
+#else
+        struct T
+        {
+            char const*
+            data() const noexcept
+            {
+                static char p[] = "abcd";
+                return p;
+            }
+
+            std::size_t
+            size() const noexcept
+            {
+                return 4;
+            }
+        };
+#endif
         BOOST_TEST(static_string<6>{"ae"}.insert(1, T{}, 1) == "abcde");
         BOOST_TEST(static_string<6>{"abe"}.insert(2, T{}, 2) == "abcde");
         BOOST_TEST(static_string<4>{"ac"}.insert(1, T{}, 1, 1) == "abc");
@@ -1049,6 +1233,7 @@ testInsert()
         BOOST_TEST_THROWS(
             (s2.insert(6, "__")),
             std::out_of_range);
+        ignore_unused(s3);
     }
     {
         static_string<7> s1("12345");
@@ -1129,16 +1314,16 @@ testInsert()
     }
     {
         static_string<5> s1("123");
-        s1.insert(1, string_view("UV"));
+        s1.insert(1, string_like("UV"));
         BOOST_TEST(s1 == "1UV23");
         BOOST_TEST(*s1.end() == 0);
         static_string<4> s2("123");
         BOOST_TEST_THROWS(
-            (s2.insert(1, string_view("UV"))),
+            (s2.insert(1, string_like("UV"))),
             std::length_error);
         static_string<5> s3("123");
         BOOST_TEST_THROWS(
-            (s3.insert(5, string_view("UV"))),
+            (s3.insert(5, string_like("UV"))),
             std::out_of_range);
     }
     {
@@ -1638,7 +1823,11 @@ testInsert()
     BOOST_TEST(testI(S("abcdefghijklmnopqrst"), 21, "12345678901234567890", 20, S("can't happen")));
 }
 
-// done 
+#if defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC diagnostic pop
+#endif
+
+// done
 static
 void
 testErase()
@@ -1851,6 +2040,51 @@ testErase()
 // done
 static
 void
+testEraseIf()
+{
+    // erase_if(static_string& str, UnaryPredicate pred)
+
+    {
+        static_string<3> s{""};
+        BOOST_TEST(erase_if(s, [](char c) { return c == 'a'; }) == 0);
+        BOOST_TEST(s == "");
+        BOOST_TEST(*s.end() == 0);
+    }
+    {
+        static_string<3> s{"aaa"};
+        BOOST_TEST(erase_if(s, [](char c) { return c == 'a'; }) == 3);
+        BOOST_TEST(s == "");
+        BOOST_TEST(*s.end() == 0);
+    }
+    {
+        static_string<3> s{"abc"};
+        BOOST_TEST(erase_if(s, [](char c) { return c == 'a'; }) == 1);
+        BOOST_TEST(s == "bc");
+        BOOST_TEST(*s.end() == 0);
+    }
+    {
+        static_string<3> s{"abc"};
+        BOOST_TEST(erase_if(s, [](char c) { return c == 'b'; }) == 1);
+        BOOST_TEST(s == "ac");
+        BOOST_TEST(*s.end() == 0);
+    }
+    {
+        static_string<3> s{"abc"};
+        BOOST_TEST(erase_if(s, [](char c) { return c == 'c'; }) == 1);
+        BOOST_TEST(s == "ab");
+        BOOST_TEST(*s.end() == 0);
+    }
+    {
+        static_string<3> s{"abc"};
+        BOOST_TEST(erase_if(s, [](char c) { return c == 'd'; }) == 0);
+        BOOST_TEST(s == "abc");
+        BOOST_TEST(*s.end() == 0);
+    }
+}
+
+// done
+static
+void
 testPushBack()
 {
     // push_back(CharT ch);
@@ -1921,7 +2155,7 @@ void
 testAppend()
 {
   using S = static_string<400>;
-  using sv = string_view;
+  using sv = string_like;
 
   // append(size_type count, CharT ch)
   BOOST_TEST(static_string<1>{}.append(1, 'a') == "a");
@@ -1957,6 +2191,7 @@ testAppend()
           cs.begin() + 2, cs.begin() + 4) == "abcd");
       BOOST_TEST_THROWS(static_string<2>{"ab"}.append(
           cs.begin() + 2, cs.begin() + 4), std::length_error);
+      ignore_unused(s);
   }
 
   // append(std::initializer_list<CharT> ilist)
@@ -1965,6 +2200,7 @@ testAppend()
 
   // append(T const& t)
   {
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
       struct T
       {
           operator string_view() const noexcept
@@ -1972,12 +2208,29 @@ testAppend()
               return "c";
           }
       };
+#else
+      struct T
+      {
+          char const*
+          data() const noexcept
+          {
+              return "c";
+          }
+
+          std::size_t
+          size() const noexcept
+          {
+              return 1;
+          }
+      };
+#endif
       BOOST_TEST(static_string<3>{"ab"}.append(T{}) == "abc");
       BOOST_TEST_THROWS(static_string<3>{"abc"}.append(T{}), std::length_error);
   }
 
   // append(T const& t, size_type pos, size_type count = npos)
   {
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
       struct T
       {
           operator string_view() const noexcept
@@ -1985,6 +2238,22 @@ testAppend()
               return "abcd";
           }
       };
+#else
+      struct T
+      {
+          char const*
+          data() const noexcept
+          {
+              return "abcd";
+          }
+
+          std::size_t
+          size() const noexcept
+          {
+              return 4;
+          }
+      };
+#endif
       BOOST_TEST(static_string<4>{"ab"}.append(T{}, 2) == "abcd");
       BOOST_TEST(static_string<3>{"a"}.append(T{}, 1, 2) == "abc");
       BOOST_TEST_THROWS(static_string<4>{"abc"}.append(T{}, 5), std::out_of_range);
@@ -2075,7 +2344,7 @@ testAppend()
           std::length_error);
   }
   {
-      string_view s1("XYZ");
+      string_like s1("XYZ");
       static_string<5> s2("12");
       s2.append(s1);
       BOOST_TEST(s2 == "12XYZ");
@@ -2130,7 +2399,7 @@ static
 void
 testPlusEquals()
 {
-    using sv = string_view;
+    using sv = string_like;
 
     // operator+=(CharT ch)
     BOOST_TEST((static_string<3>{"ab"} += 'c') == "abc");
@@ -2186,7 +2455,7 @@ testPlusEquals()
             std::length_error);
     }
     {
-        string_view s1("34");
+        string_like s1("34");
         static_string<4> s2("12");
         s2 += s1;
         BOOST_TEST(s2 == "1234");
@@ -2222,6 +2491,7 @@ testCompare()
         BOOST_TEST(s1.compare(0, 2, s2.data()) < 0);
         BOOST_TEST(s2.compare(0, 1, s1.data()) > 0);
 
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
         BOOST_TEST(s1.compare(s2.subview()) < 0);
         BOOST_TEST(s2.compare(s1.subview()) > 0);
 
@@ -2230,6 +2500,7 @@ testCompare()
 
         BOOST_TEST(s1.compare(0, 2, s2.subview(), 0, 1) < 0);
         BOOST_TEST(s2.compare(0, 1, s1.subview(), 0, 2) > 0);
+#endif
 
         BOOST_TEST(s1 < "10");
         BOOST_TEST(s2 > "1");
@@ -2238,6 +2509,14 @@ testCompare()
         BOOST_TEST(s1 < "20");
         BOOST_TEST(s2 > "1");
         BOOST_TEST(s2 > "2");
+
+        BOOST_TEST(s1 < string_like("10"));
+        BOOST_TEST(s2 > string_like("1"));
+        BOOST_TEST(string_like("10") > s1);
+        BOOST_TEST(string_like("1") < s2);
+        BOOST_TEST(s1 < string_like("20"));
+        BOOST_TEST(s2 > string_like("1"));
+        BOOST_TEST(s2 > string_like("2"));
     }
     {
         str2 s1("x");
@@ -2273,6 +2552,19 @@ testCompare()
         BOOST_TEST(! ("x" < s));
         BOOST_TEST(! ("x" > s));
         BOOST_TEST(! ("x" != s));
+
+        BOOST_TEST(s == string_like("x"));
+        BOOST_TEST(s <= string_like("x"));
+        BOOST_TEST(s >= string_like("x"));
+        BOOST_TEST(! (s < string_like("x")));
+        BOOST_TEST(! (s > string_like("x")));
+        BOOST_TEST(! (s != string_like("x")));
+        BOOST_TEST(string_like("x") == s);
+        BOOST_TEST(string_like("x") <= s);
+        BOOST_TEST(string_like("x") >= s);
+        BOOST_TEST(! (string_like("x") < s));
+        BOOST_TEST(! (string_like("x") > s));
+        BOOST_TEST(! (string_like("x") != s));
     }
     {
         str2 s("x");
@@ -2288,6 +2580,19 @@ testCompare()
         BOOST_TEST(! ("y" == s));
         BOOST_TEST(! ("y" <= s));
         BOOST_TEST(! ("y" < s));
+
+        BOOST_TEST(s <= string_like("y"));
+        BOOST_TEST(s < string_like("y"));
+        BOOST_TEST(s != string_like("y"));
+        BOOST_TEST(! (s == string_like("y")));
+        BOOST_TEST(! (s >= string_like("y")));
+        BOOST_TEST(! (s > "x"));
+        BOOST_TEST(string_like("y") >= s);
+        BOOST_TEST(string_like("y") > s);
+        BOOST_TEST(string_like("y") != s);
+        BOOST_TEST(! (string_like("y") == s));
+        BOOST_TEST(! (string_like("y") <= s));
+        BOOST_TEST(! (string_like("y") < s));
     }
     {
         str1 s1("x");
@@ -3683,32 +3988,32 @@ testGeneral()
 void
 testToStaticString()
 {
-    BOOST_TEST(testTS(0, "0", L"0", true));
-    BOOST_TEST(testTS(0u, "0", L"0", true));
-    BOOST_TEST(testTS(0xffff, "65535", L"65535", true));
-    BOOST_TEST(testTS(0x10000, "65536", L"65536", true));
-    BOOST_TEST(testTS(0xffffffff, "4294967295", L"4294967295", true));
-    BOOST_TEST(testTS(-65535, "-65535", L"-65535", true));
-    BOOST_TEST(testTS(-65536, "-65536", L"-65536", true));
-    BOOST_TEST(testTS(-4294967295ll, "-4294967295", L"-4294967295", true));
-    BOOST_TEST(testTS(1, "1", L"1", true));
-    BOOST_TEST(testTS(-1, "-1", L"-1", true));
-    BOOST_TEST(testTS(0.1));
-    BOOST_TEST(testTS(0.0000001));
-    BOOST_TEST(testTS(-0.0000001));
-    BOOST_TEST(testTS(-0.1));
-    BOOST_TEST(testTS(1234567890.0001));
-    BOOST_TEST(testTS(1.123456789012345));
-    BOOST_TEST(testTS(-1234567890.1234));
-    BOOST_TEST(testTS(-1.123456789012345));
+    BOOST_TEST(testTS(0, "0"));
+    BOOST_TEST(testTS(0u, "0"));
+    BOOST_TEST(testTS(0xffff, "65535"));
+    BOOST_TEST(testTS(0x10000, "65536"));
+    BOOST_TEST(testTS(0xffffffff, "4294967295"));
+    BOOST_TEST(testTS(-65535, "-65535"));
+    BOOST_TEST(testTS(-65536, "-65536"));
+    BOOST_TEST(testTS(-4294967295ll, "-4294967295"));
+    BOOST_TEST(testTS(1, "1"));
+    BOOST_TEST(testTS(-1, "-1"));
+    TEST_TO_STATIC_STRING(0.1);
+    TEST_TO_STATIC_STRING(0.0000001);
+    TEST_TO_STATIC_STRING(-0.0000001);
+    TEST_TO_STATIC_STRING(-0.1);
+    TEST_TO_STATIC_STRING(1234567890.0001);
+    TEST_TO_STATIC_STRING(1.123456789012345);
+    TEST_TO_STATIC_STRING(-1234567890.1234);
+    TEST_TO_STATIC_STRING(-1.123456789012345);
 
-    BOOST_TEST(testTS(std::numeric_limits<long long>::max()));
-    BOOST_TEST(testTS(std::numeric_limits<long long>::min()));
-    BOOST_TEST(testTS(std::numeric_limits<unsigned long long>::max()));
-    BOOST_TEST(testTS(std::numeric_limits<unsigned long long>::max()));
-    BOOST_TEST(testTS(std::numeric_limits<long double>::min()));
-    BOOST_TEST(testTS(std::numeric_limits<float>::min()));
-    
+    TEST_TO_STATIC_STRING(std::numeric_limits<long long>::max());
+    TEST_TO_STATIC_STRING(std::numeric_limits<long long>::min());
+    TEST_TO_STATIC_STRING(std::numeric_limits<unsigned long long>::max());
+    TEST_TO_STATIC_STRING(std::numeric_limits<unsigned long long>::max());
+    TEST_TO_STATIC_STRING(std::numeric_limits<long double>::min());
+    TEST_TO_STATIC_STRING(std::numeric_limits<float>::min());
+
     // these tests technically are not portable, but they will work
     // 99% of the time.
     {
@@ -3726,6 +4031,35 @@ testToStaticString()
       BOOST_TEST(str.find('e') != static_string<0>::npos || str.find('.') !=
         static_string<0>::npos || str == "infinity" || str == "inf");
     }
+
+#ifdef BOOST_STATIC_STRING_HAS_WCHAR
+
+    BOOST_TEST(testTWS(0, L"0"));
+    BOOST_TEST(testTWS(0u, L"0"));
+    BOOST_TEST(testTWS(0xffff, L"65535"));
+    BOOST_TEST(testTWS(0x10000, L"65536"));
+    BOOST_TEST(testTWS(0xffffffff, L"4294967295"));
+    BOOST_TEST(testTWS(-65535, L"-65535"));
+    BOOST_TEST(testTWS(-65536, L"-65536"));
+    BOOST_TEST(testTWS(-4294967295ll, L"-4294967295"));
+    BOOST_TEST(testTWS(1, L"1"));
+    BOOST_TEST(testTWS(-1, L"-1"));
+    BOOST_TEST(testTWS(0.1));
+    BOOST_TEST(testTWS(0.0000001));
+    BOOST_TEST(testTWS(-0.0000001));
+    BOOST_TEST(testTWS(-0.1));
+    BOOST_TEST(testTWS(1234567890.0001));
+    BOOST_TEST(testTWS(1.123456789012345));
+    BOOST_TEST(testTWS(-1234567890.1234));
+    BOOST_TEST(testTWS(-1.123456789012345));
+
+    BOOST_TEST(testTWS(std::numeric_limits<long long>::max()));
+    BOOST_TEST(testTWS(std::numeric_limits<long long>::min()));
+    BOOST_TEST(testTWS(std::numeric_limits<unsigned long long>::max()));
+    BOOST_TEST(testTWS(std::numeric_limits<unsigned long long>::max()));
+    BOOST_TEST(testTWS(std::numeric_limits<long double>::min()));
+    BOOST_TEST(testTWS(std::numeric_limits<float>::min()));
+
     {
       auto str = to_static_wstring(std::numeric_limits<float>::max());
       BOOST_TEST(str.find('e') != static_string<0>::npos || str.find('.') !=
@@ -3741,6 +4075,7 @@ testToStaticString()
       BOOST_TEST(str.find('e') != static_string<0>::npos || str.find('.') !=
         static_string<0>::npos || str == L"infinity" || str == L"inf");
     }
+#endif
 }
 
 // done
@@ -3749,8 +4084,8 @@ testFind()
 {
   const char* cs1 = "12345";
   const char* cs2 = "2345";
-  string_view v1 = cs1;
-  string_view v2 = cs2;
+  string_like v1 = cs1;
+  string_like v2 = cs2;
   static_string<5> fs1 = cs1;
   static_string<4> fs2 = cs2;
   using S = static_string<400>;
@@ -4090,7 +4425,7 @@ testFind()
 
   BOOST_TEST(fs1.rfind(cs1, 0) == 0);
   BOOST_TEST(fs1.rfind(cs2, 0) == S::npos);
-  
+
   BOOST_TEST(fs1.rfind(cs2, 0, 2) == S::npos);
   BOOST_TEST(fs1.rfind(cs1, 4) == 0);
 
@@ -5068,13 +5403,13 @@ testFind()
 
 
 
-  
+
   // find_first_not_of
 
   const char* cs3 = "12456";
   const char* cs4 = "2356";
-  string_view v3 = cs3;
-  string_view v4 = cs4;
+  string_like v3 = cs3;
+  string_like v4 = cs4;
   static_string<5> fs3 = cs3;
   static_string<4> fs4 = cs4;
 
@@ -5768,11 +6103,16 @@ testFind()
 
 #include <iostream>
 
+#if defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC diagnostic push // false positives
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 // done
 void
 testReplace()
 {
-  // replace(size_type pos1, size_type n1, const charT* s, size_type n2); 
+  // replace(size_type pos1, size_type n1, const charT* s, size_type n2);
   {
     static_string<20> fs1 = "helloworld";
     BOOST_TEST(fs1.replace(5, 2, fs1.data() + 1, 8) == "helloelloworlrld");
@@ -5854,12 +6194,12 @@ testReplace()
   // replace(size_type pos1, size_type n1, const T& t);
   {
     static_string<20> fs1 = "helloworld";
-    BOOST_TEST(fs1.replace(0, fs1.size(), string_view(fs1)) == "helloworld");
+    BOOST_TEST(fs1.replace(0, fs1.size(), string_like(fs1.data(), fs1.size())) == "helloworld");
   }
   // replace(size_type pos1, size_type n1, const T& t, size_type pos2, size_type n2 = npos);
   {
     static_string<20> fs1 = "helloworld";
-    BOOST_TEST(fs1.replace(0, fs1.size(), string_view(fs1), 0, fs1.size()) == "helloworld");
+    BOOST_TEST(fs1.replace(0, fs1.size(), string_like(fs1.data(), fs1.size()), 0, fs1.size()) == "helloworld");
   }
   // replace(size_type pos, size_type n, const charT * s);
   {
@@ -5885,7 +6225,7 @@ testReplace()
   // replace(const_iterator i1, const_iterator i2, const T& t);
   {
     static_string<20> fs1 = "helloworld";
-    BOOST_TEST(fs1.replace(fs1.begin(), fs1.end(), string_view(fs1)) == "helloworld");
+    BOOST_TEST(fs1.replace(fs1.begin(), fs1.end(), string_like(fs1.data(), fs1.size())) == "helloworld");
   }
   // replace(const_iterator i1, const_iterator i2, const charT* s, size_type n);
   {
@@ -5917,7 +6257,7 @@ testReplace()
     std::stringstream a("defghi");
     static_string<30> b = "abcabcdefjklmnop";
     BOOST_TEST(b.replace(b.begin() + 3, b.begin() + 9,
-      std::istream_iterator<char>(a), 
+      std::istream_iterator<char>(a),
       std::istream_iterator<char>()) ==
       "abcdefghijklmnop");
   }
@@ -5931,837 +6271,837 @@ testReplace()
   BOOST_TEST(s_short.replace(s_short.begin(), s_short.begin(), s_short.begin(), s_short.end()) == "123/123/123/123/123/123/123/123/");
   BOOST_TEST(s_long.replace(s_long.begin(), s_long.begin(), s_long.begin(), s_long.end()) == "Lorem ipsum dolor sit amet, consectetur/Lorem ipsum dolor sit amet, consectetur/");
 
-  BOOST_TEST(testR(S(""), 0, 0, "", S("")));
-  BOOST_TEST(testR(S(""), 0, 0, "12345", S("12345")));
-  BOOST_TEST(testR(S(""), 0, 0, "1234567890", S("1234567890")));
-  BOOST_TEST(testR(S(""), 0, 0, "12345678901234567890", S("12345678901234567890")));
-  BOOST_TEST(testR(S("abcde"), 0, 0, "", S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 0, "12345", S("12345abcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 0, "1234567890", S("1234567890abcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 0, "12345678901234567890", S("12345678901234567890abcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 1, "", S("bcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 1, "12345", S("12345bcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 1, "1234567890", S("1234567890bcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 1, "12345678901234567890", S("12345678901234567890bcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 2, "", S("cde")));
-  BOOST_TEST(testR(S("abcde"), 0, 2, "12345", S("12345cde")));
-  BOOST_TEST(testR(S("abcde"), 0, 2, "1234567890", S("1234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 0, 2, "12345678901234567890", S("12345678901234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "", S("e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345", S("12345e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "1234567890", S("1234567890e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345678901234567890", S("12345678901234567890e")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "", S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345", S("12345")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "1234567890", S("1234567890")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345678901234567890", S("12345678901234567890")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "", S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345", S("a12345bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "1234567890", S("a1234567890bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345678901234567890", S("a12345678901234567890bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "", S("acde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345", S("a12345cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "1234567890", S("a1234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345678901234567890", S("a12345678901234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "", S("ade")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345", S("a12345de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "1234567890", S("a1234567890de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345678901234567890", S("a12345678901234567890de")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "", S("ae")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "12345", S("a12345e")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "1234567890", S("a1234567890e")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "12345678901234567890", S("a12345678901234567890e")));
-  BOOST_TEST(testR(S("abcde"), 1, 4, "", S("a")));
-  BOOST_TEST(testR(S("abcde"), 1, 4, "12345", S("a12345")));
-  BOOST_TEST(testR(S("abcde"), 1, 4, "1234567890", S("a1234567890")));
-  BOOST_TEST(testR(S("abcde"), 1, 4, "12345678901234567890", S("a12345678901234567890")));
-  BOOST_TEST(testR(S("abcde"), 2, 0, "", S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 2, 0, "12345", S("ab12345cde")));
-  BOOST_TEST(testR(S("abcde"), 2, 0, "1234567890", S("ab1234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 2, 0, "12345678901234567890", S("ab12345678901234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 2, 1, "", S("abde")));
-  BOOST_TEST(testR(S("abcde"), 2, 1, "12345", S("ab12345de")));
-  BOOST_TEST(testR(S("abcde"), 2, 1, "1234567890", S("ab1234567890de")));
-  BOOST_TEST(testR(S("abcde"), 2, 1, "12345678901234567890", S("ab12345678901234567890de")));
-  BOOST_TEST(testR(S("abcde"), 2, 2, "", S("abe")));
-  BOOST_TEST(testR(S("abcde"), 2, 2, "12345", S("ab12345e")));
-  BOOST_TEST(testR(S("abcde"), 2, 2, "1234567890", S("ab1234567890e")));
-  BOOST_TEST(testR(S("abcde"), 2, 2, "12345678901234567890", S("ab12345678901234567890e")));
-  BOOST_TEST(testR(S("abcde"), 2, 3, "", S("ab")));
-  BOOST_TEST(testR(S("abcde"), 2, 3, "12345", S("ab12345")));
-  BOOST_TEST(testR(S("abcde"), 2, 3, "1234567890", S("ab1234567890")));
-  BOOST_TEST(testR(S("abcde"), 2, 3, "12345678901234567890", S("ab12345678901234567890")));
-  BOOST_TEST(testR(S("abcde"), 4, 0, "", S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 4, 0, "12345", S("abcd12345e")));
-  BOOST_TEST(testR(S("abcde"), 4, 0, "1234567890", S("abcd1234567890e")));
-  BOOST_TEST(testR(S("abcde"), 4, 0, "12345678901234567890", S("abcd12345678901234567890e")));
-  BOOST_TEST(testR(S("abcde"), 4, 1, "", S("abcd")));
-  BOOST_TEST(testR(S("abcde"), 4, 1, "12345", S("abcd12345")));
-  BOOST_TEST(testR(S("abcde"), 4, 1, "1234567890", S("abcd1234567890")));
-  BOOST_TEST(testR(S("abcde"), 4, 1, "12345678901234567890", S("abcd12345678901234567890")));
-  BOOST_TEST(testR(S("abcde"), 5, 0, "", S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 5, 0, "12345", S("abcde12345")));
-  BOOST_TEST(testR(S("abcde"), 5, 0, "1234567890", S("abcde1234567890")));
-  BOOST_TEST(testR(S("abcde"), 5, 0, "12345678901234567890", S("abcde12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 0, "", S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 0, "12345", S("12345abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 0, "1234567890", S("1234567890abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 0, "12345678901234567890", S("12345678901234567890abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 1, "", S("bcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 1, "12345", S("12345bcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 1, "1234567890", S("1234567890bcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 1, "12345678901234567890", S("12345678901234567890bcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 5, "", S("fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 5, "12345", S("12345fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 5, "1234567890", S("1234567890fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 5, "12345678901234567890", S("12345678901234567890fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 9, "", S("j")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 9, "12345", S("12345j")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 9, "1234567890", S("1234567890j")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 9, "12345678901234567890", S("12345678901234567890j")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 10, "", S("")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 10, "12345", S("12345")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 10, "1234567890", S("1234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 0, 10, "12345678901234567890", S("12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 0, "", S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 0, "12345", S("a12345bcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 0, "1234567890", S("a1234567890bcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 0, "12345678901234567890", S("a12345678901234567890bcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 1, "", S("acdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 1, "12345", S("a12345cdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 1, "1234567890", S("a1234567890cdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 1, "12345678901234567890", S("a12345678901234567890cdefghij")));
-  BOOST_TEST(testR(S(""), 0, 0, 0, '2', S("")));
-  BOOST_TEST(testR(S(""), 0, 0, 5, '2', S("22222")));
-  BOOST_TEST(testR(S(""), 0, 0, 10, '2', S("2222222222")));
-  BOOST_TEST(testR(S(""), 0, 0, 20, '2', S("22222222222222222222")));
-  BOOST_TEST(testR(S(""), 0, 1, 0, '2', S("")));
-  BOOST_TEST(testR(S(""), 0, 1, 5, '2', S("22222")));
-  BOOST_TEST(testR(S(""), 0, 1, 10, '2', S("2222222222")));
-  BOOST_TEST(testR(S(""), 0, 1, 20, '2', S("22222222222222222222")));
-  BOOST_TEST(testR(S("abcde"), 0, 0, 0, '2', S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 0, 5, '2', S("22222abcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 0, 10, '2', S("2222222222abcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 0, 20, '2', S("22222222222222222222abcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 1, 0, '2', S("bcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 1, 5, '2', S("22222bcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 1, 10, '2', S("2222222222bcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 1, 20, '2', S("22222222222222222222bcde")));
-  BOOST_TEST(testR(S("abcde"), 0, 2, 0, '2', S("cde")));
-  BOOST_TEST(testR(S("abcde"), 0, 2, 5, '2', S("22222cde")));
-  BOOST_TEST(testR(S("abcde"), 0, 2, 10, '2', S("2222222222cde")));
-  BOOST_TEST(testR(S("abcde"), 0, 2, 20, '2', S("22222222222222222222cde")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, 0, '2', S("e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, 5, '2', S("22222e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, 10, '2', S("2222222222e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, 20, '2', S("22222222222222222222e")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, 0, '2', S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, 5, '2', S("22222")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, 10, '2', S("2222222222")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, 20, '2', S("22222222222222222222")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, 0, '2', S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, 5, '2', S("22222")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, 10, '2', S("2222222222")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, 20, '2', S("22222222222222222222")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, 0, '2', S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, 5, '2', S("a22222bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, 10, '2', S("a2222222222bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, 20, '2', S("a22222222222222222222bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, 0, '2', S("acde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, 5, '2', S("a22222cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, 10, '2', S("a2222222222cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, 20, '2', S("a22222222222222222222cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, 0, '2', S("ade")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, 5, '2', S("a22222de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, 10, '2', S("a2222222222de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, 20, '2', S("a22222222222222222222de")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, 0, '2', S("ae")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, 5, '2', S("a22222e")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, 10, '2', S("a2222222222e")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, 20, '2', S("a22222222222222222222e")));
-  BOOST_TEST(testR(S("abcde"), 1, 4, 0, '2', S("a")));
-  BOOST_TEST(testR(S("abcde"), 1, 4, 5, '2', S("a22222")));
-  BOOST_TEST(testR(S("abcde"), 1, 4, 10, '2', S("a2222222222")));
-  BOOST_TEST(testR(S("abcde"), 1, 4, 20, '2', S("a22222222222222222222")));
-  BOOST_TEST(testR(S("abcde"), 1, 5, 0, '2', S("a")));
-  BOOST_TEST(testR(S("abcde"), 1, 5, 5, '2', S("a22222")));
-  BOOST_TEST(testR(S("abcde"), 1, 5, 10, '2', S("a2222222222")));
-  BOOST_TEST(testR(S("abcde"), 1, 5, 20, '2', S("a22222222222222222222")));
-  BOOST_TEST(testR(S("abcde"), 2, 0, 0, '2', S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 2, 0, 5, '2', S("ab22222cde")));
-  BOOST_TEST(testR(S("abcde"), 2, 0, 10, '2', S("ab2222222222cde")));
-  BOOST_TEST(testR(S("abcde"), 2, 0, 20, '2', S("ab22222222222222222222cde")));
-  BOOST_TEST(testR(S("abcde"), 2, 1, 0, '2', S("abde")));
-  BOOST_TEST(testR(S("abcde"), 2, 1, 5, '2', S("ab22222de")));
-  BOOST_TEST(testR(S("abcde"), 2, 1, 10, '2', S("ab2222222222de")));
-  BOOST_TEST(testR(S("abcde"), 2, 1, 20, '2', S("ab22222222222222222222de")));
-  BOOST_TEST(testR(S("abcde"), 2, 2, 0, '2', S("abe")));
-  BOOST_TEST(testR(S("abcde"), 2, 2, 5, '2', S("ab22222e")));
-  BOOST_TEST(testR(S("abcde"), 2, 2, 10, '2', S("ab2222222222e")));
-  BOOST_TEST(testR(S("abcde"), 2, 2, 20, '2', S("ab22222222222222222222e")));
-  BOOST_TEST(testR(S("abcde"), 2, 3, 0, '2', S("ab")));
-  BOOST_TEST(testR(S("abcde"), 2, 3, 5, '2', S("ab22222")));
-  BOOST_TEST(testR(S("abcde"), 2, 3, 10, '2', S("ab2222222222")));
-  BOOST_TEST(testR(S("abcde"), 2, 3, 20, '2', S("ab22222222222222222222")));
-  BOOST_TEST(testR(S("abcde"), 2, 4, 0, '2', S("ab")));
-  BOOST_TEST(testR(S("abcde"), 2, 4, 5, '2', S("ab22222")));
-  BOOST_TEST(testR(S("abcde"), 2, 4, 10, '2', S("ab2222222222")));
-  BOOST_TEST(testR(S("abcde"), 2, 4, 20, '2', S("ab22222222222222222222")));
-  BOOST_TEST(testR(S("abcde"), 4, 0, 0, '2', S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 4, 0, 5, '2', S("abcd22222e")));
-  BOOST_TEST(testR(S("abcde"), 4, 0, 10, '2', S("abcd2222222222e")));
-  BOOST_TEST(testR(S("abcde"), 4, 0, 20, '2', S("abcd22222222222222222222e")));
-  BOOST_TEST(testR(S("abcde"), 4, 1, 0, '2', S("abcd")));
-  BOOST_TEST(testR(S("abcde"), 4, 1, 5, '2', S("abcd22222")));
-  BOOST_TEST(testR(S("abcde"), 4, 1, 10, '2', S("abcd2222222222")));
-  BOOST_TEST(testR(S("abcde"), 4, 1, 20, '2', S("abcd22222222222222222222")));
-  BOOST_TEST(testR(S("abcde"), 4, 2, 0, '2', S("abcd")));
+  BOOST_TEST(testR("", 0, 0, "", ""));
+  BOOST_TEST(testR("", 0, 0, "12345", "12345"));
+  BOOST_TEST(testR("", 0, 0, "1234567890", "1234567890"));
+  BOOST_TEST(testR("", 0, 0, "12345678901234567890", "12345678901234567890"));
+  BOOST_TEST(testR("abcde", 0, 0, "", "abcde"));
+  BOOST_TEST(testR("abcde", 0, 0, "12345", "12345abcde"));
+  BOOST_TEST(testR("abcde", 0, 0, "1234567890", "1234567890abcde"));
+  BOOST_TEST(testR("abcde", 0, 0, "12345678901234567890", "12345678901234567890abcde"));
+  BOOST_TEST(testR("abcde", 0, 1, "", "bcde"));
+  BOOST_TEST(testR("abcde", 0, 1, "12345", "12345bcde"));
+  BOOST_TEST(testR("abcde", 0, 1, "1234567890", "1234567890bcde"));
+  BOOST_TEST(testR("abcde", 0, 1, "12345678901234567890", "12345678901234567890bcde"));
+  BOOST_TEST(testR("abcde", 0, 2, "", "cde"));
+  BOOST_TEST(testR("abcde", 0, 2, "12345", "12345cde"));
+  BOOST_TEST(testR("abcde", 0, 2, "1234567890", "1234567890cde"));
+  BOOST_TEST(testR("abcde", 0, 2, "12345678901234567890", "12345678901234567890cde"));
+  BOOST_TEST(testR("abcde", 0, 4, "", "e"));
+  BOOST_TEST(testR("abcde", 0, 4, "12345", "12345e"));
+  BOOST_TEST(testR("abcde", 0, 4, "1234567890", "1234567890e"));
+  BOOST_TEST(testR("abcde", 0, 4, "12345678901234567890", "12345678901234567890e"));
+  BOOST_TEST(testR("abcde", 0, 5, "", ""));
+  BOOST_TEST(testR("abcde", 0, 5, "12345", "12345"));
+  BOOST_TEST(testR("abcde", 0, 5, "1234567890", "1234567890"));
+  BOOST_TEST(testR("abcde", 0, 5, "12345678901234567890", "12345678901234567890"));
+  BOOST_TEST(testR("abcde", 1, 0, "", "abcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345", "a12345bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "1234567890", "a1234567890bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345678901234567890", "a12345678901234567890bcde"));
+  BOOST_TEST(testR("abcde", 1, 1, "", "acde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345", "a12345cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "1234567890", "a1234567890cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345678901234567890", "a12345678901234567890cde"));
+  BOOST_TEST(testR("abcde", 1, 2, "", "ade"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345", "a12345de"));
+  BOOST_TEST(testR("abcde", 1, 2, "1234567890", "a1234567890de"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345678901234567890", "a12345678901234567890de"));
+  BOOST_TEST(testR("abcde", 1, 3, "", "ae"));
+  BOOST_TEST(testR("abcde", 1, 3, "12345", "a12345e"));
+  BOOST_TEST(testR("abcde", 1, 3, "1234567890", "a1234567890e"));
+  BOOST_TEST(testR("abcde", 1, 3, "12345678901234567890", "a12345678901234567890e"));
+  BOOST_TEST(testR("abcde", 1, 4, "", "a"));
+  BOOST_TEST(testR("abcde", 1, 4, "12345", "a12345"));
+  BOOST_TEST(testR("abcde", 1, 4, "1234567890", "a1234567890"));
+  BOOST_TEST(testR("abcde", 1, 4, "12345678901234567890", "a12345678901234567890"));
+  BOOST_TEST(testR("abcde", 2, 0, "", "abcde"));
+  BOOST_TEST(testR("abcde", 2, 0, "12345", "ab12345cde"));
+  BOOST_TEST(testR("abcde", 2, 0, "1234567890", "ab1234567890cde"));
+  BOOST_TEST(testR("abcde", 2, 0, "12345678901234567890", "ab12345678901234567890cde"));
+  BOOST_TEST(testR("abcde", 2, 1, "", "abde"));
+  BOOST_TEST(testR("abcde", 2, 1, "12345", "ab12345de"));
+  BOOST_TEST(testR("abcde", 2, 1, "1234567890", "ab1234567890de"));
+  BOOST_TEST(testR("abcde", 2, 1, "12345678901234567890", "ab12345678901234567890de"));
+  BOOST_TEST(testR("abcde", 2, 2, "", "abe"));
+  BOOST_TEST(testR("abcde", 2, 2, "12345", "ab12345e"));
+  BOOST_TEST(testR("abcde", 2, 2, "1234567890", "ab1234567890e"));
+  BOOST_TEST(testR("abcde", 2, 2, "12345678901234567890", "ab12345678901234567890e"));
+  BOOST_TEST(testR("abcde", 2, 3, "", "ab"));
+  BOOST_TEST(testR("abcde", 2, 3, "12345", "ab12345"));
+  BOOST_TEST(testR("abcde", 2, 3, "1234567890", "ab1234567890"));
+  BOOST_TEST(testR("abcde", 2, 3, "12345678901234567890", "ab12345678901234567890"));
+  BOOST_TEST(testR("abcde", 4, 0, "", "abcde"));
+  BOOST_TEST(testR("abcde", 4, 0, "12345", "abcd12345e"));
+  BOOST_TEST(testR("abcde", 4, 0, "1234567890", "abcd1234567890e"));
+  BOOST_TEST(testR("abcde", 4, 0, "12345678901234567890", "abcd12345678901234567890e"));
+  BOOST_TEST(testR("abcde", 4, 1, "", "abcd"));
+  BOOST_TEST(testR("abcde", 4, 1, "12345", "abcd12345"));
+  BOOST_TEST(testR("abcde", 4, 1, "1234567890", "abcd1234567890"));
+  BOOST_TEST(testR("abcde", 4, 1, "12345678901234567890", "abcd12345678901234567890"));
+  BOOST_TEST(testR("abcde", 5, 0, "", "abcde"));
+  BOOST_TEST(testR("abcde", 5, 0, "12345", "abcde12345"));
+  BOOST_TEST(testR("abcde", 5, 0, "1234567890", "abcde1234567890"));
+  BOOST_TEST(testR("abcde", 5, 0, "12345678901234567890", "abcde12345678901234567890"));
+  BOOST_TEST(testR("abcdefghij", 0, 0, "", "abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 0, "12345", "12345abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 0, "1234567890", "1234567890abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 0, "12345678901234567890", "12345678901234567890abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 1, "", "bcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 1, "12345", "12345bcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 1, "1234567890", "1234567890bcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 1, "12345678901234567890", "12345678901234567890bcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 5, "", "fghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 5, "12345", "12345fghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 5, "1234567890", "1234567890fghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 5, "12345678901234567890", "12345678901234567890fghij"));
+  BOOST_TEST(testR("abcdefghij", 0, 9, "", "j"));
+  BOOST_TEST(testR("abcdefghij", 0, 9, "12345", "12345j"));
+  BOOST_TEST(testR("abcdefghij", 0, 9, "1234567890", "1234567890j"));
+  BOOST_TEST(testR("abcdefghij", 0, 9, "12345678901234567890", "12345678901234567890j"));
+  BOOST_TEST(testR("abcdefghij", 0, 10, "", ""));
+  BOOST_TEST(testR("abcdefghij", 0, 10, "12345", "12345"));
+  BOOST_TEST(testR("abcdefghij", 0, 10, "1234567890", "1234567890"));
+  BOOST_TEST(testR("abcdefghij", 0, 10, "12345678901234567890", "12345678901234567890"));
+  BOOST_TEST(testR("abcdefghij", 1, 0, "", "abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 1, 0, "12345", "a12345bcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 1, 0, "1234567890", "a1234567890bcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 1, 0, "12345678901234567890", "a12345678901234567890bcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 1, 1, "", "acdefghij"));
+  BOOST_TEST(testR("abcdefghij", 1, 1, "12345", "a12345cdefghij"));
+  BOOST_TEST(testR("abcdefghij", 1, 1, "1234567890", "a1234567890cdefghij"));
+  BOOST_TEST(testR("abcdefghij", 1, 1, "12345678901234567890", "a12345678901234567890cdefghij"));
+  BOOST_TEST(testR("", 0, 0, 0, '2', ""));
+  BOOST_TEST(testR("", 0, 0, 5, '2', "22222"));
+  BOOST_TEST(testR("", 0, 0, 10, '2', "2222222222"));
+  BOOST_TEST(testR("", 0, 0, 20, '2', "22222222222222222222"));
+  BOOST_TEST(testR("", 0, 1, 0, '2', ""));
+  BOOST_TEST(testR("", 0, 1, 5, '2', "22222"));
+  BOOST_TEST(testR("", 0, 1, 10, '2', "2222222222"));
+  BOOST_TEST(testR("", 0, 1, 20, '2', "22222222222222222222"));
+  BOOST_TEST(testR("abcde", 0, 0, 0, '2', "abcde"));
+  BOOST_TEST(testR("abcde", 0, 0, 5, '2', "22222abcde"));
+  BOOST_TEST(testR("abcde", 0, 0, 10, '2', "2222222222abcde"));
+  BOOST_TEST(testR("abcde", 0, 0, 20, '2', "22222222222222222222abcde"));
+  BOOST_TEST(testR("abcde", 0, 1, 0, '2', "bcde"));
+  BOOST_TEST(testR("abcde", 0, 1, 5, '2', "22222bcde"));
+  BOOST_TEST(testR("abcde", 0, 1, 10, '2', "2222222222bcde"));
+  BOOST_TEST(testR("abcde", 0, 1, 20, '2', "22222222222222222222bcde"));
+  BOOST_TEST(testR("abcde", 0, 2, 0, '2', "cde"));
+  BOOST_TEST(testR("abcde", 0, 2, 5, '2', "22222cde"));
+  BOOST_TEST(testR("abcde", 0, 2, 10, '2', "2222222222cde"));
+  BOOST_TEST(testR("abcde", 0, 2, 20, '2', "22222222222222222222cde"));
+  BOOST_TEST(testR("abcde", 0, 4, 0, '2', "e"));
+  BOOST_TEST(testR("abcde", 0, 4, 5, '2', "22222e"));
+  BOOST_TEST(testR("abcde", 0, 4, 10, '2', "2222222222e"));
+  BOOST_TEST(testR("abcde", 0, 4, 20, '2', "22222222222222222222e"));
+  BOOST_TEST(testR("abcde", 0, 5, 0, '2', ""));
+  BOOST_TEST(testR("abcde", 0, 5, 5, '2', "22222"));
+  BOOST_TEST(testR("abcde", 0, 5, 10, '2', "2222222222"));
+  BOOST_TEST(testR("abcde", 0, 5, 20, '2', "22222222222222222222"));
+  BOOST_TEST(testR("abcde", 0, 6, 0, '2', ""));
+  BOOST_TEST(testR("abcde", 0, 6, 5, '2', "22222"));
+  BOOST_TEST(testR("abcde", 0, 6, 10, '2', "2222222222"));
+  BOOST_TEST(testR("abcde", 0, 6, 20, '2', "22222222222222222222"));
+  BOOST_TEST(testR("abcde", 1, 0, 0, '2', "abcde"));
+  BOOST_TEST(testR("abcde", 1, 0, 5, '2', "a22222bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, 10, '2', "a2222222222bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, 20, '2', "a22222222222222222222bcde"));
+  BOOST_TEST(testR("abcde", 1, 1, 0, '2', "acde"));
+  BOOST_TEST(testR("abcde", 1, 1, 5, '2', "a22222cde"));
+  BOOST_TEST(testR("abcde", 1, 1, 10, '2', "a2222222222cde"));
+  BOOST_TEST(testR("abcde", 1, 1, 20, '2', "a22222222222222222222cde"));
+  BOOST_TEST(testR("abcde", 1, 2, 0, '2', "ade"));
+  BOOST_TEST(testR("abcde", 1, 2, 5, '2', "a22222de"));
+  BOOST_TEST(testR("abcde", 1, 2, 10, '2', "a2222222222de"));
+  BOOST_TEST(testR("abcde", 1, 2, 20, '2', "a22222222222222222222de"));
+  BOOST_TEST(testR("abcde", 1, 3, 0, '2', "ae"));
+  BOOST_TEST(testR("abcde", 1, 3, 5, '2', "a22222e"));
+  BOOST_TEST(testR("abcde", 1, 3, 10, '2', "a2222222222e"));
+  BOOST_TEST(testR("abcde", 1, 3, 20, '2', "a22222222222222222222e"));
+  BOOST_TEST(testR("abcde", 1, 4, 0, '2', "a"));
+  BOOST_TEST(testR("abcde", 1, 4, 5, '2', "a22222"));
+  BOOST_TEST(testR("abcde", 1, 4, 10, '2', "a2222222222"));
+  BOOST_TEST(testR("abcde", 1, 4, 20, '2', "a22222222222222222222"));
+  BOOST_TEST(testR("abcde", 1, 5, 0, '2', "a"));
+  BOOST_TEST(testR("abcde", 1, 5, 5, '2', "a22222"));
+  BOOST_TEST(testR("abcde", 1, 5, 10, '2', "a2222222222"));
+  BOOST_TEST(testR("abcde", 1, 5, 20, '2', "a22222222222222222222"));
+  BOOST_TEST(testR("abcde", 2, 0, 0, '2', "abcde"));
+  BOOST_TEST(testR("abcde", 2, 0, 5, '2', "ab22222cde"));
+  BOOST_TEST(testR("abcde", 2, 0, 10, '2', "ab2222222222cde"));
+  BOOST_TEST(testR("abcde", 2, 0, 20, '2', "ab22222222222222222222cde"));
+  BOOST_TEST(testR("abcde", 2, 1, 0, '2', "abde"));
+  BOOST_TEST(testR("abcde", 2, 1, 5, '2', "ab22222de"));
+  BOOST_TEST(testR("abcde", 2, 1, 10, '2', "ab2222222222de"));
+  BOOST_TEST(testR("abcde", 2, 1, 20, '2', "ab22222222222222222222de"));
+  BOOST_TEST(testR("abcde", 2, 2, 0, '2', "abe"));
+  BOOST_TEST(testR("abcde", 2, 2, 5, '2', "ab22222e"));
+  BOOST_TEST(testR("abcde", 2, 2, 10, '2', "ab2222222222e"));
+  BOOST_TEST(testR("abcde", 2, 2, 20, '2', "ab22222222222222222222e"));
+  BOOST_TEST(testR("abcde", 2, 3, 0, '2', "ab"));
+  BOOST_TEST(testR("abcde", 2, 3, 5, '2', "ab22222"));
+  BOOST_TEST(testR("abcde", 2, 3, 10, '2', "ab2222222222"));
+  BOOST_TEST(testR("abcde", 2, 3, 20, '2', "ab22222222222222222222"));
+  BOOST_TEST(testR("abcde", 2, 4, 0, '2', "ab"));
+  BOOST_TEST(testR("abcde", 2, 4, 5, '2', "ab22222"));
+  BOOST_TEST(testR("abcde", 2, 4, 10, '2', "ab2222222222"));
+  BOOST_TEST(testR("abcde", 2, 4, 20, '2', "ab22222222222222222222"));
+  BOOST_TEST(testR("abcde", 4, 0, 0, '2', "abcde"));
+  BOOST_TEST(testR("abcde", 4, 0, 5, '2', "abcd22222e"));
+  BOOST_TEST(testR("abcde", 4, 0, 10, '2', "abcd2222222222e"));
+  BOOST_TEST(testR("abcde", 4, 0, 20, '2', "abcd22222222222222222222e"));
+  BOOST_TEST(testR("abcde", 4, 1, 0, '2', "abcd"));
+  BOOST_TEST(testR("abcde", 4, 1, 5, '2', "abcd22222"));
+  BOOST_TEST(testR("abcde", 4, 1, 10, '2', "abcd2222222222"));
+  BOOST_TEST(testR("abcde", 4, 1, 20, '2', "abcd22222222222222222222"));
+  BOOST_TEST(testR("abcde", 4, 2, 0, '2', "abcd"));
 
-  BOOST_TEST(testR(S("abcde"), 4, 2, 5, '2', S("abcd22222")));
-  BOOST_TEST(testR(S("abcde"), 4, 2, 10, '2', S("abcd2222222222")));
-  BOOST_TEST(testR(S("abcde"), 4, 2, 20, '2', S("abcd22222222222222222222")));
+  BOOST_TEST(testR("abcde", 4, 2, 5, '2', "abcd22222"));
+  BOOST_TEST(testR("abcde", 4, 2, 10, '2', "abcd2222222222"));
+  BOOST_TEST(testR("abcde", 4, 2, 20, '2', "abcd22222222222222222222"));
 
-  BOOST_TEST(testR(S("abcde"), 5, 0, 0, '2', S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 5, 0, 5, '2', S("abcde22222")));
-  BOOST_TEST(testR(S("abcde"), 5, 0, 10, '2', S("abcde2222222222")));
-  BOOST_TEST(testR(S("abcde"), 5, 0, 20, '2', S("abcde22222222222222222222")));
+  BOOST_TEST(testR("abcde", 5, 0, 0, '2', "abcde"));
+  BOOST_TEST(testR("abcde", 5, 0, 5, '2', "abcde22222"));
+  BOOST_TEST(testR("abcde", 5, 0, 10, '2', "abcde2222222222"));
+  BOOST_TEST(testR("abcde", 5, 0, 20, '2', "abcde22222222222222222222"));
 
-  BOOST_TEST(testR(S("abcde"), 5, 1, 0, '2', S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 5, 1, 5, '2', S("abcde22222")));
-  BOOST_TEST(testR(S("abcde"), 5, 1, 10, '2', S("abcde2222222222")));
-  BOOST_TEST(testR(S("abcde"), 5, 1, 20, '2', S("abcde22222222222222222222")));
-  
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345", 4, S("1234e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345", 5, S("12345e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "1234567890", 0, S("e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "1234567890", 1, S("1e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "1234567890", 5, S("12345e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "1234567890", 9, S("123456789e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "1234567890", 10, S("1234567890e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345678901234567890", 0, S("e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345678901234567890", 1, S("1e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345678901234567890", 10, S("1234567890e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345678901234567890", 19, S("1234567890123456789e")));
-  BOOST_TEST(testR(S("abcde"), 0, 4, "12345678901234567890", 20, S("12345678901234567890e")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "", 0, S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345", 0, S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345", 1, S("1")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345", 2, S("12")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345", 4, S("1234")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345", 5, S("12345")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "1234567890", 0, S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "1234567890", 1, S("1")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "1234567890", 5, S("12345")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "1234567890", 9, S("123456789")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "1234567890", 10, S("1234567890")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345678901234567890", 0, S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345678901234567890", 1, S("1")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345678901234567890", 10, S("1234567890")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345678901234567890", 19, S("1234567890123456789")));
-  BOOST_TEST(testR(S("abcde"), 0, 5, "12345678901234567890", 20, S("12345678901234567890")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "", 0, S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345", 0, S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345", 1, S("1")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345", 2, S("12")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345", 4, S("1234")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345", 5, S("12345")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "1234567890", 0, S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "1234567890", 1, S("1")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "1234567890", 5, S("12345")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "1234567890", 9, S("123456789")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "1234567890", 10, S("1234567890")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345678901234567890", 0, S("")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345678901234567890", 1, S("1")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345678901234567890", 10, S("1234567890")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345678901234567890", 19, S("1234567890123456789")));
-  BOOST_TEST(testR(S("abcde"), 0, 6, "12345678901234567890", 20, S("12345678901234567890")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345", 1, S("a1bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345", 2, S("a12bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345", 4, S("a1234bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345", 5, S("a12345bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "1234567890", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "1234567890", 1, S("a1bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "1234567890", 5, S("a12345bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "1234567890", 9, S("a123456789bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "1234567890", 10, S("a1234567890bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345678901234567890", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345678901234567890", 1, S("a1bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345678901234567890", 10, S("a1234567890bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345678901234567890", 19, S("a1234567890123456789bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 0, "12345678901234567890", 20, S("a12345678901234567890bcde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "", 0, S("acde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345", 0, S("acde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345", 1, S("a1cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345", 2, S("a12cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345", 4, S("a1234cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345", 5, S("a12345cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "1234567890", 0, S("acde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "1234567890", 1, S("a1cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "1234567890", 5, S("a12345cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "1234567890", 9, S("a123456789cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "1234567890", 10, S("a1234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345678901234567890", 0, S("acde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345678901234567890", 1, S("a1cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345678901234567890", 10, S("a1234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345678901234567890", 19, S("a1234567890123456789cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 1, "12345678901234567890", 20, S("a12345678901234567890cde")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "", 0, S("ade")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345", 0, S("ade")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345", 1, S("a1de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345", 2, S("a12de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345", 4, S("a1234de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345", 5, S("a12345de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "1234567890", 0, S("ade")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "1234567890", 1, S("a1de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "1234567890", 5, S("a12345de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "1234567890", 9, S("a123456789de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "1234567890", 10, S("a1234567890de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345678901234567890", 0, S("ade")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345678901234567890", 1, S("a1de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345678901234567890", 10, S("a1234567890de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345678901234567890", 19, S("a1234567890123456789de")));
-  BOOST_TEST(testR(S("abcde"), 1, 2, "12345678901234567890", 20, S("a12345678901234567890de")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "", 0, S("ae")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "12345", 0, S("ae")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "12345", 1, S("a1e")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "12345", 2, S("a12e")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "12345", 4, S("a1234e")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "12345", 5, S("a12345e")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "1234567890", 0, S("ae")));
-  BOOST_TEST(testR(S("abcde"), 1, 3, "1234567890", 1, S("a1e")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 10, "1234567890", 5, S("a12345")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 10, "1234567890", 9, S("a123456789")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 10, "1234567890", 10, S("a1234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 10, "12345678901234567890", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 10, "12345678901234567890", 1, S("a1")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 10, "12345678901234567890", 10, S("a1234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 10, "12345678901234567890", 19, S("a1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghij"), 1, 10, "12345678901234567890", 20, S("a12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345", 1, S("abcde1fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345", 2, S("abcde12fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345", 4, S("abcde1234fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345", 5, S("abcde12345fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "1234567890", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "1234567890", 1, S("abcde1fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "1234567890", 5, S("abcde12345fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "1234567890", 9, S("abcde123456789fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "1234567890", 10, S("abcde1234567890fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345678901234567890", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345678901234567890", 1, S("abcde1fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345678901234567890", 10, S("abcde1234567890fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345678901234567890", 19, S("abcde1234567890123456789fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 0, "12345678901234567890", 20, S("abcde12345678901234567890fghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "", 0, S("abcdeghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345", 0, S("abcdeghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345", 1, S("abcde1ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345", 2, S("abcde12ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345", 4, S("abcde1234ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345", 5, S("abcde12345ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "1234567890", 0, S("abcdeghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "1234567890", 1, S("abcde1ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "1234567890", 5, S("abcde12345ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "1234567890", 9, S("abcde123456789ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "1234567890", 10, S("abcde1234567890ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345678901234567890", 0, S("abcdeghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345678901234567890", 1, S("abcde1ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345678901234567890", 10, S("abcde1234567890ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345678901234567890", 19, S("abcde1234567890123456789ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 1, "12345678901234567890", 20, S("abcde12345678901234567890ghij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "", 0, S("abcdehij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345", 0, S("abcdehij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345", 1, S("abcde1hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345", 2, S("abcde12hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345", 4, S("abcde1234hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345", 5, S("abcde12345hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "1234567890", 0, S("abcdehij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "1234567890", 1, S("abcde1hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "1234567890", 5, S("abcde12345hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "1234567890", 9, S("abcde123456789hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "1234567890", 10, S("abcde1234567890hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345678901234567890", 0, S("abcdehij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345678901234567890", 1, S("abcde1hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345678901234567890", 10, S("abcde1234567890hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345678901234567890", 19, S("abcde1234567890123456789hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 2, "12345678901234567890", 20, S("abcde12345678901234567890hij")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "", 0, S("abcdej")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345", 0, S("abcdej")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345", 1, S("abcde1j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345", 2, S("abcde12j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345", 4, S("abcde1234j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345", 5, S("abcde12345j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "1234567890", 0, S("abcdej")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "1234567890", 1, S("abcde1j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "1234567890", 5, S("abcde12345j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "1234567890", 9, S("abcde123456789j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "1234567890", 10, S("abcde1234567890j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345678901234567890", 0, S("abcdej")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345678901234567890", 1, S("abcde1j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345678901234567890", 10, S("abcde1234567890j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345678901234567890", 19, S("abcde1234567890123456789j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 4, "12345678901234567890", 20, S("abcde12345678901234567890j")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345", 1, S("abcde1")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345", 2, S("abcde12")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345", 4, S("abcde1234")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345", 5, S("abcde12345")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "1234567890", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "1234567890", 1, S("abcde1")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "1234567890", 5, S("abcde12345")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "1234567890", 9, S("abcde123456789")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "1234567890", 10, S("abcde1234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345678901234567890", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345678901234567890", 1, S("abcde1")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345678901234567890", 10, S("abcde1234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345678901234567890", 19, S("abcde1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 5, "12345678901234567890", 20, S("abcde12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "12345", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "12345", 1, S("abcde1")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "12345", 2, S("abcde12")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "12345", 4, S("abcde1234")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "12345", 5, S("abcde12345")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "1234567890", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "1234567890", 1, S("abcde1")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "1234567890", 5, S("abcde12345")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "1234567890", 9, S("abcde123456789")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "1234567890", 10, S("abcde1234567890")));
-  BOOST_TEST(testR(S("abcdefghij"), 5, 6, "12345678901234567890", 0, S("abcde")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345", 1, S("1abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345", 2, S("12abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345", 4, S("1234abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345", 5, S("12345abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "1234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "1234567890", 1, S("1abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "1234567890", 5, S("12345abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "1234567890", 9, S("123456789abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "1234567890", 10, S("1234567890abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345678901234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345678901234567890", 1, S("1abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345678901234567890", 10, S("1234567890abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345678901234567890", 19, S("1234567890123456789abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 0, "12345678901234567890", 20, S("12345678901234567890abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "", 0, S("bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345", 0, S("bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345", 1, S("1bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345", 2, S("12bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345", 4, S("1234bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345", 5, S("12345bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "1234567890", 0, S("bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "1234567890", 1, S("1bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "1234567890", 5, S("12345bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "1234567890", 9, S("123456789bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "1234567890", 10, S("1234567890bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345678901234567890", 0, S("bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345678901234567890", 1, S("1bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345678901234567890", 10, S("1234567890bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345678901234567890", 19, S("1234567890123456789bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 1, "12345678901234567890", 20, S("12345678901234567890bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "", 0, S("klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345", 0, S("klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345", 1, S("1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345", 2, S("12klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345", 4, S("1234klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345", 5, S("12345klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "1234567890", 0, S("klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "1234567890", 1, S("1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "1234567890", 5, S("12345klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "1234567890", 9, S("123456789klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "1234567890", 10, S("1234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345678901234567890", 0, S("klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345678901234567890", 1, S("1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345678901234567890", 10, S("1234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345678901234567890", 19, S("1234567890123456789klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 10, "12345678901234567890", 20, S("12345678901234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "", 0, S("t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345", 0, S("t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345", 1, S("1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345", 2, S("12t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345", 4, S("1234t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345", 5, S("12345t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "1234567890", 0, S("t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "1234567890", 1, S("1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "1234567890", 5, S("12345t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "1234567890", 9, S("123456789t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "1234567890", 10, S("1234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345678901234567890", 0, S("t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345678901234567890", 1, S("1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345678901234567890", 10, S("1234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345678901234567890", 19, S("1234567890123456789t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 19, "12345678901234567890", 20, S("12345678901234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "", 0, S("")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345", 0, S("")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345", 1, S("1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345", 2, S("12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345", 4, S("1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345", 5, S("12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "1234567890", 0, S("")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "1234567890", 1, S("1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "1234567890", 5, S("12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "1234567890", 9, S("123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "1234567890", 10, S("1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345678901234567890", 0, S("")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345678901234567890", 1, S("1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345678901234567890", 10, S("1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345678901234567890", 19, S("1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 20, "12345678901234567890", 20, S("12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "", 0, S("")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345", 0, S("")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345", 1, S("1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345", 2, S("12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345", 4, S("1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345", 5, S("12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "1234567890", 0, S("")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "1234567890", 1, S("1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "1234567890", 5, S("12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "1234567890", 9, S("123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "1234567890", 10, S("1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345678901234567890", 0, S("")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345678901234567890", 1, S("1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345678901234567890", 10, S("1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345678901234567890", 19, S("1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 0, 21, "12345678901234567890", 20, S("12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345", 1, S("a1bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345", 2, S("a12bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345", 4, S("a1234bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345", 5, S("a12345bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "1234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "1234567890", 1, S("a1bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "1234567890", 5, S("a12345bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "1234567890", 9, S("a123456789bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "1234567890", 10, S("a1234567890bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345678901234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345678901234567890", 1, S("a1bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345678901234567890", 10, S("a1234567890bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345678901234567890", 19, S("a1234567890123456789bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 0, "12345678901234567890", 20, S("a12345678901234567890bcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "", 0, S("acdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345", 0, S("acdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345", 1, S("a1cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345", 2, S("a12cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345", 4, S("a1234cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345", 5, S("a12345cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "1234567890", 0, S("acdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "1234567890", 1, S("a1cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "1234567890", 5, S("a12345cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "1234567890", 9, S("a123456789cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "1234567890", 10, S("a1234567890cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345678901234567890", 0, S("acdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345678901234567890", 1, S("a1cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345678901234567890", 10, S("a1234567890cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345678901234567890", 19, S("a1234567890123456789cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 1, "12345678901234567890", 20, S("a12345678901234567890cdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "", 0, S("aklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345", 0, S("aklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345", 1, S("a1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345", 2, S("a12klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345", 4, S("a1234klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345", 5, S("a12345klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "1234567890", 0, S("aklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "1234567890", 1, S("a1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "1234567890", 5, S("a12345klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "1234567890", 9, S("a123456789klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "1234567890", 10, S("a1234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345678901234567890", 0, S("aklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345678901234567890", 1, S("a1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345678901234567890", 10, S("a1234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345678901234567890", 19, S("a1234567890123456789klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 9, "12345678901234567890", 20, S("a12345678901234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "", 0, S("at")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345", 0, S("at")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345", 1, S("a1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345", 2, S("a12t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345", 4, S("a1234t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345", 5, S("a12345t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "1234567890", 0, S("at")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "1234567890", 1, S("a1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "1234567890", 5, S("a12345t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "1234567890", 9, S("a123456789t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "1234567890", 10, S("a1234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345678901234567890", 0, S("at")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345678901234567890", 1, S("a1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345678901234567890", 10, S("a1234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345678901234567890", 19, S("a1234567890123456789t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 18, "12345678901234567890", 20, S("a12345678901234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345", 1, S("a1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345", 2, S("a12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345", 4, S("a1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345", 5, S("a12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "1234567890", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "1234567890", 1, S("a1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "1234567890", 5, S("a12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "1234567890", 9, S("a123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "1234567890", 10, S("a1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345678901234567890", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345678901234567890", 1, S("a1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345678901234567890", 10, S("a1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345678901234567890", 19, S("a1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 19, "12345678901234567890", 20, S("a12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345", 1, S("a1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345", 2, S("a12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345", 4, S("a1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345", 5, S("a12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "1234567890", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "1234567890", 1, S("a1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "1234567890", 5, S("a12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "1234567890", 9, S("a123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "1234567890", 10, S("a1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345678901234567890", 0, S("a")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345678901234567890", 1, S("a1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345678901234567890", 10, S("a1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345678901234567890", 19, S("a1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 1, 20, "12345678901234567890", 20, S("a12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345", 1, S("abcdefghij1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345", 2, S("abcdefghij12klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345", 4, S("abcdefghij1234klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345", 5, S("abcdefghij12345klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "1234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "1234567890", 1, S("abcdefghij1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "1234567890", 5, S("abcdefghij12345klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "1234567890", 9, S("abcdefghij123456789klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "1234567890", 10, S("abcdefghij1234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345678901234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345678901234567890", 1, S("abcdefghij1klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345678901234567890", 10, S("abcdefghij1234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345678901234567890", 19, S("abcdefghij1234567890123456789klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 0, "12345678901234567890", 20, S("abcdefghij12345678901234567890klmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "", 0, S("abcdefghijlmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345", 0, S("abcdefghijlmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345", 1, S("abcdefghij1lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345", 2, S("abcdefghij12lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345", 4, S("abcdefghij1234lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345", 5, S("abcdefghij12345lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "1234567890", 0, S("abcdefghijlmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "1234567890", 1, S("abcdefghij1lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "1234567890", 5, S("abcdefghij12345lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "1234567890", 9, S("abcdefghij123456789lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "1234567890", 10, S("abcdefghij1234567890lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345678901234567890", 0, S("abcdefghijlmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345678901234567890", 1, S("abcdefghij1lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345678901234567890", 10, S("abcdefghij1234567890lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345678901234567890", 19, S("abcdefghij1234567890123456789lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 1, "12345678901234567890", 20, S("abcdefghij12345678901234567890lmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "", 0, S("abcdefghijpqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345", 0, S("abcdefghijpqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345", 1, S("abcdefghij1pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345", 2, S("abcdefghij12pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345", 4, S("abcdefghij1234pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345", 5, S("abcdefghij12345pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "1234567890", 0, S("abcdefghijpqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "1234567890", 1, S("abcdefghij1pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "1234567890", 5, S("abcdefghij12345pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "1234567890", 9, S("abcdefghij123456789pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "1234567890", 10, S("abcdefghij1234567890pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345678901234567890", 0, S("abcdefghijpqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345678901234567890", 1, S("abcdefghij1pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345678901234567890", 10, S("abcdefghij1234567890pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345678901234567890", 19, S("abcdefghij1234567890123456789pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 5, "12345678901234567890", 20, S("abcdefghij12345678901234567890pqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "", 0, S("abcdefghijt")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345", 0, S("abcdefghijt")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345", 1, S("abcdefghij1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345", 2, S("abcdefghij12t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345", 4, S("abcdefghij1234t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345", 5, S("abcdefghij12345t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "1234567890", 0, S("abcdefghijt")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "1234567890", 1, S("abcdefghij1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "1234567890", 5, S("abcdefghij12345t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "1234567890", 9, S("abcdefghij123456789t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "1234567890", 10, S("abcdefghij1234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345678901234567890", 0, S("abcdefghijt")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345678901234567890", 1, S("abcdefghij1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345678901234567890", 10, S("abcdefghij1234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345678901234567890", 19, S("abcdefghij1234567890123456789t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 9, "12345678901234567890", 20, S("abcdefghij12345678901234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345", 1, S("abcdefghij1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345", 2, S("abcdefghij12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345", 4, S("abcdefghij1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345", 5, S("abcdefghij12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "1234567890", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "1234567890", 1, S("abcdefghij1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "1234567890", 5, S("abcdefghij12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "1234567890", 9, S("abcdefghij123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "1234567890", 10, S("abcdefghij1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345678901234567890", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345678901234567890", 1, S("abcdefghij1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345678901234567890", 10, S("abcdefghij1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345678901234567890", 19, S("abcdefghij1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 10, "12345678901234567890", 20, S("abcdefghij12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345", 1, S("abcdefghij1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345", 2, S("abcdefghij12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345", 4, S("abcdefghij1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345", 5, S("abcdefghij12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "1234567890", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "1234567890", 1, S("abcdefghij1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "1234567890", 5, S("abcdefghij12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "1234567890", 9, S("abcdefghij123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "1234567890", 10, S("abcdefghij1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345678901234567890", 0, S("abcdefghij")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345678901234567890", 1, S("abcdefghij1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345678901234567890", 10, S("abcdefghij1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345678901234567890", 19, S("abcdefghij1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 10, 11, "12345678901234567890", 20, S("abcdefghij12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345", 1, S("abcdefghijklmnopqrs1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345", 2, S("abcdefghijklmnopqrs12t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345", 4, S("abcdefghijklmnopqrs1234t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345", 5, S("abcdefghijklmnopqrs12345t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "1234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "1234567890", 1, S("abcdefghijklmnopqrs1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "1234567890", 5, S("abcdefghijklmnopqrs12345t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "1234567890", 9, S("abcdefghijklmnopqrs123456789t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "1234567890", 10, S("abcdefghijklmnopqrs1234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345678901234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345", 0, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345", 1, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345", 2, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345", 4, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345", 5, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "1234567890", 0, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "1234567890", 1, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "1234567890", 5, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "1234567890", 9, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "1234567890", 10, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345678901234567890", 0, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345678901234567890", 1, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345678901234567890", 10, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345678901234567890", 19, S("can't happen")));
-  BOOST_TEST(testR(S(""), 1, 0, "12345678901234567890", 20, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345", 2, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345", 4, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345", 5, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "1234567890", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "1234567890", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "1234567890", 5, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "1234567890", 9, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "1234567890", 10, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345678901234567890", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345678901234567890", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345678901234567890", 10, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345678901234567890", 19, S("can't happen")));
-  BOOST_TEST(testR(S("abcde"), 6, 0, "12345678901234567890", 20, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345", 2, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345", 4, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345", 5, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "1234567890", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "1234567890", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "1234567890", 5, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "1234567890", 9, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "1234567890", 10, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345678901234567890", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345678901234567890", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345678901234567890", 10, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345678901234567890", 19, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghij"), 11, 0, "12345678901234567890", 20, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345", 2, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345", 4, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345", 5, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "1234567890", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "1234567890", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "1234567890", 5, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "1234567890", 9, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "1234567890", 10, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345678901234567890", 0, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345678901234567890", 1, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345678901234567890", 10, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345678901234567890", 19, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 21, 0, "12345678901234567890", 20, S("can't happen")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345678901234567890", 1, S("abcdefghijklmnopqrs1t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345678901234567890", 10, S("abcdefghijklmnopqrs1234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345678901234567890", 19, S("abcdefghijklmnopqrs1234567890123456789t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 0, "12345678901234567890", 20, S("abcdefghijklmnopqrs12345678901234567890t")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "", 0, S("abcdefghijklmnopqrs")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345", 0, S("abcdefghijklmnopqrs")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345", 1, S("abcdefghijklmnopqrs1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345", 2, S("abcdefghijklmnopqrs12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345", 4, S("abcdefghijklmnopqrs1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345", 5, S("abcdefghijklmnopqrs12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "1234567890", 0, S("abcdefghijklmnopqrs")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "1234567890", 1, S("abcdefghijklmnopqrs1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "1234567890", 5, S("abcdefghijklmnopqrs12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "1234567890", 9, S("abcdefghijklmnopqrs123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "1234567890", 10, S("abcdefghijklmnopqrs1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345678901234567890", 0, S("abcdefghijklmnopqrs")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345678901234567890", 1, S("abcdefghijklmnopqrs1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345678901234567890", 10, S("abcdefghijklmnopqrs1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345678901234567890", 19, S("abcdefghijklmnopqrs1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 1, "12345678901234567890", 20, S("abcdefghijklmnopqrs12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "", 0, S("abcdefghijklmnopqrs")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345", 0, S("abcdefghijklmnopqrs")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345", 1, S("abcdefghijklmnopqrs1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345", 2, S("abcdefghijklmnopqrs12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345", 4, S("abcdefghijklmnopqrs1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345", 5, S("abcdefghijklmnopqrs12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "1234567890", 0, S("abcdefghijklmnopqrs")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "1234567890", 1, S("abcdefghijklmnopqrs1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "1234567890", 5, S("abcdefghijklmnopqrs12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "1234567890", 9, S("abcdefghijklmnopqrs123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "1234567890", 10, S("abcdefghijklmnopqrs1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345678901234567890", 0, S("abcdefghijklmnopqrs")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345678901234567890", 1, S("abcdefghijklmnopqrs1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345678901234567890", 10, S("abcdefghijklmnopqrs1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345678901234567890", 19, S("abcdefghijklmnopqrs1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 19, 2, "12345678901234567890", 20, S("abcdefghijklmnopqrs12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345", 1, S("abcdefghijklmnopqrst1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345", 2, S("abcdefghijklmnopqrst12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345", 4, S("abcdefghijklmnopqrst1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345", 5, S("abcdefghijklmnopqrst12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "1234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "1234567890", 1, S("abcdefghijklmnopqrst1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "1234567890", 5, S("abcdefghijklmnopqrst12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "1234567890", 9, S("abcdefghijklmnopqrst123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "1234567890", 10, S("abcdefghijklmnopqrst1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345678901234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345678901234567890", 1, S("abcdefghijklmnopqrst1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345678901234567890", 10, S("abcdefghijklmnopqrst1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345678901234567890", 19, S("abcdefghijklmnopqrst1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 0, "12345678901234567890", 20, S("abcdefghijklmnopqrst12345678901234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345", 1, S("abcdefghijklmnopqrst1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345", 2, S("abcdefghijklmnopqrst12")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345", 4, S("abcdefghijklmnopqrst1234")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345", 5, S("abcdefghijklmnopqrst12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "1234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "1234567890", 1, S("abcdefghijklmnopqrst1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "1234567890", 5, S("abcdefghijklmnopqrst12345")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "1234567890", 9, S("abcdefghijklmnopqrst123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "1234567890", 10, S("abcdefghijklmnopqrst1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345678901234567890", 0, S("abcdefghijklmnopqrst")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345678901234567890", 1, S("abcdefghijklmnopqrst1")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345678901234567890", 10, S("abcdefghijklmnopqrst1234567890")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345678901234567890", 19, S("abcdefghijklmnopqrst1234567890123456789")));
-  BOOST_TEST(testR(S("abcdefghijklmnopqrst"), 20, 1, "12345678901234567890", 20, S("abcdefghijklmnopqrst12345678901234567890")));
+  BOOST_TEST(testR("abcde", 5, 1, 0, '2', "abcde"));
+  BOOST_TEST(testR("abcde", 5, 1, 5, '2', "abcde22222"));
+  BOOST_TEST(testR("abcde", 5, 1, 10, '2', "abcde2222222222"));
+  BOOST_TEST(testR("abcde", 5, 1, 20, '2', "abcde22222222222222222222"));
+
+  BOOST_TEST(testR("abcde", 0, 4, "12345", 4, "1234e"));
+  BOOST_TEST(testR("abcde", 0, 4, "12345", 5, "12345e"));
+  BOOST_TEST(testR("abcde", 0, 4, "1234567890", 0, "e"));
+  BOOST_TEST(testR("abcde", 0, 4, "1234567890", 1, "1e"));
+  BOOST_TEST(testR("abcde", 0, 4, "1234567890", 5, "12345e"));
+  BOOST_TEST(testR("abcde", 0, 4, "1234567890", 9, "123456789e"));
+  BOOST_TEST(testR("abcde", 0, 4, "1234567890", 10, "1234567890e"));
+  BOOST_TEST(testR("abcde", 0, 4, "12345678901234567890", 0, "e"));
+  BOOST_TEST(testR("abcde", 0, 4, "12345678901234567890", 1, "1e"));
+  BOOST_TEST(testR("abcde", 0, 4, "12345678901234567890", 10, "1234567890e"));
+  BOOST_TEST(testR("abcde", 0, 4, "12345678901234567890", 19, "1234567890123456789e"));
+  BOOST_TEST(testR("abcde", 0, 4, "12345678901234567890", 20, "12345678901234567890e"));
+  BOOST_TEST(testR("abcde", 0, 5, "", 0, ""));
+  BOOST_TEST(testR("abcde", 0, 5, "12345", 0, ""));
+  BOOST_TEST(testR("abcde", 0, 5, "12345", 1, "1"));
+  BOOST_TEST(testR("abcde", 0, 5, "12345", 2, "12"));
+  BOOST_TEST(testR("abcde", 0, 5, "12345", 4, "1234"));
+  BOOST_TEST(testR("abcde", 0, 5, "12345", 5, "12345"));
+  BOOST_TEST(testR("abcde", 0, 5, "1234567890", 0, ""));
+  BOOST_TEST(testR("abcde", 0, 5, "1234567890", 1, "1"));
+  BOOST_TEST(testR("abcde", 0, 5, "1234567890", 5, "12345"));
+  BOOST_TEST(testR("abcde", 0, 5, "1234567890", 9, "123456789"));
+  BOOST_TEST(testR("abcde", 0, 5, "1234567890", 10, "1234567890"));
+  BOOST_TEST(testR("abcde", 0, 5, "12345678901234567890", 0, ""));
+  BOOST_TEST(testR("abcde", 0, 5, "12345678901234567890", 1, "1"));
+  BOOST_TEST(testR("abcde", 0, 5, "12345678901234567890", 10, "1234567890"));
+  BOOST_TEST(testR("abcde", 0, 5, "12345678901234567890", 19, "1234567890123456789"));
+  BOOST_TEST(testR("abcde", 0, 5, "12345678901234567890", 20, "12345678901234567890"));
+  BOOST_TEST(testR("abcde", 0, 6, "", 0, ""));
+  BOOST_TEST(testR("abcde", 0, 6, "12345", 0, ""));
+  BOOST_TEST(testR("abcde", 0, 6, "12345", 1, "1"));
+  BOOST_TEST(testR("abcde", 0, 6, "12345", 2, "12"));
+  BOOST_TEST(testR("abcde", 0, 6, "12345", 4, "1234"));
+  BOOST_TEST(testR("abcde", 0, 6, "12345", 5, "12345"));
+  BOOST_TEST(testR("abcde", 0, 6, "1234567890", 0, ""));
+  BOOST_TEST(testR("abcde", 0, 6, "1234567890", 1, "1"));
+  BOOST_TEST(testR("abcde", 0, 6, "1234567890", 5, "12345"));
+  BOOST_TEST(testR("abcde", 0, 6, "1234567890", 9, "123456789"));
+  BOOST_TEST(testR("abcde", 0, 6, "1234567890", 10, "1234567890"));
+  BOOST_TEST(testR("abcde", 0, 6, "12345678901234567890", 0, ""));
+  BOOST_TEST(testR("abcde", 0, 6, "12345678901234567890", 1, "1"));
+  BOOST_TEST(testR("abcde", 0, 6, "12345678901234567890", 10, "1234567890"));
+  BOOST_TEST(testR("abcde", 0, 6, "12345678901234567890", 19, "1234567890123456789"));
+  BOOST_TEST(testR("abcde", 0, 6, "12345678901234567890", 20, "12345678901234567890"));
+  BOOST_TEST(testR("abcde", 1, 0, "", 0, "abcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345", 0, "abcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345", 1, "a1bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345", 2, "a12bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345", 4, "a1234bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345", 5, "a12345bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "1234567890", 0, "abcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "1234567890", 1, "a1bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "1234567890", 5, "a12345bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "1234567890", 9, "a123456789bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "1234567890", 10, "a1234567890bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345678901234567890", 0, "abcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345678901234567890", 1, "a1bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345678901234567890", 10, "a1234567890bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345678901234567890", 19, "a1234567890123456789bcde"));
+  BOOST_TEST(testR("abcde", 1, 0, "12345678901234567890", 20, "a12345678901234567890bcde"));
+  BOOST_TEST(testR("abcde", 1, 1, "", 0, "acde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345", 0, "acde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345", 1, "a1cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345", 2, "a12cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345", 4, "a1234cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345", 5, "a12345cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "1234567890", 0, "acde"));
+  BOOST_TEST(testR("abcde", 1, 1, "1234567890", 1, "a1cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "1234567890", 5, "a12345cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "1234567890", 9, "a123456789cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "1234567890", 10, "a1234567890cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345678901234567890", 0, "acde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345678901234567890", 1, "a1cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345678901234567890", 10, "a1234567890cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345678901234567890", 19, "a1234567890123456789cde"));
+  BOOST_TEST(testR("abcde", 1, 1, "12345678901234567890", 20, "a12345678901234567890cde"));
+  BOOST_TEST(testR("abcde", 1, 2, "", 0, "ade"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345", 0, "ade"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345", 1, "a1de"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345", 2, "a12de"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345", 4, "a1234de"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345", 5, "a12345de"));
+  BOOST_TEST(testR("abcde", 1, 2, "1234567890", 0, "ade"));
+  BOOST_TEST(testR("abcde", 1, 2, "1234567890", 1, "a1de"));
+  BOOST_TEST(testR("abcde", 1, 2, "1234567890", 5, "a12345de"));
+  BOOST_TEST(testR("abcde", 1, 2, "1234567890", 9, "a123456789de"));
+  BOOST_TEST(testR("abcde", 1, 2, "1234567890", 10, "a1234567890de"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345678901234567890", 0, "ade"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345678901234567890", 1, "a1de"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345678901234567890", 10, "a1234567890de"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345678901234567890", 19, "a1234567890123456789de"));
+  BOOST_TEST(testR("abcde", 1, 2, "12345678901234567890", 20, "a12345678901234567890de"));
+  BOOST_TEST(testR("abcde", 1, 3, "", 0, "ae"));
+  BOOST_TEST(testR("abcde", 1, 3, "12345", 0, "ae"));
+  BOOST_TEST(testR("abcde", 1, 3, "12345", 1, "a1e"));
+  BOOST_TEST(testR("abcde", 1, 3, "12345", 2, "a12e"));
+  BOOST_TEST(testR("abcde", 1, 3, "12345", 4, "a1234e"));
+  BOOST_TEST(testR("abcde", 1, 3, "12345", 5, "a12345e"));
+  BOOST_TEST(testR("abcde", 1, 3, "1234567890", 0, "ae"));
+  BOOST_TEST(testR("abcde", 1, 3, "1234567890", 1, "a1e"));
+  BOOST_TEST(testR("abcdefghij", 1, 10, "1234567890", 5, "a12345"));
+  BOOST_TEST(testR("abcdefghij", 1, 10, "1234567890", 9, "a123456789"));
+  BOOST_TEST(testR("abcdefghij", 1, 10, "1234567890", 10, "a1234567890"));
+  BOOST_TEST(testR("abcdefghij", 1, 10, "12345678901234567890", 0, "a"));
+  BOOST_TEST(testR("abcdefghij", 1, 10, "12345678901234567890", 1, "a1"));
+  BOOST_TEST(testR("abcdefghij", 1, 10, "12345678901234567890", 10, "a1234567890"));
+  BOOST_TEST(testR("abcdefghij", 1, 10, "12345678901234567890", 19, "a1234567890123456789"));
+  BOOST_TEST(testR("abcdefghij", 1, 10, "12345678901234567890", 20, "a12345678901234567890"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345", 1, "abcde1fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345", 2, "abcde12fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345", 4, "abcde1234fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345", 5, "abcde12345fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "1234567890", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "1234567890", 1, "abcde1fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "1234567890", 5, "abcde12345fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "1234567890", 9, "abcde123456789fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "1234567890", 10, "abcde1234567890fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345678901234567890", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345678901234567890", 1, "abcde1fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345678901234567890", 10, "abcde1234567890fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345678901234567890", 19, "abcde1234567890123456789fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 0, "12345678901234567890", 20, "abcde12345678901234567890fghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "", 0, "abcdeghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345", 0, "abcdeghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345", 1, "abcde1ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345", 2, "abcde12ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345", 4, "abcde1234ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345", 5, "abcde12345ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "1234567890", 0, "abcdeghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "1234567890", 1, "abcde1ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "1234567890", 5, "abcde12345ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "1234567890", 9, "abcde123456789ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "1234567890", 10, "abcde1234567890ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345678901234567890", 0, "abcdeghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345678901234567890", 1, "abcde1ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345678901234567890", 10, "abcde1234567890ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345678901234567890", 19, "abcde1234567890123456789ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 1, "12345678901234567890", 20, "abcde12345678901234567890ghij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "", 0, "abcdehij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345", 0, "abcdehij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345", 1, "abcde1hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345", 2, "abcde12hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345", 4, "abcde1234hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345", 5, "abcde12345hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "1234567890", 0, "abcdehij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "1234567890", 1, "abcde1hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "1234567890", 5, "abcde12345hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "1234567890", 9, "abcde123456789hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "1234567890", 10, "abcde1234567890hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345678901234567890", 0, "abcdehij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345678901234567890", 1, "abcde1hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345678901234567890", 10, "abcde1234567890hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345678901234567890", 19, "abcde1234567890123456789hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 2, "12345678901234567890", 20, "abcde12345678901234567890hij"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "", 0, "abcdej"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345", 0, "abcdej"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345", 1, "abcde1j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345", 2, "abcde12j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345", 4, "abcde1234j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345", 5, "abcde12345j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "1234567890", 0, "abcdej"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "1234567890", 1, "abcde1j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "1234567890", 5, "abcde12345j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "1234567890", 9, "abcde123456789j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "1234567890", 10, "abcde1234567890j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345678901234567890", 0, "abcdej"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345678901234567890", 1, "abcde1j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345678901234567890", 10, "abcde1234567890j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345678901234567890", 19, "abcde1234567890123456789j"));
+  BOOST_TEST(testR("abcdefghij", 5, 4, "12345678901234567890", 20, "abcde12345678901234567890j"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "", 0, "abcde"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345", 0, "abcde"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345", 1, "abcde1"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345", 2, "abcde12"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345", 4, "abcde1234"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345", 5, "abcde12345"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "1234567890", 0, "abcde"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "1234567890", 1, "abcde1"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "1234567890", 5, "abcde12345"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "1234567890", 9, "abcde123456789"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "1234567890", 10, "abcde1234567890"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345678901234567890", 0, "abcde"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345678901234567890", 1, "abcde1"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345678901234567890", 10, "abcde1234567890"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345678901234567890", 19, "abcde1234567890123456789"));
+  BOOST_TEST(testR("abcdefghij", 5, 5, "12345678901234567890", 20, "abcde12345678901234567890"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "", 0, "abcde"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "12345", 0, "abcde"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "12345", 1, "abcde1"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "12345", 2, "abcde12"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "12345", 4, "abcde1234"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "12345", 5, "abcde12345"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "1234567890", 0, "abcde"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "1234567890", 1, "abcde1"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "1234567890", 5, "abcde12345"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "1234567890", 9, "abcde123456789"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "1234567890", 10, "abcde1234567890"));
+  BOOST_TEST(testR("abcdefghij", 5, 6, "12345678901234567890", 0, "abcde"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345", 1, "1abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345", 2, "12abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345", 4, "1234abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345", 5, "12345abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "1234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "1234567890", 1, "1abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "1234567890", 5, "12345abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "1234567890", 9, "123456789abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "1234567890", 10, "1234567890abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345678901234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345678901234567890", 1, "1abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345678901234567890", 10, "1234567890abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345678901234567890", 19, "1234567890123456789abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 0, "12345678901234567890", 20, "12345678901234567890abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "", 0, "bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345", 0, "bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345", 1, "1bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345", 2, "12bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345", 4, "1234bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345", 5, "12345bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "1234567890", 0, "bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "1234567890", 1, "1bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "1234567890", 5, "12345bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "1234567890", 9, "123456789bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "1234567890", 10, "1234567890bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345678901234567890", 0, "bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345678901234567890", 1, "1bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345678901234567890", 10, "1234567890bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345678901234567890", 19, "1234567890123456789bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 1, "12345678901234567890", 20, "12345678901234567890bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "", 0, "klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345", 0, "klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345", 1, "1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345", 2, "12klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345", 4, "1234klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345", 5, "12345klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "1234567890", 0, "klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "1234567890", 1, "1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "1234567890", 5, "12345klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "1234567890", 9, "123456789klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "1234567890", 10, "1234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345678901234567890", 0, "klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345678901234567890", 1, "1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345678901234567890", 10, "1234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345678901234567890", 19, "1234567890123456789klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 10, "12345678901234567890", 20, "12345678901234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "", 0, "t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345", 0, "t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345", 1, "1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345", 2, "12t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345", 4, "1234t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345", 5, "12345t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "1234567890", 0, "t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "1234567890", 1, "1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "1234567890", 5, "12345t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "1234567890", 9, "123456789t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "1234567890", 10, "1234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345678901234567890", 0, "t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345678901234567890", 1, "1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345678901234567890", 10, "1234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345678901234567890", 19, "1234567890123456789t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 19, "12345678901234567890", 20, "12345678901234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "", 0, ""));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345", 0, ""));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345", 1, "1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345", 2, "12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345", 4, "1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345", 5, "12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "1234567890", 0, ""));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "1234567890", 1, "1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "1234567890", 5, "12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "1234567890", 9, "123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "1234567890", 10, "1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345678901234567890", 0, ""));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345678901234567890", 1, "1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345678901234567890", 10, "1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345678901234567890", 19, "1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 20, "12345678901234567890", 20, "12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "", 0, ""));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345", 0, ""));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345", 1, "1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345", 2, "12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345", 4, "1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345", 5, "12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "1234567890", 0, ""));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "1234567890", 1, "1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "1234567890", 5, "12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "1234567890", 9, "123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "1234567890", 10, "1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345678901234567890", 0, ""));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345678901234567890", 1, "1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345678901234567890", 10, "1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345678901234567890", 19, "1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 0, 21, "12345678901234567890", 20, "12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345", 1, "a1bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345", 2, "a12bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345", 4, "a1234bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345", 5, "a12345bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "1234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "1234567890", 1, "a1bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "1234567890", 5, "a12345bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "1234567890", 9, "a123456789bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "1234567890", 10, "a1234567890bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345678901234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345678901234567890", 1, "a1bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345678901234567890", 10, "a1234567890bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345678901234567890", 19, "a1234567890123456789bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 0, "12345678901234567890", 20, "a12345678901234567890bcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "", 0, "acdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345", 0, "acdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345", 1, "a1cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345", 2, "a12cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345", 4, "a1234cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345", 5, "a12345cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "1234567890", 0, "acdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "1234567890", 1, "a1cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "1234567890", 5, "a12345cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "1234567890", 9, "a123456789cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "1234567890", 10, "a1234567890cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345678901234567890", 0, "acdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345678901234567890", 1, "a1cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345678901234567890", 10, "a1234567890cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345678901234567890", 19, "a1234567890123456789cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 1, "12345678901234567890", 20, "a12345678901234567890cdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "", 0, "aklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345", 0, "aklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345", 1, "a1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345", 2, "a12klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345", 4, "a1234klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345", 5, "a12345klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "1234567890", 0, "aklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "1234567890", 1, "a1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "1234567890", 5, "a12345klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "1234567890", 9, "a123456789klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "1234567890", 10, "a1234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345678901234567890", 0, "aklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345678901234567890", 1, "a1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345678901234567890", 10, "a1234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345678901234567890", 19, "a1234567890123456789klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 9, "12345678901234567890", 20, "a12345678901234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "", 0, "at"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345", 0, "at"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345", 1, "a1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345", 2, "a12t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345", 4, "a1234t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345", 5, "a12345t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "1234567890", 0, "at"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "1234567890", 1, "a1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "1234567890", 5, "a12345t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "1234567890", 9, "a123456789t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "1234567890", 10, "a1234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345678901234567890", 0, "at"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345678901234567890", 1, "a1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345678901234567890", 10, "a1234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345678901234567890", 19, "a1234567890123456789t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 18, "12345678901234567890", 20, "a12345678901234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "", 0, "a"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345", 0, "a"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345", 1, "a1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345", 2, "a12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345", 4, "a1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345", 5, "a12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "1234567890", 0, "a"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "1234567890", 1, "a1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "1234567890", 5, "a12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "1234567890", 9, "a123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "1234567890", 10, "a1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345678901234567890", 0, "a"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345678901234567890", 1, "a1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345678901234567890", 10, "a1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345678901234567890", 19, "a1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 19, "12345678901234567890", 20, "a12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "", 0, "a"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345", 0, "a"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345", 1, "a1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345", 2, "a12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345", 4, "a1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345", 5, "a12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "1234567890", 0, "a"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "1234567890", 1, "a1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "1234567890", 5, "a12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "1234567890", 9, "a123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "1234567890", 10, "a1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345678901234567890", 0, "a"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345678901234567890", 1, "a1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345678901234567890", 10, "a1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345678901234567890", 19, "a1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 1, 20, "12345678901234567890", 20, "a12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345", 1, "abcdefghij1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345", 2, "abcdefghij12klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345", 4, "abcdefghij1234klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345", 5, "abcdefghij12345klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "1234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "1234567890", 1, "abcdefghij1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "1234567890", 5, "abcdefghij12345klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "1234567890", 9, "abcdefghij123456789klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "1234567890", 10, "abcdefghij1234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345678901234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345678901234567890", 1, "abcdefghij1klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345678901234567890", 10, "abcdefghij1234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345678901234567890", 19, "abcdefghij1234567890123456789klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 0, "12345678901234567890", 20, "abcdefghij12345678901234567890klmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "", 0, "abcdefghijlmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345", 0, "abcdefghijlmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345", 1, "abcdefghij1lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345", 2, "abcdefghij12lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345", 4, "abcdefghij1234lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345", 5, "abcdefghij12345lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "1234567890", 0, "abcdefghijlmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "1234567890", 1, "abcdefghij1lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "1234567890", 5, "abcdefghij12345lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "1234567890", 9, "abcdefghij123456789lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "1234567890", 10, "abcdefghij1234567890lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345678901234567890", 0, "abcdefghijlmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345678901234567890", 1, "abcdefghij1lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345678901234567890", 10, "abcdefghij1234567890lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345678901234567890", 19, "abcdefghij1234567890123456789lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 1, "12345678901234567890", 20, "abcdefghij12345678901234567890lmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "", 0, "abcdefghijpqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345", 0, "abcdefghijpqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345", 1, "abcdefghij1pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345", 2, "abcdefghij12pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345", 4, "abcdefghij1234pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345", 5, "abcdefghij12345pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "1234567890", 0, "abcdefghijpqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "1234567890", 1, "abcdefghij1pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "1234567890", 5, "abcdefghij12345pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "1234567890", 9, "abcdefghij123456789pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "1234567890", 10, "abcdefghij1234567890pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345678901234567890", 0, "abcdefghijpqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345678901234567890", 1, "abcdefghij1pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345678901234567890", 10, "abcdefghij1234567890pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345678901234567890", 19, "abcdefghij1234567890123456789pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 5, "12345678901234567890", 20, "abcdefghij12345678901234567890pqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "", 0, "abcdefghijt"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345", 0, "abcdefghijt"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345", 1, "abcdefghij1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345", 2, "abcdefghij12t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345", 4, "abcdefghij1234t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345", 5, "abcdefghij12345t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "1234567890", 0, "abcdefghijt"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "1234567890", 1, "abcdefghij1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "1234567890", 5, "abcdefghij12345t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "1234567890", 9, "abcdefghij123456789t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "1234567890", 10, "abcdefghij1234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345678901234567890", 0, "abcdefghijt"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345678901234567890", 1, "abcdefghij1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345678901234567890", 10, "abcdefghij1234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345678901234567890", 19, "abcdefghij1234567890123456789t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 9, "12345678901234567890", 20, "abcdefghij12345678901234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345", 1, "abcdefghij1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345", 2, "abcdefghij12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345", 4, "abcdefghij1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345", 5, "abcdefghij12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "1234567890", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "1234567890", 1, "abcdefghij1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "1234567890", 5, "abcdefghij12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "1234567890", 9, "abcdefghij123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "1234567890", 10, "abcdefghij1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345678901234567890", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345678901234567890", 1, "abcdefghij1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345678901234567890", 10, "abcdefghij1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345678901234567890", 19, "abcdefghij1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 10, "12345678901234567890", 20, "abcdefghij12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345", 1, "abcdefghij1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345", 2, "abcdefghij12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345", 4, "abcdefghij1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345", 5, "abcdefghij12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "1234567890", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "1234567890", 1, "abcdefghij1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "1234567890", 5, "abcdefghij12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "1234567890", 9, "abcdefghij123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "1234567890", 10, "abcdefghij1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345678901234567890", 0, "abcdefghij"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345678901234567890", 1, "abcdefghij1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345678901234567890", 10, "abcdefghij1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345678901234567890", 19, "abcdefghij1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 10, 11, "12345678901234567890", 20, "abcdefghij12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345", 1, "abcdefghijklmnopqrs1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345", 2, "abcdefghijklmnopqrs12t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345", 4, "abcdefghijklmnopqrs1234t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345", 5, "abcdefghijklmnopqrs12345t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "1234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "1234567890", 1, "abcdefghijklmnopqrs1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "1234567890", 5, "abcdefghijklmnopqrs12345t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "1234567890", 9, "abcdefghijklmnopqrs123456789t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "1234567890", 10, "abcdefghijklmnopqrs1234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345678901234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("", 1, 0, "12345", 0, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345", 1, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345", 2, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345", 4, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345", 5, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "1234567890", 0, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "1234567890", 1, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "1234567890", 5, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "1234567890", 9, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "1234567890", 10, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345678901234567890", 0, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345678901234567890", 1, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345678901234567890", 10, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345678901234567890", 19, "can't happen"));
+  BOOST_TEST(testR("", 1, 0, "12345678901234567890", 20, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "", 0, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345", 0, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345", 1, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345", 2, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345", 4, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345", 5, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "1234567890", 0, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "1234567890", 1, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "1234567890", 5, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "1234567890", 9, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "1234567890", 10, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345678901234567890", 0, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345678901234567890", 1, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345678901234567890", 10, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345678901234567890", 19, "can't happen"));
+  BOOST_TEST(testR("abcde", 6, 0, "12345678901234567890", 20, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "", 0, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345", 0, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345", 1, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345", 2, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345", 4, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345", 5, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "1234567890", 0, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "1234567890", 1, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "1234567890", 5, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "1234567890", 9, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "1234567890", 10, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345678901234567890", 0, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345678901234567890", 1, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345678901234567890", 10, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345678901234567890", 19, "can't happen"));
+  BOOST_TEST(testR("abcdefghij", 11, 0, "12345678901234567890", 20, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "", 0, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345", 0, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345", 1, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345", 2, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345", 4, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345", 5, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "1234567890", 0, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "1234567890", 1, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "1234567890", 5, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "1234567890", 9, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "1234567890", 10, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345678901234567890", 0, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345678901234567890", 1, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345678901234567890", 10, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345678901234567890", 19, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 21, 0, "12345678901234567890", 20, "can't happen"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345678901234567890", 1, "abcdefghijklmnopqrs1t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345678901234567890", 10, "abcdefghijklmnopqrs1234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345678901234567890", 19, "abcdefghijklmnopqrs1234567890123456789t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 0, "12345678901234567890", 20, "abcdefghijklmnopqrs12345678901234567890t"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "", 0, "abcdefghijklmnopqrs"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345", 0, "abcdefghijklmnopqrs"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345", 1, "abcdefghijklmnopqrs1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345", 2, "abcdefghijklmnopqrs12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345", 4, "abcdefghijklmnopqrs1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345", 5, "abcdefghijklmnopqrs12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "1234567890", 0, "abcdefghijklmnopqrs"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "1234567890", 1, "abcdefghijklmnopqrs1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "1234567890", 5, "abcdefghijklmnopqrs12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "1234567890", 9, "abcdefghijklmnopqrs123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "1234567890", 10, "abcdefghijklmnopqrs1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345678901234567890", 0, "abcdefghijklmnopqrs"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345678901234567890", 1, "abcdefghijklmnopqrs1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345678901234567890", 10, "abcdefghijklmnopqrs1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345678901234567890", 19, "abcdefghijklmnopqrs1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 1, "12345678901234567890", 20, "abcdefghijklmnopqrs12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "", 0, "abcdefghijklmnopqrs"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345", 0, "abcdefghijklmnopqrs"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345", 1, "abcdefghijklmnopqrs1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345", 2, "abcdefghijklmnopqrs12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345", 4, "abcdefghijklmnopqrs1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345", 5, "abcdefghijklmnopqrs12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "1234567890", 0, "abcdefghijklmnopqrs"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "1234567890", 1, "abcdefghijklmnopqrs1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "1234567890", 5, "abcdefghijklmnopqrs12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "1234567890", 9, "abcdefghijklmnopqrs123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "1234567890", 10, "abcdefghijklmnopqrs1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345678901234567890", 0, "abcdefghijklmnopqrs"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345678901234567890", 1, "abcdefghijklmnopqrs1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345678901234567890", 10, "abcdefghijklmnopqrs1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345678901234567890", 19, "abcdefghijklmnopqrs1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 19, 2, "12345678901234567890", 20, "abcdefghijklmnopqrs12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345", 1, "abcdefghijklmnopqrst1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345", 2, "abcdefghijklmnopqrst12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345", 4, "abcdefghijklmnopqrst1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345", 5, "abcdefghijklmnopqrst12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "1234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "1234567890", 1, "abcdefghijklmnopqrst1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "1234567890", 5, "abcdefghijklmnopqrst12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "1234567890", 9, "abcdefghijklmnopqrst123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "1234567890", 10, "abcdefghijklmnopqrst1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345678901234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345678901234567890", 1, "abcdefghijklmnopqrst1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345678901234567890", 10, "abcdefghijklmnopqrst1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345678901234567890", 19, "abcdefghijklmnopqrst1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 0, "12345678901234567890", 20, "abcdefghijklmnopqrst12345678901234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345", 1, "abcdefghijklmnopqrst1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345", 2, "abcdefghijklmnopqrst12"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345", 4, "abcdefghijklmnopqrst1234"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345", 5, "abcdefghijklmnopqrst12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "1234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "1234567890", 1, "abcdefghijklmnopqrst1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "1234567890", 5, "abcdefghijklmnopqrst12345"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "1234567890", 9, "abcdefghijklmnopqrst123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "1234567890", 10, "abcdefghijklmnopqrst1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345678901234567890", 0, "abcdefghijklmnopqrst"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345678901234567890", 1, "abcdefghijklmnopqrst1"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345678901234567890", 10, "abcdefghijklmnopqrst1234567890"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345678901234567890", 19, "abcdefghijklmnopqrst1234567890123456789"));
+  BOOST_TEST(testR("abcdefghijklmnopqrst", 20, 1, "12345678901234567890", 20, "abcdefghijklmnopqrst12345678901234567890"));
 
   using T = static_string<10>;
   BOOST_TEST_THROWS(T("12345").replace(0, 1, 500, 'a'), std::length_error);
@@ -6771,6 +7111,10 @@ testReplace()
   BOOST_TEST_THROWS(S("aaaaa").replace(10, 1, T("bbbbb")), std::out_of_range);
   BOOST_TEST_THROWS(T("aaaaa").replace(0, 1, S("bbbbbbbbbbbbb")), std::length_error);
 }
+
+#if defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC diagnostic pop
+#endif
 
 // done
 void
@@ -7028,21 +7372,21 @@ testStartsEnds()
   BOOST_TEST(S("1234567890").starts_with("1234567890"));
   BOOST_TEST(!S("1234567890").starts_with("234"));
   BOOST_TEST(!S("1234567890").starts_with("12345678900"));
-  BOOST_TEST(S("1234567890").starts_with(string_view("1234567890")));
+  BOOST_TEST(S("1234567890").starts_with(string_like("1234567890")));
 
   BOOST_TEST(S("1234567890").ends_with('0'));
   BOOST_TEST(S("1234567890").ends_with("890"));
   BOOST_TEST(S("1234567890").ends_with("1234567890"));
   BOOST_TEST(!S("1234567890").ends_with("234"));
   BOOST_TEST(!S("1234567890").ends_with("12345678900"));
-  BOOST_TEST(S("1234567890").ends_with(string_view("1234567890")));
+  BOOST_TEST(S("1234567890").ends_with(string_like("1234567890")));
 
   BOOST_TEST(!S().starts_with('0'));
   BOOST_TEST(!S().starts_with("0"));
-  BOOST_TEST(!S().starts_with(string_view("0")));
+  BOOST_TEST(!S().starts_with(string_like("0")));
   BOOST_TEST(!S().ends_with('0'));
   BOOST_TEST(!S().ends_with("0"));
-  BOOST_TEST(!S().ends_with(string_view("0")));
+  BOOST_TEST(!S().ends_with(string_like("0")));
 }
 
 void
@@ -7077,13 +7421,82 @@ testResize()
 }
 
 void
+testResizeAndOverwrite()
+{
+  {
+    // Basic overwrite
+    static_string<16> s;
+    s.resize_and_overwrite(
+      5,
+      [](char* buf, std::size_t) -> std::size_t
+      {
+        // Don't use std::strcpy() to avoid a MSVC C4996 warning.
+        buf[0] = 'H';
+        buf[1] = 'e';
+        buf[2] = 'l';
+        buf[3] = 'l';
+        buf[4] = 'o';
+        return 5;
+      }
+    );
+    BOOST_TEST(s.size() == 5);
+    BOOST_TEST(s == "Hello");
+  }
+  {
+    // Zero overwrite
+    static_string<16> s;
+    s.resize_and_overwrite(
+      8,
+      [](char*, std::size_t) -> std::size_t
+      {
+        return 0;
+      }
+    );
+    BOOST_TEST(s.empty());
+  }
+  {
+    // Maximum size overwrite
+    constexpr std::size_t N = 16;
+    static_string<N> s;
+    s.resize_and_overwrite(
+      N,
+      [](char* buf, std::size_t n) -> std::size_t
+      {
+        for (std::size_t i = 0; i < n; ++i) {
+          buf[i] = 'x';
+        }
+        return n;
+      }
+    );
+    BOOST_TEST(s.size() == N);
+    BOOST_TEST(s == std::string(N, 'x'));
+  }
+  {
+    // Oversize overwrite
+    static_string<16> s;
+    BOOST_TEST_THROWS(
+      s.resize_and_overwrite(
+        17,
+        [](char*, std::size_t n) -> std::size_t
+        {
+          return n;
+        }
+      ),
+      std::length_error
+    );
+  }
+}
+
+void
 testStream()
 {
   std::stringstream a;
   static_string<10> b = "abcdefghij";
   a << b;
   static_string<10> c(std::istream_iterator<char>{a}, std::istream_iterator<char>{});
+#ifdef BOOST_STATIC_STRING_HAS_ANY_STRING_VIEW
   BOOST_TEST(a.str() == b.subview());
+#endif
   BOOST_TEST(b == c);
 }
 
@@ -7152,25 +7565,37 @@ testOperatorPlus()
   }
 }
 
+// issue 47
+struct issue_47 : static_string<32>
+{
+    bool compare(const issue_47& other) const
+    {
+        return *this < other;
+    }
+};
+
 int
 runTests()
 {
   constexpr auto cxper = testConstantEvaluation();
   static_cast<void>(cxper);
 
+  testTypeTraits();
+
   testConstruct();
-    
+
   testAssignment();
-    
+
   testElements();
 
   testIterators();
-    
+
   testCapacity();
 
   testClear();
   testInsert();
   testErase();
+  testEraseIf();
   testPushBack();
   testPopBack();
   testAppend();
@@ -7181,6 +7606,7 @@ runTests()
   testGeneral();
   testToStaticString();
   testResize();
+  testResizeAndOverwrite();
 
   testFind();
 
@@ -7203,3 +7629,4 @@ main()
 {
   return boost::static_strings::runTests();
 }
+

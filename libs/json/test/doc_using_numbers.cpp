@@ -27,7 +27,8 @@
 # pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-BOOST_JSON_NS_BEGIN
+namespace boost {
+namespace json {
 
 //----------------------------------------------------------
 
@@ -35,12 +36,12 @@ static void set1() {
 
 //----------------------------------------------------------
 {
-//[doc_using_numbers_1
+// tag::doc_using_numbers_1[]
 // construction from int
 value jv1 = 1;
 
 assert( jv1.is_int64() );
-        
+
 // construction from unsigned int
 value jv2 = 2u;
 
@@ -50,16 +51,16 @@ assert( jv2.is_uint64() );
 value jv3 = 3.0;
 
 assert( jv3.is_double() );
-//]
+// end::doc_using_numbers_1[]
 }
 //----------------------------------------------------------
 {
-//[doc_using_numbers_2
+// tag::doc_using_numbers_2[]
 
 value jv = 1;
 
 assert( jv.is_int64() );
-        
+
 // jv.kind() != kind::uint64; throws
 std::uint64_t r1 = jv.as_uint64();
 
@@ -70,67 +71,60 @@ std::uint64_t r2 = jv.get_uint64();
 if(double* d = jv.if_double())
     assert( false );
 
-//]
+// end::doc_using_numbers_2[]
 };
 //----------------------------------------------------------
 {
-//[doc_using_numbers_3
-struct convert_int64
-{
-    value jv;
-
-    operator int() const
-    {
-        return value_to< int >( this->jv );
-    }
-};
-//]
+// tag::doc_using_numbers_3[]
+value jv = 1;
+assert( jv.to_number< int >() == 1 );
+// end::doc_using_numbers_3[]
 }
 //----------------------------------------------------------
 try
 {
-//[doc_using_numbers_4
+// tag::doc_using_numbers_4[]
     value jv1 = 404;
 
     assert( jv1.is_int64() );
 
     // ok, identity conversion
-    std::int64_t r1 = value_to< std::int64_t >( jv1 );
+    std::int64_t r1 = jv1.to_number< std::int64_t >( );
 
     // loss of data, throws system_error
-    char r2 = value_to< char >( jv1 );
+    char r2 = jv1.to_number< char >();
 
     // ok, no loss of data
-    double r3 = value_to< double >( jv1 );
+    double r3 = jv1.to_number< double >();
 
     value jv2 = 1.23;
 
     assert( jv1.is_double() );
 
     // ok, same as static_cast<float>( jv2.get_double() )
-    float r4 = value_to< float >( jv2 );
+    float r4 = jv2.to_number< float >();
 
     // not exact, throws system_error
-    int r5 = value_to< int >( jv2 );
+    int r5 = jv2.to_number< int >();
 
     value jv3 = {1, 2, 3};
 
     assert( ! jv3.is_number() );
 
     // not a number, throws system_error
-    int r6 = value_to< int >( jv3 );
-//]
+    int r6 = jv3.to_number< int >();
+// end::doc_using_numbers_4[]
 }
 catch(...)
 {
 }
 //----------------------------------------------------------
 {
-//[doc_using_numbers_5
+// tag::doc_using_numbers_5[]
 
 value jv = 10.5;
 
-error_code ec;
+boost::system::error_code ec;
 
 // ok, conversion is exact
 float r1 = jv.to_number< float >( ec );
@@ -142,11 +136,11 @@ int r2 = jv.to_number< int >( ec );
 
 assert( ec == error::not_exact );
 
-//]
+// end::doc_using_numbers_5[]
 }
 //----------------------------------------------------------
 {
-//[doc_using_numbers_6
+// tag::doc_using_numbers_6[]
 value jv = parse("[-42, 100, 10.25, -299999999999999999998, 2e32]");
 
 array ja = jv.as_array();
@@ -156,7 +150,7 @@ assert( ja[0].is_int64() );
 
 // represented by std::int64_t
 assert( ja[1].is_int64() );
-        
+
 // contains decimal point, represented as double
 assert( ja[2].is_double() );
 
@@ -165,14 +159,8 @@ assert( ja[3].is_double() );
 
 // contains exponent, represented as double
 assert( ja[4].is_double() );
-//]
+// end::doc_using_numbers_6[]
 }
-//----------------------------------------------------------
-{
-//[doc_using_numbers_7
-//]
-}
-//----------------------------------------------------------
 
 } // set1
 
@@ -190,4 +178,5 @@ public:
 
 TEST_SUITE(doc_using_numbers_test, "boost.json.doc_using_numbers");
 
-BOOST_JSON_NS_END
+} // namespace json
+} // namespace boost

@@ -5,9 +5,7 @@
 // See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt
 //
-#define BOOST_GIL_IO_ADD_FS_PATH_SUPPORT
 #define BOOST_GIL_IO_ENABLE_GRAY_ALPHA
-#define BOOST_FILESYSTEM_VERSION 3
 #include <boost/gil.hpp>
 #include <boost/gil/extension/io/png.hpp>
 
@@ -15,8 +13,8 @@
 
 #include "paths.hpp"
 
+namespace fs  = boost::gil::detail::filesystem;
 namespace gil = boost::gil;
-namespace fs = boost::filesystem;
 
 #ifdef BOOST_GIL_IO_USE_PNG_TEST_SUITE_IMAGES
 
@@ -44,14 +42,14 @@ void test_file_format()
         fs::directory_iterator end_iter;
         for (fs::directory_iterator dir_itr(in_path); dir_itr != end_iter; ++dir_itr)
         {
-            if (fs::is_regular(dir_itr->status()) && (fs::extension(dir_itr->path()) == ".PNG"))
+            if (fs::is_regular_file(dir_itr->status()) && (dir_itr->path().extension().string() == ".PNG"))
             {
                 gil::rgb8_image_t img;
-                std::string filename = in + dir_itr->path().leaf().string();
+                std::string filename = in + dir_itr->path().filename().string();
                 gil::read_and_convert_image(filename, img, gil::png_tag());
 
 #ifdef BOOST_GIL_IO_TEST_ALLOW_WRITING_IMAGES
-                gil::write_view(png_out + fs::basename(dir_itr->path()) + ".png",
+                gil::write_view(png_out + dir_itr->path().stem().string() + ".png",
                     gil::view(img), gil::png_tag());
 #endif  // BOOST_GIL_IO_TEST_ALLOW_WRITING_IMAGES
             }

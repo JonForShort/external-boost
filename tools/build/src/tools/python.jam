@@ -1,7 +1,7 @@
 # Copyright 2004 Vladimir Prus.
 # Distributed under the Boost Software License, Version 1.0. (See
-# accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt)
+# accompanying file LICENSE.txt or copy at
+# https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 # Support for Python and the the Boost.Python library.
 #
@@ -35,6 +35,7 @@ import feature ;
 import set ;
 import builtin ;
 import property-set ;
+import args ;
 
 
 # Make this module a project.
@@ -104,6 +105,18 @@ py3-version = ;
 rule init ( version ? : cmd-or-prefix ? : includes * : libraries ?
     : condition * : extension-suffix ? )
 {
+    if ! $(.initialized)
+    {
+        .initialized = true ;
+    }
+    else
+    {
+        if ! ( $(1) || $(2) || $(3) || $(4) || $(5) || $(6) )
+        {
+            return ;
+        }
+    }
+
     project.push-current $(.project) ;
 
     debug-message Configuring python... ;
@@ -229,7 +242,7 @@ local rule invokes-cygwin-symlink ( cmd )
 
 local rule debug-message ( message * )
 {
-    if --debug-configuration in [ modules.peek : ARGV ]
+    if [ args.get-arg debug-configuration ]
     {
         ECHO "notice:" "[python-cfg]" $(message) ;
     }
@@ -547,7 +560,13 @@ local rule compute-default-paths ( target-os : version ? : prefix ? :
     }
     else
     {
-        includes ?= $(prefix)/include/python$(version) ;
+        local default-include-path = $(prefix)/include/python$(version) ;
+        if ! [ path.exists $(default-include-path) ] && [ path.exists $(default-include-path)m ]
+        {
+            default-include-path = $(default-include-path)m ;
+        }
+
+        includes ?= $(default-include-path) ;
 
         local lib = $(exec-prefix)/lib ;
         libraries ?= $(lib)/python$(version)/config $(lib) ;
@@ -1046,6 +1065,9 @@ local rule configure ( version ? : cmd-or-prefix ? : includes * : libraries ? :
             ;
     }
 
+    # Declare the numpy target, which contains the NumPy include directory
+
+    alias numpy : : $(target-requirements) : : <include>$(.numpy-include) ;
 }
 
 # Conditional rule specification that will prevent building of a target

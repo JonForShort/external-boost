@@ -2,7 +2,7 @@
 // strand.cpp
 // ~~~~~~~~~~
 //
-// Copyright (c) 2003-2020 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,41 +16,21 @@
 // Test that header file is self-contained.
 #include <boost/asio/strand.hpp>
 
+#include <functional>
 #include <sstream>
 #include <boost/asio/executor.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/detail/thread.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include "unit_test.hpp"
 
-#if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
-# include <boost/asio/deadline_timer.hpp>
-#else // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
-# include <boost/asio/steady_timer.hpp>
-#endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
-
-#if defined(BOOST_ASIO_HAS_BOOST_BIND)
-# include <boost/bind/bind.hpp>
-#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
-# include <functional>
-#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
-
 using namespace boost::asio;
-
-#if defined(BOOST_ASIO_HAS_BOOST_BIND)
-namespace bindns = boost;
-#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
 namespace bindns = std;
-#endif
 
-#if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
-typedef deadline_timer timer;
-namespace chronons = boost::posix_time;
-#elif defined(BOOST_ASIO_HAS_CHRONO)
 typedef steady_timer timer;
 namespace chronons = boost::asio::chrono;
-#endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
 
 void increment(int* count)
 {
@@ -172,18 +152,10 @@ void strand_test()
   timer timer1(ioc, chronons::seconds(3));
   timer1.wait();
   BOOST_ASIO_CHECK(count == 0);
-#if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
-  timer1.expires_at(timer1.expires_at() + chronons::seconds(2));
-#else // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
   timer1.expires_at(timer1.expiry() + chronons::seconds(2));
-#endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
   timer1.wait();
   BOOST_ASIO_CHECK(count == 1);
-#if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
-  timer1.expires_at(timer1.expires_at() + chronons::seconds(2));
-#else // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
   timer1.expires_at(timer1.expiry() + chronons::seconds(2));
-#endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
   timer1.wait();
   BOOST_ASIO_CHECK(count == 2);
 
@@ -303,7 +275,7 @@ void strand_execute_test()
   strand<io_context::executor_type> s1 = make_strand(ioc);
   int count = 0;
 
-  boost::asio::execution::execute(s1, bindns::bind(increment, &count));
+  s1.execute(bindns::bind(increment, &count));
 
   // No handlers can be called until run() is called.
   BOOST_ASIO_CHECK(!ioc.stopped());
@@ -317,8 +289,7 @@ void strand_execute_test()
 
   count = 0;
   ioc.restart();
-  boost::asio::execution::execute(
-      boost::asio::require(s1, boost::asio::execution::blocking.possibly),
+  boost::asio::require(s1, boost::asio::execution::blocking.possibly).execute(
       bindns::bind(increment, &count));
 
   // No handlers can be called until run() is called.
@@ -333,8 +304,7 @@ void strand_execute_test()
 
   count = 0;
   ioc.restart();
-  boost::asio::execution::execute(
-      boost::asio::require(s1, boost::asio::execution::blocking.never),
+  boost::asio::require(s1, boost::asio::execution::blocking.never).execute(
       bindns::bind(increment, &count));
 
   // No handlers can be called until run() is called.
@@ -351,11 +321,10 @@ void strand_execute_test()
   ioc.restart();
   BOOST_ASIO_CHECK(!ioc.stopped());
 
-  boost::asio::execution::execute(
-      boost::asio::require(s1,
-        boost::asio::execution::blocking.never,
-        boost::asio::execution::outstanding_work.tracked),
-      bindns::bind(increment, &count));
+  boost::asio::require(s1,
+      boost::asio::execution::blocking.never,
+      boost::asio::execution::outstanding_work.tracked
+    ).execute(bindns::bind(increment, &count));
 
   // No handlers can be called until run() is called.
   BOOST_ASIO_CHECK(!ioc.stopped());
@@ -369,11 +338,10 @@ void strand_execute_test()
 
   count = 0;
   ioc.restart();
-  boost::asio::execution::execute(
-      boost::asio::require(s1,
-        boost::asio::execution::blocking.never,
-        boost::asio::execution::outstanding_work.untracked),
-      bindns::bind(increment, &count));
+  boost::asio::require(s1,
+      boost::asio::execution::blocking.never,
+      boost::asio::execution::outstanding_work.untracked
+    ).execute(bindns::bind(increment, &count));
 
   // No handlers can be called until run() is called.
   BOOST_ASIO_CHECK(!ioc.stopped());
@@ -387,12 +355,11 @@ void strand_execute_test()
 
   count = 0;
   ioc.restart();
-  boost::asio::execution::execute(
-      boost::asio::require(s1,
-        boost::asio::execution::blocking.never,
-        boost::asio::execution::outstanding_work.untracked,
-        boost::asio::execution::relationship.fork),
-      bindns::bind(increment, &count));
+  boost::asio::require(s1,
+      boost::asio::execution::blocking.never,
+      boost::asio::execution::outstanding_work.untracked,
+      boost::asio::execution::relationship.fork
+    ).execute(bindns::bind(increment, &count));
 
   // No handlers can be called until run() is called.
   BOOST_ASIO_CHECK(!ioc.stopped());
@@ -406,12 +373,31 @@ void strand_execute_test()
 
   count = 0;
   ioc.restart();
-  boost::asio::execution::execute(
+  boost::asio::require(s1,
+      boost::asio::execution::blocking.never,
+      boost::asio::execution::outstanding_work.untracked,
+      boost::asio::execution::relationship.continuation
+    ).execute(bindns::bind(increment, &count));
+
+  // No handlers can be called until run() is called.
+  BOOST_ASIO_CHECK(!ioc.stopped());
+  BOOST_ASIO_CHECK(count == 0);
+
+  ioc.run();
+
+  // The run() call will not return until all work has finished.
+  BOOST_ASIO_CHECK(ioc.stopped());
+  BOOST_ASIO_CHECK(count == 1);
+
+  count = 0;
+  ioc.restart();
+  boost::asio::prefer(
       boost::asio::require(s1,
         boost::asio::execution::blocking.never,
         boost::asio::execution::outstanding_work.untracked,
         boost::asio::execution::relationship.continuation),
-      bindns::bind(increment, &count));
+      boost::asio::execution::allocator(std::allocator<void>())
+    ).execute(bindns::bind(increment, &count));
 
   // No handlers can be called until run() is called.
   BOOST_ASIO_CHECK(!ioc.stopped());
@@ -425,35 +411,13 @@ void strand_execute_test()
 
   count = 0;
   ioc.restart();
-  boost::asio::execution::execute(
-      boost::asio::prefer(
-        boost::asio::require(s1,
-          boost::asio::execution::blocking.never,
-          boost::asio::execution::outstanding_work.untracked,
-          boost::asio::execution::relationship.continuation),
-        boost::asio::execution::allocator(std::allocator<void>())),
-      bindns::bind(increment, &count));
-
-  // No handlers can be called until run() is called.
-  BOOST_ASIO_CHECK(!ioc.stopped());
-  BOOST_ASIO_CHECK(count == 0);
-
-  ioc.run();
-
-  // The run() call will not return until all work has finished.
-  BOOST_ASIO_CHECK(ioc.stopped());
-  BOOST_ASIO_CHECK(count == 1);
-
-  count = 0;
-  ioc.restart();
-  boost::asio::execution::execute(
-      boost::asio::prefer(
-        boost::asio::require(s1,
-          boost::asio::execution::blocking.never,
-          boost::asio::execution::outstanding_work.untracked,
-          boost::asio::execution::relationship.continuation),
-        boost::asio::execution::allocator),
-      bindns::bind(increment, &count));
+  boost::asio::prefer(
+      boost::asio::require(s1,
+        boost::asio::execution::blocking.never,
+        boost::asio::execution::outstanding_work.untracked,
+        boost::asio::execution::relationship.continuation),
+      boost::asio::execution::allocator
+    ).execute(bindns::bind(increment, &count));
 
   // No handlers can be called until run() is called.
   BOOST_ASIO_CHECK(!ioc.stopped());

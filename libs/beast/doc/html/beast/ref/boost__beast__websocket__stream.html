@@ -6,8 +6,9 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../../index.html" title="Chapter 1. Boost.Beast">
 <link rel="up" href="../ref.html" title="This Page Intentionally Left Blank 2/2">
-<link rel="prev" href="boost__beast__static_string/swap/overload2.html" title="static_string::swap (2 of 2 overloads)">
+<link rel="prev" href="boost__beast__static_buffer_base/consume.html" title="static_buffer_base::consume">
 <link rel="next" href="boost__beast__websocket__stream/is_deflate_supported.html" title="websocket::stream::is_deflate_supported">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,7 +21,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="boost__beast__static_string/swap/overload2.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__websocket__stream/is_deflate_supported.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="boost__beast__static_buffer_base/consume.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__websocket__stream/is_deflate_supported.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
@@ -99,6 +100,18 @@
                 </p>
               </td>
 </tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__websocket__stream__rebind_executor.html" title="websocket::stream::rebind_executor">rebind_executor</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Rebinds the stream type to another executor.
+                </p>
+              </td>
+</tr>
 </tbody>
 </table></div>
 <h5>
@@ -132,13 +145,9 @@
               </td>
 <td>
                 <p>
-                  Perform the WebSocket handshake in the server role.
-                </p>
-                <p>
-                  Read and respond to a WebSocket HTTP Upgrade request.
-                </p>
-                <p>
-                  Respond to a WebSocket HTTP Upgrade request.
+                  Perform the WebSocket handshake in the server role. <br><span class="silver">—</span><br>Read
+                  and respond to a WebSocket HTTP Upgrade request. <br><span class="silver">—</span><br>Respond
+                  to a WebSocket HTTP Upgrade request.
                 </p>
               </td>
 </tr>
@@ -162,7 +171,8 @@
               </td>
 <td>
                 <p>
-                  Send a websocket close control frame asynchronously.
+                  Perform the WebSocket closing handshake asynchronously and close
+                  the underlying stream.
                 </p>
               </td>
 </tr>
@@ -258,11 +268,9 @@
               </td>
 <td>
                 <p>
-                  Set the automatic fragmentation option.
-                </p>
-                <p>
-                  Returns <code class="computeroutput"><span class="keyword">true</span></code> if the
-                  automatic fragmentation option is set.
+                  Set the automatic fragmentation option. <br><span class="silver">—</span><br>Returns
+                  <code class="computeroutput"><span class="keyword">true</span></code> if the automatic
+                  fragmentation option is set.
                 </p>
               </td>
 </tr>
@@ -274,11 +282,9 @@
               </td>
 <td>
                 <p>
-                  Set the binary message write option.
-                </p>
-                <p>
-                  Returns <code class="computeroutput"><span class="keyword">true</span></code> if the
-                  binary message write option is set.
+                  Set the binary message write option. <br><span class="silver">—</span><br>Returns
+                  <code class="computeroutput"><span class="keyword">true</span></code> if the binary
+                  message write option is set.
                 </p>
               </td>
 </tr>
@@ -290,7 +296,22 @@
               </td>
 <td>
                 <p>
-                  Send a websocket close control frame.
+                  Perform the WebSocket closing handshake and close the underlying
+                  stream.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__websocket__stream/compress.html" title="websocket::stream::compress">compress</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Set the compress message write option. <br><span class="silver">—</span><br>Returns
+                  <code class="computeroutput"><span class="keyword">true</span></code> if the compress
+                  message write option is set.
                 </p>
               </td>
 </tr>
@@ -302,10 +323,7 @@
               </td>
 <td>
                 <p>
-                  Set a callback to be invoked on each incoming control frame.
-                </p>
-                <p>
-                  Reset the control frame callback.
+                  Set a callback to be invoked on each incoming control frame. <br><span class="silver">—</span><br>Reset the control frame callback.
                 </p>
               </td>
 </tr>
@@ -329,7 +347,21 @@
               </td>
 <td>
                 <p>
-                  Get the permessage-deflate extension options.
+                  Get the option value. <br><span class="silver">—</span><br>Get the
+                  timeout option. <br><span class="silver">—</span><br>Get the permessage-deflate
+                  extension options.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__websocket__stream/get_status.html" title="websocket::stream::get_status">get_status</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Get the status of the permessage-deflate extension.
                 </p>
               </td>
 </tr>
@@ -465,10 +497,8 @@
               </td>
 <td>
                 <p>
-                  Set the maximum incoming message size option.
-                </p>
-                <p>
-                  Returns the maximum incoming message size setting.
+                  Set the maximum incoming message size option. <br><span class="silver">—</span><br>Returns
+                  the maximum incoming message size setting.
                 </p>
               </td>
 </tr>
@@ -528,19 +558,21 @@
               </td>
 <td>
                 <p>
-                  Set the permessage-deflate extension options.
+                  Set the option value. <br><span class="silver">—</span><br>Set the
+                  timeout option. <br><span class="silver">—</span><br>Set the permessage-deflate
+                  extension options.
                 </p>
               </td>
 </tr>
 <tr>
 <td>
                 <p>
-                  <span class="bold"><strong><a class="link" href="boost__beast__websocket__stream/stream.html" title="websocket::stream::stream">stream</a></strong></span>
+                  <span class="bold"><strong><a class="link" href="boost__beast__websocket__stream/stream.html" title="websocket::stream::stream">stream</a> <span class="silver">[constructor]</span></strong></span>
                 </p>
               </td>
 <td>
                 <p>
-                  Constructor.
+                  Constructor. <br><span class="silver">—</span><br>Rebinding constructor.
                 </p>
               </td>
 </tr>
@@ -552,11 +584,9 @@
               </td>
 <td>
                 <p>
-                  Set the text message write option.
-                </p>
-                <p>
-                  Returns <code class="computeroutput"><span class="keyword">true</span></code> if the
-                  text message write option is set.
+                  Set the text message write option. <br><span class="silver">—</span><br>Returns
+                  <code class="computeroutput"><span class="keyword">true</span></code> if the text message
+                  write option is set.
                 </p>
               </td>
 </tr>
@@ -580,10 +610,8 @@
               </td>
 <td>
                 <p>
-                  Set the write buffer size option.
-                </p>
-                <p>
-                  Returns the size of the write buffer.
+                  Set the write buffer size option. <br><span class="silver">—</span><br>Returns
+                  the size of the write buffer.
                 </p>
               </td>
 </tr>
@@ -602,7 +630,7 @@
 <tr>
 <td>
                 <p>
-                  <span class="bold"><strong><a class="link" href="boost__beast__websocket__stream/_stream.html" title="websocket::stream::~stream">~stream</a></strong></span>
+                  <span class="bold"><strong><a class="link" href="boost__beast__websocket__stream/_dtor_stream.html" title="websocket::stream::~stream">~stream</a> <span class="silver">[destructor]</span></strong></span>
                 </p>
               </td>
 <td>
@@ -620,9 +648,11 @@
 <p>
         The <a class="link" href="boost__beast__websocket__stream.html" title="websocket::stream"><code class="computeroutput"><span class="identifier">stream</span></code></a> class template provides asynchronous
         and blocking message-oriented functionality necessary for clients and servers
-        to utilize the WebSocket protocol. For asynchronous operations, the application
-        must ensure that they are are all performed within the same implicit or explicit
-        strand.
+        to utilize the WebSocket protocol.
+      </p>
+<p>
+        For asynchronous operations, the application must ensure that they are are
+        all performed within the same implicit or explicit strand.
       </p>
 <h5>
 <a name="beast.ref.boost__beast__websocket__stream.h4"></a>
@@ -761,18 +791,15 @@
           </li>
 </ul></div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2016-2019 Vinnie
+<div class="copyright-footer">Copyright © 2016-2019 Vinnie
       Falco<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="boost__beast__static_string/swap/overload2.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__websocket__stream/is_deflate_supported.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="boost__beast__static_buffer_base/consume.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__websocket__stream/is_deflate_supported.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

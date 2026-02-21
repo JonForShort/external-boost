@@ -32,6 +32,9 @@ void test_box()
     CHECK_ULP_CLOSE(expected, t, 0);
     CHECK_ULP_CLOSE(expected, cardinal_b_spline_prime<0>(Real(1.1)), 0);
 
+    CHECK_EQUAL(cardinal_b_spline<0>(Real(0.5)), Real(0.5f));
+    CHECK_EQUAL(cardinal_b_spline_prime<0>(Real(0.5)), std::numeric_limits<Real>::infinity());
+
     t = cardinal_b_spline<0>(Real(-1.1));
     expected = 0;
     CHECK_ULP_CLOSE(expected, t, 0);
@@ -236,23 +239,33 @@ int main()
 {
     test_box<float>();
     test_box<double>();
+#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
     test_box<long double>();
+#endif
 
     test_hat<float>();
     test_hat<double>();
+#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
     test_hat<long double>();
+#endif
 
     test_quadratic<float>();
     test_quadratic<double>();
+#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
     test_quadratic<long double>();
+#endif
 
     test_cubic<float>();
     test_cubic<double>();
+#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
     test_cubic<long double>();
+#endif
 
     test_quintic<float>();
     test_quintic<double>();
+#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
     test_quintic<long double>();
+#endif
 
     test_partition_of_unity<1, double>();
     test_partition_of_unity<2, double>();
@@ -269,6 +282,7 @@ int main()
     test_b_spline_derivatives<8, double>();
     test_b_spline_derivatives<9, double>();
 
+#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
     test_b_spline_derivatives<3, long double>();
     test_b_spline_derivatives<4, long double>();
     test_b_spline_derivatives<5, long double>();
@@ -276,7 +290,7 @@ int main()
     test_b_spline_derivatives<7, long double>();
     test_b_spline_derivatives<8, long double>();
     test_b_spline_derivatives<9, long double>();
-
+#endif
 
 #ifdef BOOST_HAS_FLOAT128
     test_box<float128>();

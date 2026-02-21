@@ -8,6 +8,7 @@
 <link rel="up" href="../using_io.html" title="Networking">
 <link rel="prev" href="stream_types.html" title="Streams">
 <link rel="next" href="rate_limiting.html" title="Rate Limiting 💡">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -439,8 +440,7 @@
     <span class="identifier">boost</span><span class="special">::</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">spawn</span><span class="special">(</span><span class="identifier">ioc</span><span class="special">,</span>
     <span class="special">[&amp;](</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">yield_context</span> <span class="identifier">yield</span><span class="special">)</span>
     <span class="special">{</span>
-        <span class="comment">// We use the Beast ssl_stream wrapped around a beast tcp_stream.</span>
-        <span class="identifier">ssl_stream</span><span class="special">&lt;</span><span class="identifier">tcp_stream</span><span class="special">&gt;</span> <span class="identifier">stream</span><span class="special">(</span><span class="identifier">ioc</span><span class="special">,</span> <span class="identifier">ctx</span><span class="special">);</span>
+        <span class="identifier">net</span><span class="special">::</span><span class="identifier">ssl</span><span class="special">::</span><span class="identifier">stream</span><span class="special">&lt;</span><span class="identifier">tcp_stream</span><span class="special">&gt;</span> <span class="identifier">stream</span><span class="special">(</span><span class="identifier">ioc</span><span class="special">,</span> <span class="identifier">ctx</span><span class="special">);</span>
 
         <span class="comment">// The resolver will be used to look up the IP addresses for the host name</span>
         <span class="identifier">net</span><span class="special">::</span><span class="identifier">ip</span><span class="special">::</span><span class="identifier">tcp</span><span class="special">::</span><span class="identifier">resolver</span> <span class="identifier">resolver</span><span class="special">(</span><span class="identifier">ioc</span><span class="special">);</span>
@@ -525,7 +525,10 @@
 
         <span class="comment">// Set the string to return to the caller</span>
         <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">res</span><span class="special">.</span><span class="identifier">body</span><span class="special">());</span>
-    <span class="special">});</span>
+    <span class="special">},</span>
+    <span class="comment">// this will capture exceptions thrown by the coroutine,</span>
+    <span class="comment">// which we're ignoring, since we're using error_codes to capture them.</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">detached</span><span class="special">);</span>
 
     <span class="comment">// `run` will dispatch completion handlers, and block until there is</span>
     <span class="comment">// no more "work" remaining. When this call returns, the operations</span>
@@ -536,15 +539,12 @@
 <span class="special">}</span>
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2016-2019 Vinnie
+<div class="copyright-footer">Copyright © 2016-2019 Vinnie
       Falco<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="stream_types.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../using_io.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="rate_limiting.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>

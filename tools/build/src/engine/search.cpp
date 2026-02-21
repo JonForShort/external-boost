@@ -7,8 +7,8 @@
 /* This file is ALSO:
  * Copyright 2001-2004 David Abrahams.
  * Distributed under the Boost Software License, Version 1.0.
- * (See accompanying file LICENSE_1_0.txt or copy at
- * http://www.boost.org/LICENSE_1_0.txt)
+ * (See accompanying file LICENSE.txt or copy at
+ * https://www.bfgroup.xyz/b2/LICENSE.txt)
  */
 
 #include "jam.h"
@@ -27,12 +27,15 @@
 
 #include <string.h>
 
+namespace {
 
 typedef struct _binding
 {
     OBJECT * binding;
     OBJECT * target;
 } BINDING;
+
+}
 
 static struct hash * explicit_bindings = 0;
 
@@ -98,11 +101,11 @@ void set_explicit_binding( OBJECT * target, OBJECT * locate )
 
     /* Root the target path at the given location. */
     f->f_root.ptr = object_str( locate );
-    f->f_root.len = strlen( object_str( locate ) );
+    f->f_root.len = int32_t(strlen( object_str( locate ) ));
 
     path_build( f, buf );
     boundname = object_new( buf->value );
-    if ( DEBUG_SEARCH )
+    if ( is_debug_search() )
         out_printf( "explicit locate %s: %s\n", object_str( target ), buf->value );
     string_free( buf );
     key = path_as_key( boundname );
@@ -164,11 +167,11 @@ OBJECT * search( OBJECT * target, timestamp * const time,
     {
         OBJECT * key;
         f->f_root.ptr = object_str( list_front( varlist ) );
-        f->f_root.len = strlen( object_str( list_front( varlist ) ) );
+        f->f_root.len = int32_t(strlen( object_str( list_front( varlist ) ) ));
 
         path_build( f, buf );
 
-        if ( DEBUG_SEARCH )
+        if ( is_debug_search() )
             out_printf( "locate %s: %s\n", object_str( target ), buf->value );
 
         key = object_new( buf->value );
@@ -189,12 +192,12 @@ OBJECT * search( OBJECT * target, timestamp * const time,
             OBJECT * test_path;
 
             f->f_root.ptr = object_str( list_item( iter ) );
-            f->f_root.len = strlen( object_str( list_item( iter ) ) );
+            f->f_root.len = int32_t(strlen( object_str( list_item( iter ) ) ));
 
             string_truncate( buf, 0 );
             path_build( f, buf );
 
-            if ( DEBUG_SEARCH )
+            if ( is_debug_search() )
                 out_printf( "search %s: %s\n", object_str( target ), buf->value );
 
             test_path = object_new( buf->value );
@@ -205,7 +208,7 @@ OBJECT * search( OBJECT * target, timestamp * const time,
 
             if ( ( ba = (BINDING *)hash_find( explicit_bindings, key ) ) )
             {
-                if ( DEBUG_SEARCH )
+                if ( is_debug_search() )
                     out_printf(" search %s: found explicitly located target %s\n",
                         object_str( target ), object_str( ba->target ) );
                 if ( another_target )
@@ -241,7 +244,7 @@ OBJECT * search( OBJECT * target, timestamp * const time,
         string_truncate( buf, 0 );
         path_build( f, buf );
 
-        if ( DEBUG_SEARCH )
+        if ( is_debug_search() )
             out_printf( "search %s: %s\n", object_str( target ), buf->value );
 
         key = object_new( buf->value );

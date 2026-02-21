@@ -1,16 +1,20 @@
 # Copyright 2016-2017 Klemens David Morgenstern
 # Copyright 2018 Mateusz Loskot <mateusz@loskot.net>
-# Copyright 2018-2019 Hans Dembinski
+# Copyright 2018-2021 Hans Dembinski
 #
 # Use, modification and distribution is subject to the Boost Software License,
 # Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
+require-b2 5.0.1 ;
+
+import-search /boost/config/checks ;
+
 import python ;
 import os ;
 import regex ;
 import testing ;
-import ../../config/checks/config : requires ;
+import config : requires ;
 
 if ! [ python.configured ]
 {
@@ -21,6 +25,7 @@ path-constant THIS_PATH : . ;
 
 project
     : requirements
+    <library>/boost/histogram//boost_histogram
     [ requires
       cxx14_constexpr cxx14_decltype_auto cxx14_generic_lambdas cxx14_return_type_deduction cxx11_user_defined_literals
       # list could go on...
@@ -39,15 +44,17 @@ alias odr :
     ;
 
 alias cxx14 :
+    [ run quick.cpp ]
     [ run accumulators_count_test.cpp ]
+    [ run accumulators_fraction_test.cpp ]
     [ run accumulators_mean_test.cpp ]
     [ run accumulators_sum_test.cpp : : :
       # make sure sum accumulator works even with -ffast-math and optimizations
       <toolset>gcc:<cxxflags>"-O3 -ffast-math"
       <toolset>clang:<cxxflags>"-O3 -ffast-math" ]
-    [ run accumulators_thread_safe_test.cpp ]
     [ run accumulators_weighted_mean_test.cpp ]
     [ run accumulators_weighted_sum_test.cpp ]
+    [ run accumulators_collector_test.cpp ]
     [ run algorithm_project_test.cpp ]
     [ run algorithm_reduce_test.cpp ]
     [ run algorithm_sum_test.cpp ]
@@ -66,6 +73,7 @@ alias cxx14 :
     [ run detail_axes_test.cpp ]
     [ run detail_convert_integer_test.cpp ]
     [ run detail_detect_test.cpp ]
+    [ run detail_erf_inv_test.cpp ]
     [ run detail_limits_test.cpp ]
     [ run detail_make_default_test.cpp ]
     [ run detail_misc_test.cpp ]
@@ -76,6 +84,7 @@ alias cxx14 :
     [ run detail_replace_type_test.cpp ]
     [ run detail_safe_comparison_test.cpp ]
     [ run detail_static_if_test.cpp ]
+    [ run detail_static_vector_and_span_test.cpp ]
     [ run detail_tuple_slice_test.cpp ]
     [ run histogram_custom_axis_test.cpp ]
     [ run histogram_dynamic_test.cpp ]
@@ -83,12 +92,22 @@ alias cxx14 :
     [ run histogram_growing_test.cpp ]
     [ run histogram_mixed_test.cpp ]
     [ run histogram_operators_test.cpp ]
-    [ run histogram_ostream_test.cpp ]
+    [ run histogram_fraction_test.cpp ]
+    [ run histogram_collector_test.cpp ]
     [ run histogram_test.cpp ]
     [ run indexed_test.cpp ]
     [ run storage_adaptor_test.cpp ]
     [ run unlimited_storage_test.cpp ]
-    [ run utility_test.cpp ]
+    [ run utility_binomial_proportion_interval_test.cpp ]
+    [ run utility_wald_interval_test.cpp ]
+    [ run utility_wilson_interval_test.cpp ]
+    [ run tools_test.cpp ]
+    [ run issue_327_test.cpp ]
+    [ run issue_353_test.cpp ]
+    [ run histogram_ostream_test.cpp : : :
+      <testing.launcher>"set LANG=UTF" ]
+    [ run histogram_ostream_ascii_test.cpp : : :
+      <testing.launcher>"set LANG=FOO COLUMNS=20" ]
     ;
 
 alias cxx17 :
@@ -123,14 +142,21 @@ alias failure :
 alias threading :
     [ run histogram_threaded_test.cpp ]
     [ run storage_adaptor_threaded_test.cpp ]
+    [ run accumulators_count_thread_safe_test.cpp ]
     :
     <threading>multi
     ;
 
 # warnings are off for these other boost libraries, which tend to be not warning-free
-alias accumulators : [ run boost_accumulators_support_test.cpp ] : <warnings>off ;
-alias range : [ run boost_range_support_test.cpp ] : <warnings>off ;
-alias units : [ run boost_units_support_test.cpp ] : <warnings>off ;
+alias math :
+    [ run detail_normal_test.cpp : : : <library>/boost/math//boost_math ]
+    [ run utility_clopper_pearson_interval_test.cpp : : : <library>/boost/math//boost_math ]
+    [ run utility_jeffreys_interval_test.cpp : : : <library>/boost/math//boost_math ]
+    : <warnings>off
+    ;
+alias accumulators : [ run boost_accumulators_support_test.cpp : : : <library>/boost/accumulators//boost_accumulators ] : <warnings>off ;
+alias range : [ run boost_range_support_test.cpp : : : <library>/boost/range//boost_range ] : <warnings>off ;
+alias units : [ run boost_units_support_test.cpp : : : <library>/boost/units//boost_units ] : <warnings>off ;
 alias serialization :
     [ run accumulators_serialization_test.cpp libserial : $(THIS_PATH) ]
     [ run detail_array_wrapper_serialization_test.cpp libserial ]
@@ -147,15 +173,23 @@ alias libserial :
     <link>static <warnings>off <rtti>on
     ;
 
+# helper for minimal and develop aliases
+alias minimal_without_failure : cxx14 cxx17 threading odr ;
+
 # for builds without optional boost dependencies
-alias minimal : cxx14 cxx17 failure threading ;
+alias minimal : minimal_without_failure failure ;
+
+# for builds with optional boost dependencies
+alias optional_boost : math accumulators range units serialization ;
 
 # all tests
-alias all : minimal odr accumulators range units serialization ;
+alias all : minimal optional_boost ;
 
-# all except "failure", because it is distracting during development
-alias develop : cxx14 cxx17 threading odr accumulators range units serialization ;
+# all except "failure", because it is distracting during development;
+# this is called implicitly if no other alias is specified
+alias develop : minimal_without_failure optional_boost ;
 
+explicit minimal_without_failure ;
 explicit minimal ;
 explicit all ;
 explicit odr ;
@@ -164,7 +198,9 @@ explicit cxx17 ;
 explicit failure ;
 explicit threading ;
 explicit accumulators ;
+explicit math ;
 explicit range ;
 explicit units ;
 explicit serialization ;
 explicit libserial ;
+explicit optional_boost ;

@@ -3,7 +3,7 @@
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
- * Copyright (c) 2020 Andrey Semashev
+ * Copyright (c) 2020-2025 Andrey Semashev
  */
 /*!
  * \file   atomic/detail/wait_ops_windows.hpp
@@ -15,15 +15,25 @@
 #define BOOST_ATOMIC_DETAIL_WAIT_OPS_WINDOWS_HPP_INCLUDED_
 
 #include <cstddef>
-#include <boost/static_assert.hpp>
+#include <cstdint>
+#include <chrono>
 #include <boost/memory_order.hpp>
-#include <boost/winapi/basic_types.hpp>
-#include <boost/winapi/wait_constants.hpp>
 #include <boost/atomic/detail/config.hpp>
-#include <boost/atomic/detail/link.hpp>
-#include <boost/atomic/detail/once_flag.hpp>
+#include <boost/atomic/detail/chrono.hpp>
 #include <boost/atomic/detail/wait_operations_fwd.hpp>
-#include <boost/atomic/detail/wait_ops_generic.hpp>
+#include <boost/atomic/detail/wait_capabilities.hpp>
+#include <boost/winapi/wait_constants.hpp>
+#include <boost/winapi/wait_on_address.hpp>
+#if (defined(BOOST_ATOMIC_FORCE_AUTO_LINK) || (!defined(BOOST_ALL_NO_LIB) && !defined(BOOST_ATOMIC_NO_LIB)))
+#define BOOST_LIB_NAME "synchronization"
+#if defined(BOOST_AUTO_LINK_NOMANGLE)
+#include <boost/config/auto_link.hpp>
+#else // defined(BOOST_AUTO_LINK_NOMANGLE)
+#define BOOST_AUTO_LINK_NOMANGLE
+#include <boost/config/auto_link.hpp>
+#undef BOOST_AUTO_LINK_NOMANGLE
+#endif // defined(BOOST_AUTO_LINK_NOMANGLE)
+#endif // (defined(BOOST_ATOMIC_FORCE_AUTO_LINK) || (!defined(BOOST_ALL_NO_LIB) && !defined(BOOST_ATOMIC_NO_LIB)))
 #include <boost/atomic/detail/header.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
@@ -34,86 +44,106 @@ namespace boost {
 namespace atomics {
 namespace detail {
 
-typedef boost::winapi::BOOL_ BOOST_WINAPI_WINAPI_CC
-wait_on_address_t(
-    volatile boost::winapi::VOID_* addr,
-    boost::winapi::PVOID_ compare_addr,
-    boost::winapi::SIZE_T_ size,
-    boost::winapi::DWORD_ timeout_ms);
-
-typedef boost::winapi::VOID_ BOOST_WINAPI_WINAPI_CC
-wake_by_address_t(boost::winapi::PVOID_ addr);
-
-extern BOOST_ATOMIC_DECL wait_on_address_t* wait_on_address;
-extern BOOST_ATOMIC_DECL wake_by_address_t* wake_by_address_single;
-extern BOOST_ATOMIC_DECL wake_by_address_t* wake_by_address_all;
-
-extern BOOST_ATOMIC_DECL once_flag wait_functions_once_flag;
-BOOST_ATOMIC_DECL void initialize_wait_functions() BOOST_NOEXCEPT;
-
-BOOST_FORCEINLINE void ensure_wait_functions_initialized() BOOST_NOEXCEPT
-{
-    BOOST_STATIC_ASSERT_MSG(once_flag_operations::is_always_lock_free, "Boost.Atomic unsupported target platform: native atomic operations not implemented for bytes");
-    if (BOOST_LIKELY(once_flag_operations::load(wait_functions_once_flag.m_flag, boost::memory_order_acquire) == 0u))
-        return;
-
-    initialize_wait_functions();
-}
-
 template< typename Base, std::size_t Size >
 struct wait_operations_windows :
-    public atomics::detail::wait_operations_generic< Base, false >
+    public Base
 {
-    typedef atomics::detail::wait_operations_generic< Base, false > base_type;
-    typedef typename base_type::storage_type storage_type;
+    using base_type = Base;
+    using storage_type = typename base_type::storage_type;
 
-    static BOOST_CONSTEXPR_OR_CONST bool always_has_native_wait_notify = false;
+    static constexpr bool always_has_native_wait_notify = true;
 
-    static BOOST_FORCEINLINE bool has_native_wait_notify(storage_type const volatile&) BOOST_NOEXCEPT
+    static BOOST_FORCEINLINE bool has_native_wait_notify(storage_type const volatile&) noexcept
     {
-        ensure_wait_functions_initialized();
-        return atomics::detail::wait_on_address != NULL;
+        return true;
     }
 
-    static BOOST_FORCEINLINE storage_type wait(storage_type const volatile& storage, storage_type old_val, memory_order order) BOOST_NOEXCEPT
+    static BOOST_FORCEINLINE storage_type wait(storage_type const volatile& storage, storage_type old_val, memory_order order) noexcept
     {
-        ensure_wait_functions_initialized();
-
-        if (BOOST_LIKELY(atomics::detail::wait_on_address != NULL))
+        storage_type new_val = base_type::load(storage, order);
+        while (new_val == old_val)
         {
-            storage_type new_val = base_type::load(storage, order);
-            while (new_val == old_val)
+            boost::winapi::WaitOnAddress(const_cast< storage_type* >(&storage), &old_val, Size, boost::winapi::infinite);
+            new_val = base_type::load(storage, order);
+        }
+
+        return new_val;
+    }
+
+private:
+    template< typename Clock >
+    static BOOST_FORCEINLINE storage_type wait_until_impl
+    (
+        storage_type const volatile& storage,
+        storage_type old_val,
+        typename Clock::time_point timeout,
+        typename Clock::time_point now,
+        memory_order order,
+        bool& timed_out
+    ) noexcept(noexcept(Clock::now()))
+    {
+        storage_type new_val = base_type::load(storage, order);
+        while (new_val == old_val)
+        {
+            const std::int64_t msec = atomics::detail::chrono::ceil< std::chrono::milliseconds >(timeout - now).count();
+            if (msec <= 0)
             {
-                atomics::detail::wait_on_address(const_cast< storage_type* >(&storage), &old_val, Size, boost::winapi::infinite);
-                new_val = base_type::load(storage, order);
+                timed_out = true;
+                break;
             }
 
-            return new_val;
+            boost::winapi::WaitOnAddress
+            (
+                const_cast< storage_type* >(&storage),
+                &old_val,
+                Size,
+                msec <= static_cast< std::int64_t >(boost::winapi::max_non_infinite_wait) ?
+                    static_cast< boost::winapi::DWORD_ >(msec) : boost::winapi::max_non_infinite_wait
+            );
+
+            now = Clock::now();
+            new_val = base_type::load(storage, order);
         }
-        else
-        {
-            return base_type::wait(storage, old_val, order);
-        }
+
+        return new_val;
     }
 
-    static BOOST_FORCEINLINE void notify_one(storage_type volatile& storage) BOOST_NOEXCEPT
+public:
+    template< typename Clock, typename Duration >
+    static BOOST_FORCEINLINE storage_type wait_until
+    (
+        storage_type const volatile& storage,
+        storage_type old_val,
+        std::chrono::time_point< Clock, Duration > timeout,
+        memory_order order,
+        bool& timed_out
+    ) noexcept(noexcept(Clock::now()))
     {
-        ensure_wait_functions_initialized();
-
-        if (BOOST_LIKELY(atomics::detail::wake_by_address_single != NULL))
-            atomics::detail::wake_by_address_single(const_cast< storage_type* >(&storage));
-        else
-            base_type::notify_one(storage);
+        return wait_until_impl< Clock >(storage, old_val, timeout, Clock::now(), order, timed_out);
     }
 
-    static BOOST_FORCEINLINE void notify_all(storage_type volatile& storage) BOOST_NOEXCEPT
+    template< typename Rep, typename Period >
+    static BOOST_FORCEINLINE storage_type wait_for
+    (
+        storage_type const volatile& storage,
+        storage_type old_val,
+        std::chrono::duration< Rep, Period > timeout,
+        memory_order order,
+        bool& timed_out
+    ) noexcept
     {
-        ensure_wait_functions_initialized();
+        const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        return wait_until_impl< std::chrono::steady_clock >(storage, old_val, now + timeout, now, order, timed_out);
+    }
 
-        if (BOOST_LIKELY(atomics::detail::wake_by_address_all != NULL))
-            atomics::detail::wake_by_address_all(const_cast< storage_type* >(&storage));
-        else
-            base_type::notify_all(storage);
+    static BOOST_FORCEINLINE void notify_one(storage_type volatile& storage) noexcept
+    {
+        boost::winapi::WakeByAddressSingle(const_cast< storage_type* >(&storage));
+    }
+
+    static BOOST_FORCEINLINE void notify_all(storage_type volatile& storage) noexcept
+    {
+        boost::winapi::WakeByAddressAll(const_cast< storage_type* >(&storage));
     }
 };
 

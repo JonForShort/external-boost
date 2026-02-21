@@ -14,7 +14,8 @@
 
 #include "test_suite.hpp"
 
-BOOST_JSON_NS_BEGIN
+namespace boost {
+namespace json {
 
 //----------------------------------------------------------
 
@@ -22,41 +23,25 @@ static void set1() {
 
 //----------------------------------------------------------
 {
-//[doc_serializing_1
+// tag::doc_serializing_1[]
 value jv = { 1, 2, 3, 4, 5 };
 
 std::cout << jv << "\n";
-//]
+// end::doc_serializing_1[]
 }
 //----------------------------------------------------------
 {
-//[doc_serializing_2
+// tag::doc_serializing_2[]
 value jv = { 1, 2, 3, 4, 5 };
 
 std::string s = serialize( jv );
-//]
-}
-//----------------------------------------------------------
-{
-//[doc_serializing_3
-//]
-}
-//----------------------------------------------------------
-{
-//[doc_serializing_4
-//]
+// end::doc_serializing_2[]
 }
 //----------------------------------------------------------
 {
 //[doc_serializing_5
 //]
 }
-//----------------------------------------------------------
-{
-//[doc_serializing_6
-//]
-}
-//----------------------------------------------------------
 
 } // set1
 
@@ -72,4 +57,5 @@ public:
 
 TEST_SUITE(doc_serializing_test, "boost.json.doc_serializing");
 
-BOOST_JSON_NS_END
+} // namespace json
+} // namespace boost

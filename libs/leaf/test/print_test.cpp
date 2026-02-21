@@ -1,11 +1,31 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/detail/print.hpp>
-#include "lightweight_test.hpp"
+#include <boost/leaf/config.hpp>
+
+#if !BOOST_LEAF_CFG_DIAGNOSTICS || !BOOST_LEAF_CFG_STD_STRING
+
+#include <iostream>
+
+int main()
+{
+    std::cout << "Unit test not applicable." << std::endl;
+    return 0;
+}
+
+#else
+
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/detail/print.hpp>
+#endif
+
 #include <sstream>
+#include <iostream>
+
+#include "lightweight_test.hpp"
 
 namespace leaf = boost::leaf;
 
@@ -13,7 +33,7 @@ struct c0
 {
     friend std::ostream & operator<<( std::ostream & os, c0 const & )
     {
-        return os << "c0";
+        return os << "info";
     }
 };
 
@@ -21,9 +41,9 @@ struct c1
 {
     int value;
 
-    friend std::ostream & operator<<( std::ostream & os, c1 const & )
+    friend std::ostream & operator<<( std::ostream & os, c1 const & x )
     {
-        return os << "c1";
+        return os << "value " << x.value;
     }
 };
 
@@ -32,9 +52,9 @@ struct c2
     int value;
 };
 
-std::ostream & operator<<( std::ostream & os, c2 const & )
+std::ostream & operator<<( std::ostream & os, c2 const & x )
 {
-    return os << "c2";
+    return os << "value " << x.value;
 }
 
 struct c3
@@ -48,52 +68,50 @@ struct c4
     unprintable value;;
 };
 
-template <class T>
-bool check( T const & x, char const * sub )
+template <int Line, class T>
+std::string print(T const & x, char const * prefix, char const * delimiter)
 {
-    using namespace leaf::leaf_detail;
+    using namespace leaf::detail;
     std::ostringstream s;
-    diagnostic<T>::print(s,x);
+    diagnostic<T>::print(s, prefix, delimiter, x);
+    diagnostic<T>::print(s, prefix, delimiter, x);
     std::string q = s.str();
-    return q.find(sub)!=q.npos;
+    std::cout << "[LINE " << Line << "] " << q << '\n';
+    return q;
 }
+
+struct my_exception: std::exception
+{
+    char const * what() const noexcept override { return "my_exception what"; }
+};
 
 int main()
 {
-    BOOST_TEST(check(c0{ },"c0"));
-    BOOST_TEST(check(c1{42},"c1"));
     {
-        c1 x;
-        c1 & y = x;
-        BOOST_TEST(check(x,"c1"));
-        BOOST_TEST(check(y,"c1"));
+        std::string out = print<__LINE__>(c0{}, "Title " , ", ");
+        BOOST_TEST_EQ(out, "Title c0: info, c0: info");
     }
-    BOOST_TEST(check(c2{42},"c2"));
     {
-        c2 x = {42};
-        c2 & y = x;
-        BOOST_TEST(check(x,"c2"));
-        BOOST_TEST(check(y,"c2"));
+        std::string out = print<__LINE__>(c1{42}, "Title ", ", ");
+        BOOST_TEST_EQ(out, "Title c1: value 42, c1: value 42");
     }
-    BOOST_TEST(check(c3{42},"c3"));
-    BOOST_TEST(check(c3{42},"42"));
     {
-        c3 x = {42};
-        c3 & y = x;
-        BOOST_TEST(check(x,"c3"));
-        BOOST_TEST(check(x,"42"));
-        BOOST_TEST(check(y,"c3"));
-        BOOST_TEST(check(y,"42"));
+        std::string out = print<__LINE__>(c2{42}, "Title ", ", ");
+        BOOST_TEST_EQ(out, "Title c2: value 42, c2: value 42");
     }
-    BOOST_TEST(check(c4(),"c4"));
-    BOOST_TEST(check(c4(),"{Non-Printable}"));
     {
-        c4 x;
-        c4 & y = x;
-        BOOST_TEST(check(x,"c4"));
-        BOOST_TEST(check(x,"{Non-Printable}"));
-        BOOST_TEST(check(y,"c4"));
-        BOOST_TEST(check(y,"{Non-Printable}"));
+        std::string out = print<__LINE__>(c3{42}, "Title ", ", ");
+        BOOST_TEST_EQ(out, "Title c3: 42, c3: 42");
+    }
+    {
+        std::string out = print<__LINE__>(c4{}, "Title ", ", ");
+        BOOST_TEST_EQ(out, "Title c4, c4");
+    }
+    {
+        std::string out = print<__LINE__>(my_exception{}, "Title ", ", ");
+        BOOST_TEST_EQ(out, "Title my_exception: \"my_exception what\", my_exception: \"my_exception what\"");
     }
     return boost::report_errors();
 }
+
+#endif

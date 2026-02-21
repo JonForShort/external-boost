@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////
-//  Copyright 2012 John Maddock. Distributed under the Boost
+//  Copyright 2012 - 2025 John Maddock.
+//  Copyright 2025 Christopher Kormanyos.
+//  Distributed under the Boost
 //  Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt
 
@@ -17,12 +19,13 @@
 //
 #define BOOST_MP_USE_LIMB_SHIFT
 
-#include <boost/multiprecision/gmp.hpp>
+#include <timer.hpp>
+#include <test.hpp>
+
 #include <boost/multiprecision/cpp_int.hpp>
+#include <boost/multiprecision/gmp.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int.hpp>
-#include "timer.hpp"
-#include "test.hpp"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4127) //  Conditional expression is constant
@@ -73,10 +76,10 @@ T generate_random(unsigned bits_wanted)
 }
 
 template <class T>
-struct is_checked_cpp_int : public boost::mpl::false_
+struct is_checked_cpp_int : public std::integral_constant<bool, false>
 {};
-template <unsigned MinBits, unsigned MaxBits, boost::multiprecision::cpp_integer_type SignType, class Allocator, boost::multiprecision::expression_template_option ET>
-struct is_checked_cpp_int<boost::multiprecision::number<boost::multiprecision::cpp_int_backend<MinBits, MaxBits, SignType, boost::multiprecision::checked, Allocator>, ET> > : public boost::mpl::true_
+template <std::size_t MinBits, std::size_t MaxBits, boost::multiprecision::cpp_integer_type SignType, class Allocator, boost::multiprecision::expression_template_option ET>
+struct is_checked_cpp_int<boost::multiprecision::number<boost::multiprecision::cpp_int_backend<MinBits, MaxBits, SignType, boost::multiprecision::checked, Allocator>, ET> > : public std::integral_constant<bool, true>
 {};
 
 template <class Number>
@@ -587,6 +590,13 @@ struct tester
          a                                 = sqrt(test_type(ui), b);
          BOOST_CHECK_EQUAL(a.str(), s1.str());
          BOOST_CHECK_EQUAL(b.str(), t.str());
+         a = sqrt(test_type(ui) + test_type(0));
+         BOOST_CHECK_EQUAL(a.str(), s1.str());
+         a = sqrt(test_type(ui) * test_type(1));
+         BOOST_CHECK_EQUAL(a.str(), s1.str());
+         a = sqrt(test_type(ui) * 1, b);
+         BOOST_CHECK_EQUAL(a.str(), s1.str());
+         BOOST_CHECK_EQUAL(b.str(), t.str());
       }
       a = -1;
       ++a;
@@ -615,19 +625,19 @@ struct tester
          }
          {
             u256            a      = 1;
-            boost::uint64_t amount = 1;
+            std::uint64_t amount = 1;
             u256            b      = a << amount;
             BOOST_CHECK_EQUAL(b, 2);
 
             u256 high_bit = u256(0);
             bit_set(high_bit, 255);
             BOOST_CHECK_EQUAL(a << 255, high_bit);
-            BOOST_CHECK_EQUAL(a << boost::uint64_t(256), 0);
+            BOOST_CHECK_EQUAL(a << std::uint64_t(256), 0);
             BOOST_CHECK_EQUAL(a << 0, a);
 
             u256 c = 3;
             BOOST_CHECK_EQUAL(c, 3);
-            BOOST_CHECK_EQUAL(c << boost::uint64_t(256), 0);
+            BOOST_CHECK_EQUAL(c << std::uint64_t(256), 0);
             BOOST_CHECK_EQUAL(c << 0, c);
 
             // Bug workaround:
@@ -637,12 +647,12 @@ struct tester
             BOOST_CHECK_EQUAL(u256(3) << 255, u256(1) << 255);
 
             u256            a      = 1;
-            boost::uint64_t amount = 1;
+            std::uint64_t amount = 1;
             u256            b      = a >> amount;
             BOOST_CHECK_EQUAL(b, 0);
             BOOST_CHECK_EQUAL(a >> 255, 0);
-            BOOST_CHECK_EQUAL(a >> boost::uint64_t(256), 0);
-            BOOST_CHECK_EQUAL(a >> boost::uint64_t(-1), 0);
+            BOOST_CHECK_EQUAL(a >> std::uint64_t(256), 0);
+            BOOST_CHECK_EQUAL(a >> std::uint64_t(-1), 0);
 
             u256 h;
             bit_set(h, 255);
@@ -652,7 +662,7 @@ struct tester
             BOOST_CHECK_EQUAL(h >> 254, u256(1) << 1);
             BOOST_CHECK_EQUAL(h >> 255, u256(1) << 0);
             BOOST_CHECK_EQUAL(h >> 256, 0);
-            BOOST_CHECK_EQUAL(h >> boost::uint64_t(-1), 0);
+            BOOST_CHECK_EQUAL(h >> std::uint64_t(-1), 0);
 
             u256 g;
             bit_set(g, 255);
@@ -669,10 +679,10 @@ struct tester
             BOOST_CHECK_EQUAL(g >> 100, u256(3) << 154);
             BOOST_CHECK_EQUAL(g >> 256, 0);
             BOOST_CHECK_EQUAL(g >> 257, 0);
-            BOOST_CHECK_EQUAL(g >> boost::uint32_t(-1), 0);
-            BOOST_CHECK_EQUAL(g >> boost::uint64_t(-1), 0);
-            BOOST_CHECK_EQUAL(g >> boost::uint16_t(-1), 0);
-            BOOST_CHECK_EQUAL(g >> (boost::uint16_t(-1) - 1), 0);
+            BOOST_CHECK_EQUAL(g >> std::uint32_t(-1), 0);
+            BOOST_CHECK_EQUAL(g >> std::uint64_t(-1), 0);
+            BOOST_CHECK_EQUAL(g >> std::uint16_t(-1), 0);
+            BOOST_CHECK_EQUAL(g >> (std::uint16_t(-1) - 1), 0);
          }
          {
             s256     a      = 1;
@@ -680,8 +690,8 @@ struct tester
             s256     b      = a >> amount;
             BOOST_CHECK_EQUAL(b, 0);
             BOOST_CHECK_EQUAL(a >> 255, 0);
-            BOOST_CHECK_EQUAL(a >> boost::uint64_t(256), 0);
-            BOOST_CHECK_EQUAL(a >> boost::uint64_t(-1), 0);
+            BOOST_CHECK_EQUAL(a >> std::uint64_t(256), 0);
+            BOOST_CHECK_EQUAL(a >> std::uint64_t(-1), 0);
 
             s256 n = -1;
             BOOST_CHECK_EQUAL(n >> 0, n);
@@ -691,7 +701,7 @@ struct tester
             BOOST_CHECK_EQUAL(n >> 255, n);
             BOOST_CHECK_EQUAL(n >> 256, n);
             BOOST_CHECK_EQUAL(n >> 257, n);
-            BOOST_CHECK_EQUAL(n >> ~boost::uint64_t(0), n);
+            BOOST_CHECK_EQUAL(n >> ~std::uint64_t(0), n);
 
             // Test min value. This actually -(2^256-1), not -(2^255) as in C.
             s256 h = (std::numeric_limits<s256>::min)();
@@ -722,14 +732,14 @@ struct tester
             BOOST_CHECK_EQUAL(k >> 254, 0b1);
             BOOST_CHECK_EQUAL(k >> 255, 0);
             BOOST_CHECK_EQUAL(k >> 256, 0);
-            BOOST_CHECK_EQUAL(k >> ~boost::uint32_t(0), 0);
+            BOOST_CHECK_EQUAL(k >> ~std::uint32_t(0), 0);
 
             // Division equivalence.
 
             // Built-in type:
-            if (std::numeric_limits<boost::int64_t>::is_specialized)
+            if (std::numeric_limits<std::int64_t>::is_specialized)
             {
-               boost::int64_t d = (std::numeric_limits<boost::int64_t>::min)();
+               std::int64_t d = (std::numeric_limits<std::int64_t>::min)();
                BOOST_CHECK_EQUAL(d >> 1, d / 2);
                int64_t e = d + 1;
                BOOST_CHECK_EQUAL(e >> 1, e / 2 - 1);
@@ -778,6 +788,7 @@ struct tester
 
          if (last_error_count != (unsigned)boost::detail::test_errors())
          {
+            // LCOV_EXCL_START These lines are not expected to get hit in tests.
             last_error_count = boost::detail::test_errors();
             std::cout << std::hex << std::showbase;
 
@@ -810,6 +821,7 @@ struct tester
             std::cout << "a1%b1  = " << a1 % b1 << std::endl;
             std::cout << "a%d    = " << a % d << std::endl;
             std::cout << "a1%d1  = " << a1 % d1 << std::endl;
+            // LCOV_EXCL_STOP These lines are not expected to get hit in tests.
          }
 
          //

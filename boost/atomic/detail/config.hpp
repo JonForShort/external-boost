@@ -4,7 +4,7 @@
  * http://www.boost.org/LICENSE_1_0.txt)
  *
  * Copyright (c) 2012 Hartmut Kaiser
- * Copyright (c) 2014-2018, 2020 Andrey Semashev
+ * Copyright (c) 2014-2018, 2020-2025 Andrey Semashev
  */
 /*!
  * \file   atomic/detail/config.hpp
@@ -21,6 +21,29 @@
 #pragma once
 #endif
 
+#if defined(__SANITIZE_THREAD__)
+#define BOOST_ATOMIC_DETAIL_TSAN
+#elif defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define BOOST_ATOMIC_DETAIL_TSAN
+#endif
+#endif
+
+// Instrumentation macros to make TSan aware of the memory order semantics of asm blocks
+#if defined(BOOST_ATOMIC_DETAIL_TSAN)
+extern "C" {
+void __tsan_acquire(void*);
+void __tsan_release(void*);
+} // extern "C"
+#define BOOST_ATOMIC_DETAIL_TSAN_ACQUIRE(ptr, mo) \
+    { if ((static_cast< unsigned int >(mo) & static_cast< unsigned int >(memory_order_acquire)) != 0u) __tsan_acquire((void*)(ptr)); }
+#define BOOST_ATOMIC_DETAIL_TSAN_RELEASE(ptr, mo) \
+    { if ((static_cast< unsigned int >(mo) & static_cast< unsigned int >(memory_order_release)) != 0u) __tsan_release((void*)(ptr)); }
+#else // defined(BOOST_ATOMIC_DETAIL_TSAN)
+#define BOOST_ATOMIC_DETAIL_TSAN_ACQUIRE(ptr, mo)
+#define BOOST_ATOMIC_DETAIL_TSAN_RELEASE(ptr, mo)
+#endif // defined(BOOST_ATOMIC_DETAIL_TSAN)
+
 #if defined(__CUDACC__)
 // nvcc does not support alternatives ("q,m") in asm statement constraints
 #define BOOST_ATOMIC_DETAIL_NO_ASM_CONSTRAINT_ALTERNATIVES
@@ -36,43 +59,24 @@
 #define BOOST_ATOMIC_DETAIL_ASM_CLOBBER_CC_COMMA
 #endif
 
-#if (defined(__i386__) || defined(__x86_64__)) && (defined(__clang__) || (defined(BOOST_GCC) && (BOOST_GCC+0) < 40500) || defined(__SUNPRO_CC))
+#if (defined(__i386__) || defined(__x86_64__)) && (defined(__clang__) || (defined(BOOST_GCC) && BOOST_GCC < 40500) || defined(__SUNPRO_CC))
 // This macro indicates that the compiler does not support allocating eax:edx or rax:rdx register pairs ("A") in asm blocks
 #define BOOST_ATOMIC_DETAIL_X86_NO_ASM_AX_DX_PAIRS
 #endif
 
-#if defined(__i386__) && (defined(__PIC__) || defined(__PIE__)) && !(defined(__clang__) || (defined(BOOST_GCC) && (BOOST_GCC+0) >= 50100))
+#if defined(__i386__) && (defined(__PIC__) || defined(__PIE__)) && !(defined(__clang__) || (defined(BOOST_GCC) && BOOST_GCC >= 50100))
 // This macro indicates that asm blocks should preserve ebx value unchanged. Some compilers are able to maintain ebx themselves
 // around the asm blocks. For those compilers we don't need to save/restore ebx in asm blocks.
 #define BOOST_ATOMIC_DETAIL_X86_ASM_PRESERVE_EBX
 #endif
 
-#if defined(BOOST_NO_CXX11_HDR_TYPE_TRAITS)
-#if !(defined(BOOST_LIBSTDCXX11) && (BOOST_LIBSTDCXX_VERSION+0) >= 40700) /* libstdc++ from gcc >= 4.7 in C++11 mode */
-// This macro indicates that there is not even a basic <type_traits> standard header that is sufficient for most Boost.Atomic needs.
-#define BOOST_ATOMIC_DETAIL_NO_CXX11_BASIC_HDR_TYPE_TRAITS
-#endif
-#endif // defined(BOOST_NO_CXX11_HDR_TYPE_TRAITS)
-
 #if defined(BOOST_NO_CXX11_ALIGNAS) ||\
-    (defined(BOOST_GCC) && (BOOST_GCC+0) < 40900) ||\
-    (defined(BOOST_MSVC) && (BOOST_MSVC+0) < 1910 && defined(_M_IX86))
+    (defined(BOOST_GCC) && BOOST_GCC < 40900) ||\
+    (defined(BOOST_MSVC) && BOOST_MSVC < 1910 && defined(_M_IX86))
 // gcc prior to 4.9 doesn't support alignas with a constant expression as an argument.
 // MSVC 14.0 does support alignas, but in 32-bit mode emits "error C2719: formal parameter with requested alignment of N won't be aligned" for N > 4,
 // when aligned types are used in function arguments, even though the std::max_align_t type has alignment of 8.
 #define BOOST_ATOMIC_DETAIL_NO_CXX11_ALIGNAS
-#endif
-
-#if defined(BOOST_NO_CXX11_CONSTEXPR) || (defined(BOOST_GCC) && (BOOST_GCC+0) < 40800)
-// This macro indicates that the compiler doesn't support constexpr constructors that initialize one member
-// of an anonymous union member of the class.
-#define BOOST_ATOMIC_DETAIL_NO_CXX11_CONSTEXPR_UNION_INIT
-#endif
-
-#if !defined(BOOST_ATOMIC_DETAIL_NO_CXX11_CONSTEXPR_UNION_INIT)
-#define BOOST_ATOMIC_DETAIL_CONSTEXPR_UNION_INIT BOOST_CONSTEXPR
-#else
-#define BOOST_ATOMIC_DETAIL_CONSTEXPR_UNION_INIT
 #endif
 
 // Enable pointer/reference casts between storage and value when possible.
@@ -91,24 +95,18 @@
 #define BOOST_ATOMIC_DETAIL_ASM_HAS_FLAG_OUTPUTS
 #endif
 
-#if defined(BOOST_INTEL) || (defined(BOOST_GCC) && (BOOST_GCC+0) < 40700) ||\
-    (defined(BOOST_CLANG) && !defined(__apple_build_version__) && ((__clang_major__+0) * 100 + (__clang_minor__+0)) < 302) ||\
-    (defined(__clang__) && defined(__apple_build_version__) && ((__clang_major__+0) * 100 + (__clang_minor__+0)) < 402)
-// Intel compiler (at least 18.0 update 1) breaks if noexcept specification is used in defaulted function declarations:
-// error: the default constructor of "boost::atomics::atomic<T>" cannot be referenced -- it is a deleted function
-// GCC 4.6 doesn't seem to support that either. Clang 3.1 deduces wrong noexcept for the defaulted function and fails as well.
-#define BOOST_ATOMIC_DETAIL_DEF_NOEXCEPT_DECL
-#define BOOST_ATOMIC_DETAIL_DEF_NOEXCEPT_IMPL BOOST_NOEXCEPT
-#else
-#define BOOST_ATOMIC_DETAIL_DEF_NOEXCEPT_DECL BOOST_NOEXCEPT
-#define BOOST_ATOMIC_DETAIL_DEF_NOEXCEPT_IMPL
-#endif
-
 #if defined(__has_builtin)
 #if __has_builtin(__builtin_constant_p)
 #define BOOST_ATOMIC_DETAIL_IS_CONSTANT(x) __builtin_constant_p(x)
 #endif
-#elif defined(__GNUC__)
+#if __has_builtin(__builtin_clear_padding)
+#define BOOST_ATOMIC_DETAIL_CLEAR_PADDING(x) __builtin_clear_padding(x)
+#elif __has_builtin(__builtin_zero_non_value_bits)
+#define BOOST_ATOMIC_DETAIL_CLEAR_PADDING(x) __builtin_zero_non_value_bits(x)
+#endif
+#endif
+
+#if !defined(BOOST_ATOMIC_DETAIL_IS_CONSTANT) && defined(__GNUC__)
 #define BOOST_ATOMIC_DETAIL_IS_CONSTANT(x) __builtin_constant_p(x)
 #endif
 
@@ -116,59 +114,21 @@
 #define BOOST_ATOMIC_DETAIL_IS_CONSTANT(x) false
 #endif
 
-#if (defined(__BYTE_ORDER__) && defined(__FLOAT_WORD_ORDER__) && (__BYTE_ORDER__+0) == (__FLOAT_WORD_ORDER__+0)) ||\
-    defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
+#if !defined(BOOST_ATOMIC_DETAIL_CLEAR_PADDING) && defined(BOOST_MSVC) && BOOST_MSVC >= 1927
+// Note that as of MSVC 19.29 this intrinsic does not clear padding in unions:
+// https://developercommunity.visualstudio.com/t/__builtin_zero_non_value_bits-does-not-c/1551510
+#define BOOST_ATOMIC_DETAIL_CLEAR_PADDING(x) __builtin_zero_non_value_bits(x)
+#endif
+
+#if !defined(BOOST_ATOMIC_DETAIL_CLEAR_PADDING)
+#define BOOST_ATOMIC_NO_CLEAR_PADDING
+#define BOOST_ATOMIC_DETAIL_CLEAR_PADDING(x)
+#endif
+
+#if (defined(__BYTE_ORDER__) && defined(__FLOAT_WORD_ORDER__) && __BYTE_ORDER__ == __FLOAT_WORD_ORDER__) ||\
+    defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_AMD64) || defined(_M_ARM) || defined(_M_ARM64) || defined(_M_ARM64EC)
 // This macro indicates that integer and floating point endianness is the same
 #define BOOST_ATOMIC_DETAIL_INT_FP_ENDIAN_MATCH
-#endif
-
-// Deprecated symbols markup
-#if !defined(BOOST_ATOMIC_DETAIL_DEPRECATED) && defined(_MSC_VER)
-#if (_MSC_VER) >= 1400
-#define BOOST_ATOMIC_DETAIL_DEPRECATED(msg) __declspec(deprecated(msg))
-#else
-// MSVC 7.1 only supports the attribute without a message
-#define BOOST_ATOMIC_DETAIL_DEPRECATED(msg) __declspec(deprecated)
-#endif
-#endif
-
-#if !defined(BOOST_ATOMIC_DETAIL_DEPRECATED) && defined(__has_extension)
-#if __has_extension(attribute_deprecated_with_message)
-#define BOOST_ATOMIC_DETAIL_DEPRECATED(msg) __attribute__((deprecated(msg)))
-#endif
-#endif
-
-// gcc since 4.5 supports deprecated attribute with a message; older versions support the attribute without a message.
-// Oracle Studio 12.4 supports deprecated attribute with a message; this is the first release that supports the attribute.
-#if !defined(BOOST_ATOMIC_DETAIL_DEPRECATED) && (\
-    (defined(__GNUC__) && ((__GNUC__ + 0) * 100 + (__GNUC_MINOR__ + 0)) >= 405) ||\
-    (defined(__SUNPRO_CC) && (__SUNPRO_CC + 0) >= 0x5130))
-#define BOOST_ATOMIC_DETAIL_DEPRECATED(msg) __attribute__((deprecated(msg)))
-#endif
-
-#if !defined(BOOST_ATOMIC_DETAIL_DEPRECATED) && __cplusplus >= 201402
-#define BOOST_ATOMIC_DETAIL_DEPRECATED(msg) [[deprecated(msg)]]
-#endif
-
-#if !defined(BOOST_ATOMIC_DETAIL_DEPRECATED) && defined(__GNUC__)
-#define BOOST_ATOMIC_DETAIL_DEPRECATED(msg) __attribute__((deprecated))
-#endif
-
-#if !defined(BOOST_ATOMIC_DETAIL_DEPRECATED) && defined(__has_attribute)
-#if __has_attribute(deprecated)
-#define BOOST_ATOMIC_DETAIL_DEPRECATED(msg) __attribute__((deprecated))
-#endif
-#endif
-
-#if !defined(BOOST_ATOMIC_DETAIL_DEPRECATED)
-#define BOOST_ATOMIC_DETAIL_DEPRECATED(msg)
-#endif
-
-// In Boost.Atomic 1.73 we deprecated atomic<>::storage() accessor in favor of atomic<>::value(). In future releases storage() will be removed.
-#if !defined(BOOST_ATOMIC_SILENCE_STORAGE_DEPRECATION)
-#define BOOST_ATOMIC_DETAIL_STORAGE_DEPRECATED BOOST_ATOMIC_DETAIL_DEPRECATED("Boost.Atomic 1.73 has deprecated atomic<>::storage() in favor of atomic<>::value() and atomic<>::storage_type in favor of atomic<>::value_type. You can define BOOST_ATOMIC_SILENCE_STORAGE_DEPRECATION to disable this warning.")
-#else
-#define BOOST_ATOMIC_DETAIL_STORAGE_DEPRECATED
 #endif
 
 #endif // BOOST_ATOMIC_DETAIL_CONFIG_HPP_INCLUDED_

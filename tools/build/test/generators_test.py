@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright 2002, 2003 Dave Abrahams
 # Copyright 2002, 2003, 2004, 2005 Vladimir Prus
 # Copyright 2012 Jurko Gospodnetic
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt)
+# (See accompanying file LICENSE.txt or copy at
+# https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 import BoostBuild
 import re
@@ -252,9 +252,9 @@ def test_generated_target_names():
 
       We use the following target generation structure with differently named
     BBX targets:
-                       /---> BB1 ---\
+                       /---> BB1 ---\\
                 AAA --<----> BB2 ---->--> CCC --(composing)--> DDD
-                       \---> BB3 ---/
+                       \\---> BB3 ---/
 
       The extra generator at the end is needed because generating a top-level
     CCC target directly would requires us to explicitly specify a name for it.
@@ -345,8 +345,8 @@ def __write_appender(t, name):
     t.write(name,
 r"""# Copyright 2012 Jurko Gospodnetic
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt)
+# (See accompanying file LICENSE.txt or copy at
+# https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 #   Support for registering test generators that construct their targets by
 # simply appending their given input data, e.g. list of sources & targets.

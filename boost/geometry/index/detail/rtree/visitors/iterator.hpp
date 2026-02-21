@@ -4,12 +4,21 @@
 //
 // Copyright (c) 2011-2015 Adam Wulkiewicz, Lodz, Poland.
 //
+// This file was modified by Oracle on 2021-2023.
+// Modifications copyright (c) 2021-2023 Oracle and/or its affiliates.
+// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+//
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef BOOST_GEOMETRY_INDEX_DETAIL_RTREE_VISITORS_ITERATOR_HPP
 #define BOOST_GEOMETRY_INDEX_DETAIL_RTREE_VISITORS_ITERATOR_HPP
+
+#include <boost/geometry/index/detail/rtree/node/concept.hpp>
+#include <boost/geometry/index/detail/rtree/node/node_elements.hpp>
+#include <boost/geometry/index/detail/rtree/node/variant_visitor.hpp>
 
 namespace boost { namespace geometry { namespace index {
 
@@ -73,7 +82,7 @@ public:
     {
         for (;;)
         {
-            // if leaf is choosen, move to the next value in leaf
+            // if leaf is chosen, move to the next value in leaf
             if ( m_values )
             {
                 // there are more values in the current leaf
@@ -87,7 +96,7 @@ public:
                     m_values = 0;
                 }
             }
-            // if leaf isn't choosen, move to the next leaf
+            // if leaf isn't chosen, move to the next leaf
             else
             {
                 // return if there is no more nodes to traverse

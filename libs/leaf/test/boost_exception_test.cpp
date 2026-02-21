@@ -1,10 +1,10 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/detail/config.hpp>
-#if defined(BOOST_LEAF_NO_EXCEPTIONS)
+#include <boost/leaf/config.hpp>
+
+#if defined(BOOST_LEAF_NO_EXCEPTIONS) || !defined(BOOST_LEAF_BOOST_AVAILABLE)
 
 #include <iostream>
 
@@ -16,11 +16,16 @@ int main()
 
 #else
 
-#include <boost/leaf/handle_errors.hpp>
-#include <boost/leaf/pred.hpp>
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/handle_errors.hpp>
+#   include <boost/leaf/pred.hpp>
+#endif
+
+#include "lightweight_test.hpp"
 #include <boost/exception/info.hpp>
 #include <boost/exception/get_error_info.hpp>
-#include "lightweight_test.hpp"
 
 namespace leaf = boost::leaf;
 
@@ -32,8 +37,8 @@ int main()
 {
     static_assert(std::is_same<test_info, decltype(std::declval<leaf::match<test_info, 42>>().matched)>::value, "handler_argument_traits deduction bug");
 
-    using tr = leaf::leaf_detail::handler_argument_traits<leaf::match<test_info, 42>>;
-    static_assert(std::is_same<void, tr::error_type>::value, "handler_argument_traits deduction bug");
+    using tr = leaf::detail::handler_argument_traits<leaf::match<test_info, 42>>;
+    static_assert(std::is_same<leaf::leaf_detail_mp11::mp_list<>, tr::context_types>::value, "handler_argument_traits deduction bug");
 
     {
         int r = leaf::try_catch(

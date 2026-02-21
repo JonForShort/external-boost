@@ -3,8 +3,8 @@
 # Copyright 2005-2012 Juergen Hunold
 #
 # Distributed under the Boost Software License, Version 1.0. (See
-# accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt)
+# accompanying file LICENSE.txt or copy at
+# https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 # Qt5 library support module
 #
@@ -63,6 +63,7 @@ import toolset : flags ;
 import os ;
 import virtual-target ;
 import scanner ;
+import args ;
 
 # The Qt version used for requirements
 # Valid are <qt>5.0 or <qt>5.1.0
@@ -80,14 +81,11 @@ project qt5 ;
 .project = [ project.current ] ;
 
 # Helper utils for easy debug output
-if [ MATCH (--debug-configuration) : [ modules.peek : ARGV ] ]
-{
-    .debug-configuration = TRUE ;
-}
+.debug-configuration = [ args.get-arg debug-configuration ] ;
 
 local rule debug-message ( message * )
 {
-    if $(.debug-configuration) = TRUE
+    if $(.debug-configuration)
     {
         ECHO notice\: "[qt5-cfg]" $(message) ;
     }
@@ -306,7 +304,6 @@ rule init ( prefix : version ? : condition * : namespace ? : infix ? : full_bin 
        local usage-requirements =
            <include>$(.incprefix)
            <library-path>$(.libprefix)
-           <threading>multi
            <allow>qt5 ;
 
        if $(link) in shared

@@ -6,6 +6,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="Boost.Sort">
 <link rel="next" href="sort/single_thread.html" title="2.- Single Thread Algorithms">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -76,10 +77,11 @@
 <dt><span class="section"><a href="sort/single_thread/spreadsort/history.html">History</a></span></dt>
 <dt><span class="section"><a href="boost_sort_c___reference.html">Boost.Sort C++ Reference</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="boost_sort_c___reference.html#header.boost.sort.spreadsort.float_sort_hpp">Header &lt;boost/sort/spreadsort/float_sort.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="header/boost/sort/spreadsort/integer_sort_hpp.html">Header &lt;boost/sort/spreadsort/integer_sort.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="header/boost/sort/spreadsort/spreadsort_hpp.html">Header &lt;boost/sort/spreadsort/spreadsort.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="header/boost/sort/spreadsort/string_sort_hpp.html">Header &lt;boost/sort/spreadsort/string_sort.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="boost_sort_c___reference.html#doxygen.boost_sort_c___reference.pdqsort_8hpp">Header &lt;boost/sort/pdqsort/pdqsort.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="doxygen/boost_sort_c___reference/float__sort_8hpp.html">Header &lt;boost/sort/spreadsort/float_sort.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="doxygen/boost_sort_c___reference/integer__sort_8hpp.html">Header &lt;boost/sort/spreadsort/integer_sort.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="doxygen/boost_sort_c___reference/spreadsort_8hpp.html">Header &lt;boost/sort/spreadsort/spreadsort.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="doxygen/boost_sort_c___reference/string__sort_8hpp.html">Header &lt;boost/sort/spreadsort/string_sort.hpp&gt;</a></span></dt>
 </dl></dd>
 </dl></dd>
 <dt><span class="section"><a href="sort/single_thread/pdqsort.html">2.2.- pdqsort</a></span></dt>
@@ -165,8 +167,9 @@
         and parallel versions.
       </p>
 <p>
-        These algorithms do not use any other library or utility. The parallel algorithms
-        need a C++11 compliant compiler.
+        These algorithms do not use any other library or utility, you only need to
+        include boost/sort/sort.hpp or one of the more specific headers. The parallel
+        algorithms need a C++11 compliant compiler.
       </p>
 <h5>
 <a name="sort.introduction.h0"></a>
@@ -258,10 +261,7 @@ block_size (number of elements) |  4096  |  2048   |   1024  |   768   |   512  
 </blockquote></div>
 </div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"><p><small>Last revised: December 03, 2020 at 05:04:35 GMT</small></p></td>
-<td align="right"><div class="copyright-footer"></div></td>
-</tr></table>
+<div class="copyright-footer"></div>
 <hr>
 <div class="spirit-nav"><a accesskey="n" href="sort/single_thread.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a></div>
 </body>

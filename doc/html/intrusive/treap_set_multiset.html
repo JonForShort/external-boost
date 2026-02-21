@@ -6,9 +6,10 @@
 <link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
-<link rel="up" href="../intrusive.html" title="Chapter 19. Boost.Intrusive">
+<link rel="up" href="../intrusive.html" title="Chapter 16. Boost.Intrusive">
 <link rel="prev" href="sg_set_multiset.html" title="Intrusive scapegoat tree based associative containers: sg_set, sg_multiset and sgtree">
 <link rel="next" href="bst_hooks.html" title="Binary search tree hooks: bs_set_base_hook and bs_set_member_hook">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -70,19 +71,19 @@
     </p>
 <p>
       <span class="bold"><strong>Boost.Intrusive</strong></span> offers 3 containers based
-      on treaps: <code class="computeroutput"><a class="link" href="../boost/intrusive/treap_set.html" title="Class template treap_set">treap_set</a></code>,
-      <code class="computeroutput"><a class="link" href="../boost/intrusive/treap_multiset.html" title="Class template treap_multiset">treap_multiset</a></code>
-      and <code class="computeroutput"><a class="link" href="../boost/intrusive/treap.html" title="Class template treap">treap</a></code>. The first two
-      are similar to <code class="computeroutput"><a class="link" href="../boost/intrusive/set.html" title="Class template set">set</a></code> or <code class="computeroutput"><a class="link" href="../boost/intrusive/multiset.html" title="Class template multiset">multiset</a></code> and the latter is a generalization
+      on treaps: <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1treap__set.html" title="Class template treap_set">treap_set</a></code>,
+      <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1treap__multiset.html" title="Class template treap_multiset">treap_multiset</a></code>
+      and <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1treap.html" title="Class template treap">treap</a></code>. The first two
+      are similar to <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1set.html" title="Class template set">set</a></code> or <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1multiset.html" title="Class template multiset">multiset</a></code> and the latter is a generalization
       that offers functions both to insert unique and multiple keys.
     </p>
 <p>
       The memory overhead of these containers with Boost.Intrusive hooks is 3 pointers.
     </p>
 <p>
-      An empty, <code class="computeroutput"><a class="link" href="../boost/intrusive/treap_set.html" title="Class template treap_set">treap_set</a></code>,
-      <code class="computeroutput"><a class="link" href="../boost/intrusive/treap_multiset.html" title="Class template treap_multiset">treap_multiset</a></code>
-      or <code class="computeroutput"><a class="link" href="../boost/intrusive/treap.html" title="Class template treap">treap</a></code> has also the
+      An empty, <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1treap__set.html" title="Class template treap_set">treap_set</a></code>,
+      <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1treap__multiset.html" title="Class template treap_multiset">treap_multiset</a></code>
+      or <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1treap.html" title="Class template treap">treap</a></code> has also the
       size of 3 pointers and an integer (supposing empty function objects for key
       and priority comparison and constant-time size).
     </p>
@@ -220,7 +221,7 @@
 <a name="intrusive.treap_set_multiset.treap_set_multiset_example"></a><a class="link" href="treap_set_multiset.html#intrusive.treap_set_multiset.treap_set_multiset_example" title="Example">Example</a>
 </h3></div></div></div>
 <p>
-        Now let's see a small example using binary search tree hooks and <code class="computeroutput"><a class="link" href="../boost/intrusive/treap_set.html" title="Class template treap_set">treap_set</a></code>/ <code class="computeroutput"><a class="link" href="../boost/intrusive/treap_multiset.html" title="Class template treap_multiset">treap_multiset</a></code>
+        Now let's see a small example using binary search tree hooks and <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1treap__set.html" title="Class template treap_set">treap_set</a></code>/ <code class="computeroutput"><a class="link" href="../doxygen/classboost_1_1intrusive_1_1treap__multiset.html" title="Class template treap_multiset">treap_multiset</a></code>
         containers:
       </p>
 <pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">intrusive</span><span class="special">/</span><span class="identifier">treap_set</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
@@ -279,7 +280,7 @@
 
    <span class="comment">//Create several MyClass objects, each one with a different value</span>
    <span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">MyClass</span><span class="special">&gt;</span> <span class="identifier">values</span><span class="special">;</span>
-   <span class="keyword">for</span><span class="special">(</span><span class="keyword">int</span> <span class="identifier">i</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span> <span class="identifier">i</span> <span class="special">&lt;</span> <span class="number">100</span><span class="special">;</span> <span class="special">++</span><span class="identifier">i</span><span class="special">)</span>  <span class="identifier">values</span><span class="special">.</span><span class="identifier">push_back</span><span class="special">(</span><span class="identifier">MyClass</span><span class="special">(</span><span class="identifier">i</span><span class="special">,</span> <span class="special">(</span><span class="identifier">i</span> <span class="special">%</span> <span class="number">10</span><span class="special">)));</span>
+   <span class="keyword">for</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">i</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span> <span class="identifier">i</span> <span class="special">&lt;</span> <span class="number">100u</span><span class="special">;</span> <span class="special">++</span><span class="identifier">i</span><span class="special">)</span>  <span class="identifier">values</span><span class="special">.</span><span class="identifier">push_back</span><span class="special">(</span><span class="identifier">MyClass</span><span class="special">((</span><span class="keyword">int</span><span class="special">)</span><span class="identifier">i</span><span class="special">,</span> <span class="keyword">unsigned</span><span class="special">(</span><span class="identifier">i</span> <span class="special">%</span> <span class="number">10</span><span class="special">)));</span>
 
    <span class="identifier">BaseSet</span> <span class="identifier">baseset</span><span class="special">;</span>
    <span class="identifier">MemberMultiset</span> <span class="identifier">membermultiset</span><span class="special">;</span>
@@ -319,14 +320,11 @@
 </pre>
 </div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2005 Olaf Krzikalla<br>Copyright © 2006-2015 Ion Gaztanaga<p>
+<div class="copyright-footer">Copyright © 2005 Olaf Krzikalla<br>Copyright © 2006-2015 Ion Gaztanaga<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="sg_set_multiset.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../intrusive.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="bst_hooks.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>

@@ -1,8 +1,7 @@
 #ifndef BOOST_LEAF_TEST_RES_HPP_INCLUDED
 #define BOOST_LEAF_TEST_RES_HPP_INCLUDED
 
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -33,7 +32,7 @@ public:
     {
     }
     template <class Enum>
-    test_res( Enum e, typename std::enable_if<std::is_error_code_enum<Enum>::value, Enum>::type * = 0 ):
+    test_res( Enum e, typename std::enable_if<std::is_error_code_enum<Enum>::value, Enum>::type * = nullptr ):
         value_(),
         error_(make_error_code(e)),
         which_(variant::error)
@@ -41,16 +40,16 @@ public:
     }
     explicit operator bool() const noexcept
     {
-        return which_==variant::value;
+        return which_ == variant::value;
     }
     T const & value() const
     {
-        BOOST_LEAF_ASSERT(which_==variant::value);
+        BOOST_LEAF_ASSERT(which_ == variant::value);
         return value_;
     }
     E const & error() const
     {
-        BOOST_LEAF_ASSERT(which_==variant::error);
+        BOOST_LEAF_ASSERT(which_ == variant::error);
         return error_;
     }
 };
@@ -77,22 +76,22 @@ public:
     {
     }
     template <class Enum>
-    test_res( Enum e, typename std::enable_if<std::is_error_code_enum<Enum>::value, Enum>::type * = 0 ):
+    test_res( Enum e, typename std::enable_if<std::is_error_code_enum<Enum>::value, Enum>::type * = nullptr ):
         error_(make_error_code(e)),
         which_(variant::error)
     {
     }
     explicit operator bool() const noexcept
     {
-        return which_==variant::value;
+        return which_ == variant::value;
     }
     void value() const
     {
-        BOOST_LEAF_ASSERT(which_==variant::value);
+        BOOST_LEAF_ASSERT(which_ == variant::value);
     }
     E const & error() const
     {
-        BOOST_LEAF_ASSERT(which_==variant::error);
+        BOOST_LEAF_ASSERT(which_ == variant::error);
         return error_;
     }
 };

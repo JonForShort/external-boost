@@ -7,7 +7,8 @@
 <link rel="home" href="../../../boost_asio.html" title="Boost.Asio">
 <link rel="up" href="../basic_socket.html" title="basic_socket">
 <link rel="prev" href="lowest_layer/overload2.html" title="basic_socket::lowest_layer (2 of 2 overloads)">
-<link rel="next" href="max_connections.html" title="basic_socket::max_connections">
+<link rel="next" href="max_listen_connections.html" title="basic_socket::max_listen_connections">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,7 +21,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="lowest_layer/overload2.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../basic_socket.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="max_connections.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="lowest_layer/overload2.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../basic_socket.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="max_listen_connections.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
@@ -29,10 +30,10 @@
 <p>
           <a class="indexterm" name="boost_asio.indexterm.basic_socket.lowest_layer_type"></a> 
 A
-          <a class="link" href="../basic_socket.html" title="basic_socket"><code class="computeroutput">basic_socket</code></a>
+          <a class="link" href="../basic_socket.html" title="basic_socket"><code class="computeroutput"><span class="identifier">basic_socket</span></code></a>
           is always the lowest layer.
         </p>
-<pre class="programlisting">typedef basic_socket&lt; Protocol, Executor &gt; lowest_layer_type;
+<pre class="programlisting"><span class="keyword">typedef</span> <span class="identifier">basic_socket</span><span class="special">&lt;</span> <span class="identifier">Protocol</span><span class="special">,</span> <span class="identifier">Executor</span> <span class="special">&gt;</span> <span class="identifier">lowest_layer_type</span><span class="special">;</span>
 </pre>
 <h6>
 <a name="boost_asio.reference.basic_socket.lowest_layer_type.h0"></a>
@@ -737,19 +738,6 @@ A
 <tr>
 <td>
                   <p>
-                    <a class="link" href="max_connections.html" title="basic_socket::max_connections"><span class="bold"><strong>max_connections</strong></span></a> <span class="silver">[static]</span>
-                  </p>
-                </td>
-<td>
-                  <p>
-                    (Deprecated: Use max_listen_connections.) The maximum length
-                    of the queue of pending incoming connections.
-                  </p>
-                </td>
-</tr>
-<tr>
-<td>
-                  <p>
                     <a class="link" href="max_listen_connections.html" title="basic_socket::max_listen_connections"><span class="bold"><strong>max_listen_connections</strong></span></a> <span class="silver">[static]</span>
                   </p>
                 </td>
@@ -810,7 +798,7 @@ A
 </tbody>
 </table></div>
 <p>
-          The <a class="link" href="../basic_socket.html" title="basic_socket"><code class="computeroutput">basic_socket</code></a>
+          The <a class="link" href="../basic_socket.html" title="basic_socket"><code class="computeroutput"><span class="identifier">basic_socket</span></code></a>
           class template provides functionality that is common to both stream-oriented
           and datagram-oriented sockets.
         </p>
@@ -836,18 +824,15 @@ A
           <span class="emphasis"><em>Convenience header: </em></span><code class="literal">boost/asio.hpp</code>
         </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2020 Christopher M.
+<div class="copyright-footer">Copyright © 2003-2025 Christopher M.
       Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="lowest_layer/overload2.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../basic_socket.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="max_connections.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="lowest_layer/overload2.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../basic_socket.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="max_listen_connections.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

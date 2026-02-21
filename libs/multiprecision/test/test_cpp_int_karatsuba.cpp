@@ -68,14 +68,14 @@ T generate_random(unsigned bits_wanted)
 }
 
 template <class T>
-struct is_checked_cpp_int : public boost::mpl::false_
+struct is_checked_cpp_int : public std::integral_constant<bool, false>
 {};
-template <unsigned MinBits, unsigned MaxBits, boost::multiprecision::cpp_integer_type SignType, class Allocator, boost::multiprecision::expression_template_option ET>
-struct is_checked_cpp_int<boost::multiprecision::number<boost::multiprecision::cpp_int_backend<MinBits, MaxBits, SignType, boost::multiprecision::checked, Allocator>, ET> > : public boost::mpl::true_
+template <std::size_t MinBits, std::size_t MaxBits, boost::multiprecision::cpp_integer_type SignType, class Allocator, boost::multiprecision::expression_template_option ET>
+struct is_checked_cpp_int<boost::multiprecision::number<boost::multiprecision::cpp_int_backend<MinBits, MaxBits, SignType, boost::multiprecision::checked, Allocator>, ET> > : public std::integral_constant<bool, true>
 {};
 
 template <class N>
-typename boost::enable_if_c<boost::multiprecision::backends::is_fixed_precision<typename N::backend_type>::value && !is_checked_cpp_int<N>::value>::type test(const N&)
+typename std::enable_if<boost::multiprecision::backends::is_fixed_precision<typename N::backend_type>::value && !is_checked_cpp_int<N>::value>::type test(const N&)
 {
    using namespace boost::multiprecision;
 
@@ -102,6 +102,7 @@ typename boost::enable_if_c<boost::multiprecision::backends::is_fixed_precision<
 
       if (last_error_count != (unsigned)boost::detail::test_errors())
       {
+         // LCOV_EXCL_START
          last_error_count = boost::detail::test_errors();
          std::cout << std::hex << std::showbase;
          std::cout << f1 << std::endl;
@@ -110,6 +111,7 @@ typename boost::enable_if_c<boost::multiprecision::backends::is_fixed_precision<
          std::cout << g << std::endl;
          std::cout << r1 << std::endl;
          std::cout << r << std::endl;
+         // LCOV_EXCL_STOP
       }
 
       static boost::random::mt19937             gen;
@@ -125,6 +127,7 @@ typename boost::enable_if_c<boost::multiprecision::backends::is_fixed_precision<
 
       if (last_error_count != (unsigned)boost::detail::test_errors())
       {
+         // LCOV_EXCL_START
          last_error_count = boost::detail::test_errors();
          std::cout << std::hex << std::showbase;
          std::cout << f1 << std::endl;
@@ -133,6 +136,7 @@ typename boost::enable_if_c<boost::multiprecision::backends::is_fixed_precision<
          std::cout << g << std::endl;
          std::cout << r1 << std::endl;
          std::cout << r << std::endl;
+         // LCOV_EXCL_STOP
       }
 
 #ifndef CI_SUPPRESS_KNOWN_ISSUES
@@ -174,17 +178,19 @@ typename boost::enable_if_c<boost::multiprecision::backends::is_fixed_precision<
 
       if (last_error_count != (unsigned)boost::detail::test_errors())
       {
+         // LCOV_EXCL_START
          last_error_count = boost::detail::test_errors();
          std::cout << std::hex << std::showbase;
          std::cout << a << std::endl;
          std::cout << x << std::endl;
          std::cout << b << std::endl;
          std::cout << y << std::endl;
+         // LCOV_EXCL_STOP
       }
    }
 }
 template <class N>
-typename boost::disable_if_c<boost::multiprecision::backends::is_fixed_precision<typename N::backend_type>::value && !is_checked_cpp_int<N>::value>::type test(const N&)
+typename std::enable_if<!(boost::multiprecision::backends::is_fixed_precision<typename N::backend_type>::value && !is_checked_cpp_int<N>::value)>::type test(const N&)
 {
    using namespace boost::multiprecision;
 
@@ -213,6 +219,7 @@ typename boost::disable_if_c<boost::multiprecision::backends::is_fixed_precision
 
       if (last_error_count != (unsigned)boost::detail::test_errors())
       {
+         // LCOV_EXCL_START
          last_error_count = boost::detail::test_errors();
          std::cout << std::hex << std::showbase;
          std::cout << f1 << std::endl;
@@ -221,6 +228,7 @@ typename boost::disable_if_c<boost::multiprecision::backends::is_fixed_precision
          std::cout << g << std::endl;
          std::cout << r1 << std::endl;
          std::cout << r << std::endl;
+         // LCOV_EXCL_STOP
       }
 
 #ifndef CI_SUPPRESS_KNOWN_ISSUES
@@ -259,12 +267,14 @@ typename boost::disable_if_c<boost::multiprecision::backends::is_fixed_precision
 
       if (last_error_count != (unsigned)boost::detail::test_errors())
       {
+         // LCOV_EXCL_START
          last_error_count = boost::detail::test_errors();
          std::cout << std::hex << std::showbase;
          std::cout << a << std::endl;
          std::cout << x << std::endl;
          std::cout << b << std::endl;
          std::cout << y << std::endl;
+         // LCOV_EXCL_STOP
       }
    }
 }

@@ -2,13 +2,14 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Chapter 28. Boost.PFR 2.0</title>
+<title>Chapter 26. Boost.PFR 2.3</title>
 <link rel="stylesheet" href="../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
 <link rel="up" href="libraries.html" title="Part I. The Boost C++ Libraries (BoostBook Subset)">
-<link rel="prev" href="auxiliary.html" title="Auxiliary Components">
+<link rel="prev" href="boost_parser/rationale.html" title="Rationale">
 <link rel="next" href="boost_pfr/short_examples_for_the_impatient.html" title="Short Examples for the Impatient">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -21,13 +22,13 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="auxiliary.html"><img src="../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="libraries.html"><img src="../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="index.html"><img src="../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost_pfr/short_examples_for_the_impatient.html"><img src="../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="boost_parser/rationale.html"><img src="../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="libraries.html"><img src="../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="index.html"><img src="../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost_pfr/short_examples_for_the_impatient.html"><img src="../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="chapter">
 <div class="titlepage"><div>
 <div><h2 class="title">
-<a name="boost_pfr"></a>Chapter 28. Boost.PFR 2.0</h2></div>
-<div><p class="copyright">Copyright © 2016-2020 Antony Polukhin</p></div>
+<a name="boost_pfr"></a>Chapter 26. Boost.PFR 2.3</h2></div>
+<div><p class="copyright">Copyright © 2016-2025 Antony Polukhin</p></div>
 <div><div class="legalnotice">
 <a name="boost_pfr.legal"></a><p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -53,22 +54,29 @@
       ways of getting operators </a></span></dt>
 <dt><span class="section"><a href="boost_pfr/tutorial.html#boost_pfr.tutorial.reflection_of_unions">Reflection of
       unions </a></span></dt>
+<dt><span class="section"><a href="boost_pfr/tutorial.html#boost_pfr.tutorial.reflection_of_field_name">Reflection
+      of field name </a></span></dt>
 </dl></dd>
 <dt><span class="section"><a href="boost_pfr/limitations_and_configuration.html">Limitations and
     Configuration</a></span></dt>
+<dt><span class="section"><a href="boost_pfr/pfr_as_a_c_20_module.html">PFR as a C++20 module</a></span></dt>
 <dt><span class="section"><a href="boost_pfr/how_it_works.html">How it works</a></span></dt>
 <dt><span class="section"><a href="boost_pfr/acknowledgements.html">Acknowledgements</a></span></dt>
-<dt><span class="section"><a href="reference_section.html">Reference Section</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html">Reference Section of PFR</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr_hpp">Header &lt;boost/pfr.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr.core_hpp">Header &lt;boost/pfr/core.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr.functions_for_hpp">Header &lt;boost/pfr/functions_for.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr.functors_hpp">Header &lt;boost/pfr/functors.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr.io_hpp">Header &lt;boost/pfr/io.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr.io_fields_hpp">Header &lt;boost/pfr/io_fields.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr.ops_hpp">Header &lt;boost/pfr/ops.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr.ops_fields_hpp">Header &lt;boost/pfr/ops_fields.hpp&gt;</a></span></dt>
-<dt><span class="section"><a href="reference_section.html#header.boost.pfr.tuple_size_hpp">Header &lt;boost/pfr/tuple_size.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.pfr_8hpp">Header &lt;boost/pfr.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.config_8hpp">Header &lt;boost/pfr/config.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.core_8hpp">Header &lt;boost/pfr/core.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.core__name_8hpp">Header &lt;boost/pfr/core_name.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.functions__for_8hpp">Header &lt;boost/pfr/functions_for.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.functors_8hpp">Header &lt;boost/pfr/functors.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.io_8hpp">Header &lt;boost/pfr/io.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.io__fields_8hpp">Header &lt;boost/pfr/io_fields.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.ops_8hpp">Header &lt;boost/pfr/ops.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.ops__fields_8hpp">Header &lt;boost/pfr/ops_fields.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.traits_8hpp">Header &lt;boost/pfr/traits.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.traits__fwd_8hpp">Header &lt;boost/pfr/traits_fwd.hpp&gt;</a></span></dt>
+<dt><span class="section"><a href="reference_section_of_pfr.html#doxygen.reference_section_of_pfr.tuple__size_8hpp">Header &lt;boost/pfr/tuple_size.hpp&gt;</a></span></dt>
 </dl></dd>
 </dl>
 </div>
@@ -101,6 +109,7 @@
 <span class="special">}</span>
 </pre>
 <p>
+      Experiment with the sample <a href="https://godbolt.org/z/PfYsWKb7v" target="_top">online</a>.
       See <a class="link" href="boost_pfr/limitations_and_configuration.html" title="Limitations and Configuration"><span class="bold"><strong>limitations</strong></span></a>.
     </p>
 <h3>
@@ -132,7 +141,7 @@
 </tr></thead>
 <tbody><tr>
 <td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">db</span><span class="special">/</span><span class="identifier">api</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+<pre class="table-programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">db</span><span class="special">/</span><span class="identifier">api</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 
 <span class="keyword">struct</span> <span class="identifier">user_info</span> <span class="special">{</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">int64_t</span> <span class="identifier">id</span><span class="special">;</span>
@@ -146,23 +155,23 @@
         <span class="identifier">name</span>
     <span class="special">);</span>
 
-    <span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+    <span class="comment">/////////////////////////////////////////////////////////////////////////////</span>
     <span class="identifier">user_info</span> <span class="identifier">info</span> <span class="special">{</span>
         <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(</span><span class="identifier">info_tuple</span><span class="special">)),</span>
         <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">1</span><span class="special">&gt;(</span><span class="identifier">info_tuple</span><span class="special">)),</span>
         <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">2</span><span class="special">&gt;(</span><span class="identifier">info_tuple</span><span class="special">)),</span>
         <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">3</span><span class="special">&gt;(</span><span class="identifier">info_tuple</span><span class="special">)),</span>
     <span class="special">}</span>
-    <span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+    <span class="comment">/////////////////////////////////////////////////////////////////////////////</span>
 
     <span class="keyword">auto</span> <span class="identifier">friend_info</span> <span class="special">=</span> <span class="identifier">ask_user_for_friend</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">info</span><span class="special">));</span>
 
     <span class="identifier">db</span><span class="special">::</span><span class="identifier">insert</span><span class="special">(</span>
         <span class="string">"INSERT INTO user_infos(id, name, email, login) VALUES ($0, $1, $2, $3)"</span><span class="special">,</span>
-        <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">friend_info</span><span class="special">.</span><span class="identifier">id</span><span class="special">),</span>    <span class="comment">//////////////////////////////////////////////</span>
-        <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">friend_info</span><span class="special">.</span><span class="identifier">name</span><span class="special">),</span>  <span class="comment">// Users are forced to move individual fields</span>
-        <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">friend_info</span><span class="special">.</span><span class="identifier">email</span><span class="special">),</span> <span class="comment">// because your library can not iterate over</span>
-        <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">friend_info</span><span class="special">.</span><span class="identifier">login</span><span class="special">)</span>  <span class="comment">// the fields of a user provided structure</span>
+        <span class="identifier">friend_info</span><span class="special">.</span><span class="identifier">id</span><span class="special">,</span>    <span class="comment">//////////////////////////////////////////////////////</span>
+        <span class="identifier">friend_info</span><span class="special">.</span><span class="identifier">name</span><span class="special">,</span>  <span class="comment">// Users are forced to enumerate fields because your</span>
+        <span class="identifier">friend_info</span><span class="special">.</span><span class="identifier">email</span><span class="special">,</span> <span class="comment">// library can not iterate over the fields of a user</span>
+        <span class="identifier">friend_info</span><span class="special">.</span><span class="identifier">login</span>  <span class="comment">// provided structure</span>
     <span class="special">);</span>
 
     <span class="keyword">return</span> <span class="identifier">friend_info</span><span class="special">;</span>
@@ -170,7 +179,7 @@
 </pre>
             </td>
 <td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">db</span><span class="special">/</span><span class="identifier">api</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+<pre class="table-programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">db</span><span class="special">/</span><span class="identifier">api</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 
 <span class="keyword">struct</span> <span class="identifier">user_info</span> <span class="special">{</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">int64_t</span> <span class="identifier">id</span><span class="special">;</span>
@@ -184,22 +193,22 @@
         <span class="identifier">name</span>
     <span class="special">);</span>
 
-    <span class="comment">////////////////// No boilerplate code to move data around /////////////////////</span>
+    <span class="comment">////////////////// No boilerplate code to move data around //////////////////</span>
 
 
 
 
 
 
-    <span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
+    <span class="comment">/////////////////////////////////////////////////////////////////////////////</span>
 
     <span class="keyword">auto</span> <span class="identifier">friend_info</span> <span class="special">=</span> <span class="identifier">ask_user_for_friend</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">info</span><span class="special">));</span>
 
     <span class="identifier">db</span><span class="special">::</span><span class="identifier">insert</span><span class="special">(</span>
         <span class="string">"INSERT INTO user_infos(id, name, email, login) VALUES ($0, $1, $2, $3)"</span><span class="special">,</span>
-        <span class="identifier">friend_info</span>     <span class="comment">////////////////////////////////////////////////////////////</span>
-                        <span class="comment">// Boost.PFR allows you to iterate over all the fields of a</span>
-                        <span class="comment">// user provided structure</span>
+        <span class="identifier">friend_info</span>     <span class="comment">/////////////////////////////////////////////////////////</span>
+                        <span class="comment">// Boost.PFR allows you to iterate over all the fields</span>
+                        <span class="comment">// of a user provided structure</span>
                         <span class="comment">//</span>
     <span class="special">);</span>
 
@@ -233,14 +242,14 @@
 </tr></thead>
 <tbody><tr>
 <td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">db</span><span class="special">/</span><span class="identifier">api</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+<pre class="table-programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">db</span><span class="special">/</span><span class="identifier">api</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 
 <span class="keyword">struct</span> <span class="identifier">user_info</span> <span class="special">{</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">int64_t</span> <span class="identifier">id</span><span class="special">;</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">name</span><span class="special">,</span> <span class="identifier">email</span><span class="special">,</span> <span class="identifier">login</span><span class="special">;</span>
 <span class="special">};</span>
 
-<span class="comment">/// Customizations via hand-written code or macro like BOOST_FUSION_ADAPT_STRUCT ///</span>
+<span class="comment">/// Customizations via hand-written code ////////////////////////////////////////</span>
 <span class="keyword">auto</span> <span class="identifier">db_api_tie</span><span class="special">(</span><span class="identifier">user_info</span><span class="special">&amp;</span> <span class="identifier">ui</span><span class="special">)</span> <span class="keyword">noexcept</span> <span class="special">{</span>
     <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">ui</span><span class="special">.</span><span class="identifier">id</span><span class="special">,</span> <span class="identifier">ui</span><span class="special">.</span><span class="identifier">name</span><span class="special">,</span> <span class="identifier">ui</span><span class="special">.</span><span class="identifier">email</span><span class="special">,</span> <span class="identifier">ui</span><span class="special">.</span><span class="identifier">login</span><span class="special">);</span>
 <span class="special">}</span>
@@ -248,18 +257,18 @@
 <span class="keyword">auto</span> <span class="identifier">db_api_tie</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">user_info</span><span class="special">&amp;</span> <span class="identifier">ui</span><span class="special">)</span> <span class="keyword">noexcept</span> <span class="special">{</span>
     <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">tie</span><span class="special">(</span><span class="identifier">ui</span><span class="special">.</span><span class="identifier">id</span><span class="special">,</span> <span class="identifier">ui</span><span class="special">.</span><span class="identifier">name</span><span class="special">,</span> <span class="identifier">ui</span><span class="special">.</span><span class="identifier">email</span><span class="special">,</span> <span class="identifier">ui</span><span class="special">.</span><span class="identifier">login</span><span class="special">);</span>
 <span class="special">}</span>
-<span class="comment">////////////////////////////////////////////////////////////////////////////////////</span>
+<span class="comment">/////////////////////////////////////////////////////////////////////////////////</span>
 </pre>
             </td>
 <td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">db</span><span class="special">/</span><span class="identifier">api</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+<pre class="table-programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">db</span><span class="special">/</span><span class="identifier">api</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 
 <span class="keyword">struct</span> <span class="identifier">user_info</span> <span class="special">{</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">int64_t</span> <span class="identifier">id</span><span class="special">;</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">name</span><span class="special">,</span> <span class="identifier">email</span><span class="special">,</span> <span class="identifier">login</span><span class="special">;</span>
 <span class="special">};</span>
 
-<span class="comment">//////// With Boost.PFR there's no need in hand written customizations /////////////</span>
+<span class="comment">//////// With Boost.PFR there's no need in hand written customizations //////////</span>
 
 
 
@@ -267,15 +276,39 @@
 
 
 
-<span class="comment">////////////////////////////////////////////////////////////////////////////////////</span>
+<span class="comment">/////////////////////////////////////////////////////////////////////////////////</span>
 </pre>
             </td>
 </tr></tbody>
 </table>
 </div>
 <p>
+      Imagine that you are writing a serialization library. Serialization of user
+      provided structures (and nested structures) with Boost.PFR it is just as simple
+      as:
+    </p>
+<pre class="programlisting"><span class="keyword">void</span> <span class="identifier">Write</span><span class="special">(</span><span class="identifier">Writer</span><span class="special">&amp;</span> <span class="identifier">writer</span><span class="special">,</span> <span class="keyword">int</span> <span class="identifier">value</span><span class="special">);</span>
+<span class="keyword">void</span> <span class="identifier">Write</span><span class="special">(</span><span class="identifier">Writer</span><span class="special">&amp;</span> <span class="identifier">writer</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> <span class="identifier">value</span><span class="special">);</span>
+
+<span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">T</span><span class="special">&gt;</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">enable_if_t</span><span class="special">&lt;</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">pfr</span><span class="special">::</span><span class="identifier">is_implicitly_reflectable_v</span><span class="special">&lt;</span><span class="identifier">T</span><span class="special">&gt;&gt;</span> <span class="identifier">Write</span><span class="special">(</span><span class="identifier">Writer</span><span class="special">&amp;</span> <span class="identifier">writer</span><span class="special">,</span> <span class="keyword">const</span> <span class="identifier">T</span><span class="special">&amp;</span> <span class="identifier">value</span><span class="special">)</span> <span class="special">{</span>
+  <span class="identifier">boost</span><span class="special">::</span><span class="identifier">pfr</span><span class="special">::</span><span class="identifier">for_each_field</span><span class="special">(</span>
+      <span class="identifier">value</span><span class="special">,</span> <span class="special">[&amp;</span><span class="identifier">writer</span><span class="special">](</span><span class="keyword">const</span> <span class="keyword">auto</span><span class="special">&amp;</span> <span class="identifier">field</span><span class="special">)</span> <span class="special">{</span> <span class="identifier">Write</span><span class="special">(</span><span class="identifier">writer</span><span class="special">,</span> <span class="identifier">field</span><span class="special">);</span> <span class="special">});</span>
+<span class="special">}</span>
+</pre>
+<p>
       With Boost.PFR the code is shorter, more readable and more pleasant to write.
     </p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+        All the above examples were inspired by the Boost.PFR usage in <a href="https://github.com/userver-framework/userver" target="_top">🐙
+        userver framework</a>.
+      </p></td></tr>
+</table></div>
 <h3>
 <a name="boost_pfr.intro.h1"></a>
       <span class="phrase"><a name="boost_pfr.intro.out_of_the_box_functionality"></a></span><a class="link" href="boost_pfr.html#boost_pfr.intro.out_of_the_box_functionality">Out
@@ -299,22 +332,35 @@
           IO streaming
         </li>
 <li class="listitem">
-          access to members by index
+          access to members by index or type
+        </li>
+<li class="listitem">
+          access to member's names by index
         </li>
 <li class="listitem">
           member type retrieval
         </li>
 <li class="listitem">
           methods for cooperation with <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span></code>
+          for members
+        </li>
+<li class="listitem">
+          methods for cooperation with <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">array</span></code>
+          for member's names
         </li>
 <li class="listitem">
           methods to visit each field of the structure
+        </li>
+<li class="listitem">
+          trait to detect potential ability to reflect type, and ability to override
+          trait's decision in user-side code
         </li>
 </ul></div>
 <p>
       Boost.PFR is a header only library that does not depend on Boost. You can just
       copy the content of the "include" folder <a href="https://github.com/boostorg/pfr" target="_top">from
-      the github</a> into your project, and the library will work fine.
+      the Boost.PFR github</a> into your project, and the library will work fine.
+      For a version of the library without <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span></code> namespace see <a href="https://github.com/apolukhin/pfr_non_boost" target="_top">PFR</a>.
     </p>
 <div class="caution"><table border="0" summary="Caution">
 <tr>
@@ -322,19 +368,17 @@
 <th align="left">Caution</th>
 </tr>
 <tr><td align="left" valign="top"><p>
-        Recommended C++ Standards are C++17 and above. Library requires at least
-        C++14! Pre C++14 compilers (C++11, C++03...) are not supported
+        Recommended C++ Standards are C++20 and above. C++17 completely enough for
+        a user who doesn't want accessing name of structure member. Library requires
+        at least C++14! Pre C++14 compilers (C++11, C++03...) are not supported
       </p></td></tr>
 </table></div>
 </div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"><p><small>Last revised: December 03, 2020 at 05:08:24 GMT</small></p></td>
-<td align="right"><div class="copyright-footer"></div></td>
-</tr></table>
+<div class="copyright-footer"></div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="auxiliary.html"><img src="../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="libraries.html"><img src="../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="index.html"><img src="../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost_pfr/short_examples_for_the_impatient.html"><img src="../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="boost_parser/rationale.html"><img src="../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="libraries.html"><img src="../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="index.html"><img src="../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost_pfr/short_examples_for_the_impatient.html"><img src="../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

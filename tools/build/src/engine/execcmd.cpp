@@ -41,10 +41,8 @@ static int intr;
  */
 
 void argv_from_shell( char const * * argv, LIST * shell, char const * command,
-    int const slot )
+    int32_t const slot )
 {
-    static char jobno[ 4 ];
-
     int i;
     int gotpercent = 0;
     LISTITER iter = list_begin( shell );
@@ -52,14 +50,14 @@ void argv_from_shell( char const * * argv, LIST * shell, char const * command,
 
     assert( 0 <= slot );
     assert( slot < 999 );
-    sprintf( jobno, "%d", slot + 1 );
+    auto jobno = b2::value::as_string( slot + 1 );
 
     for ( i = 0; iter != end && i < MAXARGC; ++i, iter = list_next( iter ) )
     {
         switch ( object_str( list_item( iter ) )[ 0 ] )
         {
             case '%': argv[ i ] = command; ++gotpercent; break;
-            case '!': argv[ i ] = jobno; break;
+            case '!': argv[ i ] = jobno->str(); break;
             default : argv[ i ] = object_str( list_item( iter ) );
         }
     }
@@ -74,12 +72,12 @@ void argv_from_shell( char const * * argv, LIST * shell, char const * command,
 /* Returns whether the given command string contains lines longer than the given
  * maximum.
  */
-int check_cmd_for_too_long_lines( char const * command, size_t max,
-    int * const error_length, int * const error_max_length )
+int check_cmd_for_too_long_lines( char const * command, int32_t max,
+    int32_t * const error_length, int32_t * const error_max_length )
 {
     while ( *command )
     {
-        size_t const l = strcspn( command, "\n" );
+        int32_t const l = int32_t(strcspn( command, "\n" ));
         if ( l > max )
         {
             *error_length = l;

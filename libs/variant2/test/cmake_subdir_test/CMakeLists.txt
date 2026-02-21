@@ -7,6 +7,8 @@ cmake_minimum_required(VERSION 3.5...3.16)
 project(cmake_subdir_test LANGUAGES CXX)
 
 add_subdirectory(../.. boostorg/variant2)
+
+add_subdirectory(../../../assert boostorg/assert)
 add_subdirectory(../../../config boostorg/config)
 add_subdirectory(../../../mp11 boostorg/mp11)
 
@@ -16,4 +18,4 @@ target_link_libraries(quick Boost::variant2)
 enable_testing()
 add_test(quick quick)
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>)
+add_custom_target(check VERBATIM COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C $<CONFIG>)

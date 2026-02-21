@@ -17,11 +17,11 @@ using namespace boost::math::tools;
 using namespace boost::math;
 using namespace std;
 
-#include <libs/math/test/table_type.hpp>
+#include <table_type.hpp>
 
 #define T double
 #define SC_(x) static_cast<double>(x)
-#include <libs/math/test/ibeta_int_data.ipp>
+#include <ibeta_int_data.ipp>
 
 int main(int, char* [])
 {
@@ -40,7 +40,7 @@ int main(int, char* [])
       "//  Boost Software License, Version 1.0. (See accompanying file\n"
       "//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)\n"
       "\n\n"
-      "static const boost::array<boost::array<typename table_type<T>::type, 4>, " << ibeta_int_data.size() << "> ibeta_derivative_small_data = { {\n";
+      "static const std::array<std::array<typename table_type<T>::type, 4>, " << ibeta_int_data.size() << "> ibeta_derivative_small_data = { {\n";
      
 
    for(unsigned i = 0; i < ibeta_int_data.size(); ++i)

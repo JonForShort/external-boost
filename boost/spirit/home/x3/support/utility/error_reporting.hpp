@@ -64,8 +64,6 @@ namespace boost { namespace spirit { namespace x3
         void print_file_line(std::size_t line) const;
         void print_line(Iterator line_start, Iterator last) const;
         void print_indicator(Iterator& line_start, Iterator last, char ind) const;
-        void skip_whitespace(Iterator& err_pos, Iterator last) const;
-        void skip_non_whitespace(Iterator& err_pos, Iterator last) const;
         Iterator get_line_start(Iterator first, Iterator pos) const;
         std::size_t position(Iterator i) const;
 
@@ -87,7 +85,7 @@ namespace boost { namespace spirit { namespace x3
             err_out << "In ";
         }
 
-        err_out << "line " << line << ':' << std::endl;
+        err_out << "line " << line << ':' << '\n';
     }
 
     template <typename Iterator>
@@ -104,7 +102,7 @@ namespace boost { namespace spirit { namespace x3
         }
         typedef typename std::iterator_traits<Iterator>::value_type char_type;
         std::basic_string<char_type> line{start, end};
-        err_out << x3::to_utf8(line) << std::endl;
+        err_out << x3::to_utf8(line) << '\n';
     }
 
     template <typename Iterator>
@@ -123,41 +121,15 @@ namespace boost { namespace spirit { namespace x3
         }
     }
 
-    template <typename Iterator>
-    void error_handler<Iterator>::skip_whitespace(Iterator& err_pos, Iterator last) const
-    {
-        // make sure err_pos does not point to white space
-        while (err_pos != last)
-        {
-            char c = *err_pos;
-            if (std::isspace(c))
-                ++err_pos;
-            else
-                break;
-        }
-    }
-
-    template <typename Iterator>
-    void error_handler<Iterator>::skip_non_whitespace(Iterator& err_pos, Iterator last) const
-    {
-        // make sure err_pos does not point to white space
-        while (err_pos != last)
-        {
-            char c = *err_pos;
-            if (std::isspace(c))
-                break;
-            else
-                ++err_pos;
-        }
-    }
-
     template <class Iterator>
     inline Iterator error_handler<Iterator>::get_line_start(Iterator first, Iterator pos) const
     {
         Iterator latest = first;
-        for (Iterator i = first; i != pos; ++i)
+        for (Iterator i = first; i != pos;)
             if (*i == '\r' || *i == '\n')
-                latest = i;
+                latest = ++i;
+            else
+                ++i;
         return latest;
     }
 
@@ -192,18 +164,13 @@ namespace boost { namespace spirit { namespace x3
         Iterator first = pos_cache.first();
         Iterator last = pos_cache.last();
 
-        // make sure err_pos does not point to white space
-        skip_whitespace(err_pos, last);
-
         print_file_line(position(err_pos));
-        err_out << error_message << std::endl;
+        err_out << error_message << '\n';
 
         Iterator start = get_line_start(first, err_pos);
-        if (start != first)
-            ++start;
         print_line(start, last);
         print_indicator(start, err_pos, '_');
-        err_out << "^_" << std::endl;
+        err_out << "^_" << '\n';
     }
 
     template <typename Iterator>
@@ -213,19 +180,14 @@ namespace boost { namespace spirit { namespace x3
         Iterator first = pos_cache.first();
         Iterator last = pos_cache.last();
 
-        // make sure err_pos does not point to white space
-        skip_whitespace(err_first, last);
-
         print_file_line(position(err_first));
-        err_out << error_message << std::endl;
+        err_out << error_message << '\n';
 
         Iterator start = get_line_start(first, err_first);
-        if (start != first)
-            ++start;
         print_line(start, last);
         print_indicator(start, err_first, ' ');
         print_indicator(start, err_last, '~');
-        err_out << " <<-- Here" << std::endl;
+        err_out << " <<-- Here" << '\n';
     }
 
 }}}

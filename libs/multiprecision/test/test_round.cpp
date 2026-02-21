@@ -1,4 +1,5 @@
-//  (C) Copyright John Maddock 2007.
+//  (C) Copyright John Maddock 2007 - 2025.
+//  (C) Copyright Christopher Kormanyos 2023 - 2025.
 //  Use, modification and distribution are subject to the
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,15 +8,16 @@
 #define _SCL_SECURE_NO_WARNINGS
 #endif
 
-#include <boost/detail/lightweight_test.hpp>
-#include <boost/math/special_functions/round.hpp>
-#include <boost/math/special_functions/trunc.hpp>
-#include <boost/math/special_functions/modf.hpp>
-#include <boost/math/special_functions/sign.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include "test.hpp"
+#include <test.hpp>
 
-#if !defined(TEST_MPF_50) && !defined(TEST_MPF) && !defined(TEST_BACKEND) && !defined(TEST_CPP_DEC_FLOAT) && !defined(TEST_MPFR) && !defined(TEST_MPFR_50) && !defined(TEST_MPFI_50) && !defined(TEST_FLOAT128) && !defined(TEST_CPP_BIN_FLOAT)
+#include <boost/detail/lightweight_test.hpp>
+#include <boost/math/special_functions/modf.hpp>
+#include <boost/math/special_functions/round.hpp>
+#include <boost/math/special_functions/sign.hpp>
+#include <boost/math/special_functions/trunc.hpp>
+#include <boost/random/mersenne_twister.hpp>
+
+#if !defined(TEST_MPF_50) && !defined(TEST_MPF) && !defined(TEST_BACKEND) && !defined(TEST_CPP_DEC_FLOAT) && !defined(TEST_MPFR) && !defined(TEST_MPFR_50) && !defined(TEST_MPFI_50) && !defined(TEST_FLOAT128) && !defined(TEST_CPP_BIN_FLOAT) && !defined(TEST_CPP_DOUBLE_FLOAT)
 #define TEST_MPF_50
 #define TEST_MPFR_50
 #define TEST_MPFI_50
@@ -23,6 +25,7 @@
 #define TEST_CPP_DEC_FLOAT
 #define TEST_FLOAT128
 #define TEST_CPP_BIN_FLOAT
+#define TEST_CPP_DOUBLE_FLOAT
 
 #ifdef _MSC_VER
 #pragma message("CAUTION!!: No backend type specified so testing everything.... this will take some time!!")
@@ -32,6 +35,8 @@
 #endif
 
 #endif
+
+#include <test_traits.hpp> // Note: include this AFTER the test-backends are defined
 
 #if defined(TEST_MPF_50)
 #include <boost/multiprecision/gmp.hpp>
@@ -53,6 +58,12 @@
 #endif
 #ifdef TEST_FLOAT128
 #include <boost/multiprecision/float128.hpp>
+#endif
+#ifdef TEST_CPP_DOUBLE_FLOAT
+#if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+#else
+#include <boost/multiprecision/cpp_double_fp.hpp>
+#endif
 #endif
 
 #ifdef BOOST_MSVC
@@ -84,37 +95,38 @@ T get_random()
 }
 
 template <class T, class U>
-typename boost::disable_if_c<boost::multiprecision::is_interval_number<T>::value>::type check_within_half(T a, U u)
+typename std::enable_if<!boost::multiprecision::is_interval_number<T>::value>::type check_within_half(T a, U u)
 {
    BOOST_MATH_STD_USING
+
    if (fabs(a - u) > 0.5f)
    {
-      BOOST_ERROR("Rounded result differed by more than 0.5 from the original");
-      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)
-                << std::left << a << u << std::endl;
+      BOOST_ERROR("Rounded result differed by more than 0.5 from the original"); // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)     // LCOV_EXCL_LINE
+                << std::left << a << u << std::endl;                             // LCOV_EXCL_LINE
    }
    if ((fabs(a - u) == 0.5f) && (fabs(static_cast<T>(u)) < fabs(a)))
    {
-      BOOST_ERROR("Rounded result was towards zero with boost::round");
-      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)
-                << std::left << a << u << std::endl;
+      BOOST_ERROR("Rounded result was towards zero with boost::round");      // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40) // LCOV_EXCL_LINE
+                << std::left << a << u << std::endl;                         // LCOV_EXCL_LINE
    }
 }
 template <class T, class U>
-typename boost::enable_if_c<boost::multiprecision::is_interval_number<T>::value>::type check_within_half(T a, U u)
+typename std::enable_if<boost::multiprecision::is_interval_number<T>::value>::type check_within_half(T a, U u)
 {
    BOOST_MATH_STD_USING
    if (upper(T(fabs(a - u))) > 0.5f)
    {
-      BOOST_ERROR("Rounded result differed by more than 0.5 from the original");
-      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)
-                << std::left << a << u << std::endl;
+      BOOST_ERROR("Rounded result differed by more than 0.5 from the original"); // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)     // LCOV_EXCL_LINE
+                << std::left << a << u << std::endl;                             // LCOV_EXCL_LINE
    }
    if ((upper(T(fabs(a - u))) == 0.5f) && (fabs(static_cast<T>(u)) < fabs(a)))
    {
-      BOOST_ERROR("Rounded result was towards zero with boost::round");
-      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)
-                << std::left << a << u << std::endl;
+      BOOST_ERROR("Rounded result was towards zero with boost::round");      // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40) // LCOV_EXCL_LINE
+                << std::left << a << u << std::endl;                         // LCOV_EXCL_LINE
    }
 }
 
@@ -134,7 +146,7 @@ inline unsigned long long safe_abs(long long const& v)
    return v < 0 ? static_cast<unsigned long long>(1u) + static_cast<unsigned long long>(-(v + 1)) : v;
 }
 template <class T>
-inline typename boost::disable_if_c<boost::is_integral<T>::value, T>::type safe_abs(T const& v)
+inline typename std::enable_if<!boost::multiprecision::detail::is_integral<T>::value, T>::type safe_abs(T const& v)
 {
    return v < 0 ? -v : v;
 }
@@ -143,84 +155,117 @@ template <class T, class U>
 void check_trunc_result(T a, U u)
 {
    BOOST_MATH_STD_USING
+
    if (fabs(a - u) >= 1)
    {
-      BOOST_ERROR("Rounded result differed by more than 1 from the original");
-      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)
-                << std::left << a << u << std::endl;
+      BOOST_ERROR("Rounded result differed by more than 1 from the original"); // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)   // LCOV_EXCL_LINE
+                << std::left << a << u << std::endl;                           // LCOV_EXCL_LINE
    }
+
    if (abs(a) < safe_abs(u))
    {
-      BOOST_ERROR("Truncated result had larger absolute value than the original");
-      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)
-                << std::left << a << u << std::endl;
+      BOOST_ERROR("Truncated result had larger absolute value than the original"); // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)       // LCOV_EXCL_LINE
+                << std::left << abs(a) << safe_abs(u) << std::endl;                // LCOV_EXCL_LINE
    }
+
    if (fabs(static_cast<T>(u)) > fabs(a))
    {
-      BOOST_ERROR("Rounded result was away from zero with boost::trunc");
-      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)
-                << std::left << a << u << std::endl;
+      BOOST_ERROR("Rounded result was away from zero with boost::trunc");    // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40) // LCOV_EXCL_LINE
+                << std::left << a << u << std::endl;                         // LCOV_EXCL_LINE
    }
 }
+
+namespace local {
+
+template <class T>
+static inline auto modf_fail_gate(const T& my_sum, const T& my_a) noexcept -> typename std::enable_if<has_poor_exp_range_or_precision_support<T>::value, bool>::type
+{
+   const T ratio { my_sum / my_a };
+   const T delta { fabs(1 - ratio) };
+
+   return (delta > std::numeric_limits<T>::epsilon());
+}
+
+template <class T>
+static inline auto modf_fail_gate(const T& my_sum, const T& my_a) noexcept -> typename std::enable_if<(!has_poor_exp_range_or_precision_support<T>::value), bool>::type
+{
+   return (my_sum != my_a);
+}
+
+} // namespace local
 
 template <class T, class U>
 void check_modf_result(T a, T fract, U ipart)
 {
    BOOST_MATH_STD_USING
-   if (fract + ipart != a)
+
+   const T sum { fract + ipart };
+
+   if (local::modf_fail_gate<T>(sum, a))
    {
-      BOOST_ERROR("Fractional and integer results do not add up to the original value");
-      std::cerr << "Values were: " << std::setprecision(35) << " "
-                << std::left << a << ipart << " " << fract << std::endl;
+      BOOST_ERROR("Fractional and integer results do not add up to the original value"); // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << " "                       // LCOV_EXCL_LINE
+                << std::left << a << ipart << " " << fract << std::endl;                 // LCOV_EXCL_LINE
    }
+
    if ((boost::math::sign(a) != boost::math::sign(fract)) && boost::math::sign(fract))
    {
-      BOOST_ERROR("Original and fractional parts have differing signs");
-      std::cerr << "Values were: " << std::setprecision(35) << " "
-                << std::left << a << ipart << " " << fract << std::endl;
+      BOOST_ERROR("Original and fractional parts have differing signs"); // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << " "       // LCOV_EXCL_LINE
+                << std::left << a << ipart << " " << fract << std::endl; // LCOV_EXCL_LINE
    }
    if ((boost::math::sign(a) != boost::math::sign(ipart)) && boost::math::sign(ipart))
    {
-      BOOST_ERROR("Original and integer parts have differing signs");
-      std::cerr << "Values were: " << std::setprecision(35) << " "
-                << std::left << a << ipart << " " << ipart << std::endl;
+      BOOST_ERROR("Original and integer parts have differing signs");    // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << " "       // LCOV_EXCL_LINE
+                << std::left << a << ipart << " " << ipart << std::endl; // LCOV_EXCL_LINE
    }
    if (fabs(a - ipart) >= 1)
    {
-      BOOST_ERROR("Rounded result differed by more than 1 from the original");
-      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)
-                << std::left << a << ipart << std::endl;
+      BOOST_ERROR("Rounded result differed by more than 1 from the original"); // LCOV_EXCL_LINE
+      std::cerr << "Values were: " << std::setprecision(35) << std::setw(40)   // LCOV_EXCL_LINE
+                << std::left << a << ipart << std::endl;                       // LCOV_EXCL_LINE
    }
 }
 
 template <class T>
 void test()
 {
+   std::cout << "Testing type: " << typeid(T).name() << std::endl;
+
    BOOST_MATH_STD_USING
 
-   for (int i = 0; i < 1000; ++i)
+   for (int index = 0; index < 1000; ++index)
    {
-      T arg = get_random<T>();
+      static_cast<void>(index);
+
+      const T arg { get_random<T>() };
+
       T r   = round(arg);
       check_within_half(arg, r);
       BOOST_TEST(r == round(arg + 0));
       r = trunc(arg);
       check_trunc_result(arg, r);
       BOOST_TEST(r == trunc(arg + 0));
+
       T frac = modf(arg, &r);
       check_modf_result(arg, frac, r);
 
       if (abs(r) < (std::numeric_limits<int>::max)())
       {
-         int i = iround(arg);
-         check_within_half(arg, i);
-         BOOST_TEST(i == iround(arg + 0));
-         i = itrunc(arg);
-         check_trunc_result(arg, i);
-         BOOST_TEST(i == itrunc(arg + 0));
-         r = modf(arg, &i);
-         check_modf_result(arg, r, i);
+         int irnd = iround(arg);
+         check_within_half(arg, irnd);
+         BOOST_TEST(irnd == iround(arg + 0));
+         irnd = itrunc(arg);
+         check_trunc_result(arg, irnd);
+         BOOST_TEST(irnd == itrunc(arg + 0));
+         r = modf(arg, &irnd);
+         check_modf_result(arg, r, irnd);
       }
+
       if (abs(r) < (std::numeric_limits<long>::max)())
       {
          long l = lround(arg);
@@ -233,10 +278,10 @@ void test()
          check_modf_result(arg, r, l);
       }
 
-#ifdef BOOST_HAS_LONG_LONG
-      if (abs(r) < (std::numeric_limits<boost::long_long_type>::max)())
+#if defined(BOOST_HAS_LONG_LONG)
+      if (abs(r) < (std::numeric_limits<long long>::max)())
       {
-         boost::long_long_type ll = llround(arg);
+         long long ll = llround(arg);
          check_within_half(arg, ll);
          BOOST_TEST(ll == llround(arg + 0));
          ll = lltrunc(arg);
@@ -274,6 +319,7 @@ void test()
       si = itrunc(static_cast<T>((std::numeric_limits<int>::min)() + 1));
       check_trunc_result(static_cast<T>((std::numeric_limits<int>::min)() + 1), si);
    }
+
    if (std::numeric_limits<T>::digits >= std::numeric_limits<long>::digits)
    {
       long k = lround(static_cast<T>((std::numeric_limits<long>::max)()));
@@ -298,30 +344,31 @@ void test()
       k = ltrunc(static_cast<T>((std::numeric_limits<long>::min)() + 1));
       check_trunc_result(static_cast<T>((std::numeric_limits<long>::min)() + 1), k);
    }
-#ifndef BOOST_NO_LONG_LONG
-   if (std::numeric_limits<T>::digits >= std::numeric_limits<boost::long_long_type>::digits)
+
+#if !defined(BOOST_NO_LONG_LONG)
+   if (std::numeric_limits<T>::digits >= std::numeric_limits<long long>::digits)
    {
-      boost::long_long_type j = llround(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)()));
-      check_within_half(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)()), j);
+      long long j = llround(static_cast<T>((std::numeric_limits<long long>::max)()));
+      check_within_half(static_cast<T>((std::numeric_limits<long long>::max)()), j);
       BOOST_TEST(j == llround(static_cast<T>((std::numeric_limits<long long>::max)()) + 0));
-      j = llround(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)()));
-      check_within_half(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)()), j);
+      j = llround(static_cast<T>((std::numeric_limits<long long>::min)()));
+      check_within_half(static_cast<T>((std::numeric_limits<long long>::min)()), j);
       BOOST_TEST(j == llround(static_cast<T>((std::numeric_limits<long long>::min)()) + 0));
-      j = lltrunc(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)()));
-      check_trunc_result(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)()), j);
+      j = lltrunc(static_cast<T>((std::numeric_limits<long long>::max)()));
+      check_trunc_result(static_cast<T>((std::numeric_limits<long long>::max)()), j);
       BOOST_TEST(j == lltrunc(static_cast<T>((std::numeric_limits<long long>::max)()) + 0));
-      j = lltrunc(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)()));
-      check_trunc_result(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)()), j);
+      j = lltrunc(static_cast<T>((std::numeric_limits<long long>::min)()));
+      check_trunc_result(static_cast<T>((std::numeric_limits<long long>::min)()), j);
       BOOST_TEST(j == lltrunc(static_cast<T>((std::numeric_limits<long long>::min)()) + 0));
 
-      j = llround(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)() - 1));
-      check_within_half(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)() - 1), j);
-      j = llround(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)() + 1));
-      check_within_half(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)() + 1), j);
-      j = lltrunc(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)() - 1));
-      check_trunc_result(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)() - 1), j);
-      j = lltrunc(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)() + 1));
-      check_trunc_result(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)() + 1), j);
+      j = llround(static_cast<T>((std::numeric_limits<long long>::max)() - 1));
+      check_within_half(static_cast<T>((std::numeric_limits<long long>::max)() - 1), j);
+      j = llround(static_cast<T>((std::numeric_limits<long long>::min)() + 1));
+      check_within_half(static_cast<T>((std::numeric_limits<long long>::min)() + 1), j);
+      j = lltrunc(static_cast<T>((std::numeric_limits<long long>::max)() - 1));
+      check_trunc_result(static_cast<T>((std::numeric_limits<long long>::max)() - 1), j);
+      j = lltrunc(static_cast<T>((std::numeric_limits<long long>::min)() + 1));
+      check_trunc_result(static_cast<T>((std::numeric_limits<long long>::min)() + 1), j);
    }
 #endif
    //
@@ -399,10 +446,10 @@ void test()
       BOOST_CHECK_THROW(result = static_cast<T>(ltrunc(static_cast<T>((std::numeric_limits<long>::min)()) - 1)), boost::math::rounding_error);
    }
 #ifndef BOOST_NO_LONG_LONG
-   if (std::numeric_limits<T>::digits >= std::numeric_limits<boost::long_long_type>::digits)
+   if (std::numeric_limits<T>::digits >= std::numeric_limits<long long>::digits)
    {
-      BOOST_CHECK_THROW(result = static_cast<T>(lltrunc(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)()) + 1)), boost::math::rounding_error);
-      BOOST_CHECK_THROW(result = static_cast<T>(lltrunc(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)()) - 1)), boost::math::rounding_error);
+      BOOST_CHECK_THROW(result = static_cast<T>(lltrunc(static_cast<T>((std::numeric_limits<long long>::max)()) + 1)), boost::math::rounding_error);
+      BOOST_CHECK_THROW(result = static_cast<T>(lltrunc(static_cast<T>((std::numeric_limits<long long>::min)()) - 1)), boost::math::rounding_error);
    }
 #endif
    if (std::numeric_limits<T>::digits >= std::numeric_limits<int>::digits)
@@ -416,10 +463,10 @@ void test()
       BOOST_CHECK_THROW(result = static_cast<T>(lround(static_cast<T>((std::numeric_limits<long>::min)()) - 1)), boost::math::rounding_error);
    }
 #ifndef BOOST_NO_LONG_LONG
-   if (std::numeric_limits<T>::digits >= std::numeric_limits<boost::long_long_type>::digits)
+   if (std::numeric_limits<T>::digits >= std::numeric_limits<long long>::digits)
    {
-      BOOST_CHECK_THROW(result = static_cast<T>(llround(static_cast<T>((std::numeric_limits<boost::long_long_type>::max)()) + 1)), boost::math::rounding_error);
-      BOOST_CHECK_THROW(result = static_cast<T>(llround(static_cast<T>((std::numeric_limits<boost::long_long_type>::min)()) - 1)), boost::math::rounding_error);
+      BOOST_CHECK_THROW(result = static_cast<T>(llround(static_cast<T>((std::numeric_limits<long long>::max)()) + 1)), boost::math::rounding_error);
+      BOOST_CHECK_THROW(result = static_cast<T>(llround(static_cast<T>((std::numeric_limits<long long>::min)()) - 1)), boost::math::rounding_error);
    }
 #endif
 #endif
@@ -457,7 +504,7 @@ int main()
 #ifdef TEST_CPP_BIN_FLOAT
    test<boost::multiprecision::cpp_bin_float_50>();
    test<boost::multiprecision::cpp_bin_float_100>();
-   test<boost::multiprecision::number<boost::multiprecision::cpp_bin_float<35, boost::multiprecision::digit_base_10, std::allocator<char>, boost::long_long_type> > >();
+   test<boost::multiprecision::number<boost::multiprecision::cpp_bin_float<35, boost::multiprecision::digit_base_10, std::allocator<char>, long long> > >();
 #endif
 #ifdef TEST_BACKEND
    test<boost::multiprecision::number<boost::multiprecision::concepts::number_backend_float_architype> >();
@@ -465,5 +512,19 @@ int main()
 #ifdef TEST_FLOAT128
    test<boost::multiprecision::float128>();
 #endif
+#ifdef TEST_CPP_DOUBLE_FLOAT
+
+   #if (defined(BOOST_GCC) && !defined(BOOST_CLANG) && (BOOST_GCC < 80000))
+   #else
+   test<boost::multiprecision::cpp_double_float>();
+   test<boost::multiprecision::cpp_double_double>();
+   test<boost::multiprecision::cpp_double_long_double>();
+   #if defined(BOOST_MP_CPP_DOUBLE_FP_HAS_FLOAT128)
+   test<boost::multiprecision::cpp_double_float128>();
+   #endif
+   #endif
+
+#endif
+
    return boost::report_errors();
 }

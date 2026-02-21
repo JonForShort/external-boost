@@ -7,7 +7,8 @@
 <link rel="home" href="../../../boost_asio.html" title="Boost.Asio">
 <link rel="up" href="../use_future_t.html" title="use_future_t">
 <link rel="prev" href="get_allocator.html" title="use_future_t::get_allocator">
-<link rel="next" href="operator_lb__rb_.html" title="use_future_t::operator[]">
+<link rel="next" href="operator_lp__rp_/overload1.html" title="use_future_t::operator() (1 of 2 overloads)">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,7 +21,7 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="get_allocator.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../use_future_t.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="operator_lb__rb_.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="get_allocator.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../use_future_t.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="operator_lp__rp_/overload1.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
@@ -31,43 +32,30 @@
 Wrap
           a function object in a packaged task.
         </p>
-<pre class="programlisting">template&lt;
-    typename Function&gt;
-unspecified operator()(
-    Function &amp;&amp; f) const;
-</pre>
-<p>
-          The <code class="computeroutput">package</code> function is used to adapt a function object as
-          a packaged task. When this adapter is passed as a completion token to an
-          asynchronous operation, the result of the function object is retuned via
-          a std::future.
-        </p>
-<h6>
-<a name="boost_asio.reference.use_future_t.operator_lp__rp_.h0"></a>
-          <span class="phrase"><a name="boost_asio.reference.use_future_t.operator_lp__rp_.example"></a></span><a class="link" href="operator_lp__rp_.html#boost_asio.reference.use_future_t.operator_lp__rp_.example">Example</a>
-        </h6>
-<pre class="programlisting">std::future&lt;std::size_t&gt; fut =
-  my_socket.async_read_some(buffer,
-    use_future([](boost::system::error_code ec, std::size_t n)
-      {
-        return ec ? 0 : n;
-      }));
-...
-std::size_t n = fut.get();
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">typename</span> <span class="identifier">Function</span><span class="special">&gt;</span>
+<span class="identifier">unspecified</span> <a class="link" href="operator_lp__rp_/overload1.html" title="use_future_t::operator() (1 of 2 overloads)">operator()</a><span class="special">(</span>
+    <span class="identifier">Function</span> <span class="special">&amp;&amp;</span> <span class="identifier">f</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="emphasis"><em>» <a class="link" href="operator_lp__rp_/overload1.html" title="use_future_t::operator() (1 of 2 overloads)">more...</a></em></span>
+
+
+
+<span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">typename</span> <span class="identifier">Function</span><span class="special">&gt;</span>
+<span class="identifier">detail</span><span class="special">::</span><span class="identifier">packaged_token</span><span class="special">&lt;</span> <span class="identifier">decay_t</span><span class="special">&lt;</span> <span class="identifier">Function</span> <span class="special">&gt;,</span> <span class="identifier">Allocator</span> <span class="special">&gt;</span> <a class="link" href="operator_lp__rp_/overload2.html" title="use_future_t::operator() (2 of 2 overloads)">operator()</a><span class="special">(</span>
+    <span class="identifier">Function</span> <span class="special">&amp;&amp;</span> <span class="identifier">f</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="emphasis"><em>» <a class="link" href="operator_lp__rp_/overload2.html" title="use_future_t::operator() (2 of 2 overloads)">more...</a></em></span>
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2020 Christopher M.
+<div class="copyright-footer">Copyright © 2003-2025 Christopher M.
       Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="get_allocator.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../use_future_t.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="operator_lb__rb_.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="get_allocator.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../use_future_t.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="operator_lp__rp_/overload1.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

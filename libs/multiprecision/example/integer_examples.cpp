@@ -52,12 +52,12 @@ void print_factorials()
       factorial *= i;
    }
    //
-   // Lets see how many digits the largest factorial was:
+   // Let's see how many digits the largest factorial was:
    unsigned digits = results.back().str().size();
    //
    // Now print them out, using right justification, while we're at it
    // we'll indicate the limit of each integer type, so begin by defining
-   // the limits for 16, 32, 64 etc bit integers:
+   // the limits for 16, 32, 64 etc. bit integers:
    cpp_int limits[] = {
       (cpp_int(1) << 16) - 1,
       (cpp_int(1) << 32) - 1,
@@ -164,12 +164,12 @@ which we can then simply decrement.  The result from a call to `b2` is the same 
 We can equally test bits, so for example the n'th bit of the result returned from `b2` shouldn't be set
 unless we increment it first:
 
-   BOOST_ASSERT(!bit_test(b1(200), 200));     // OK
-   BOOST_ASSERT(bit_test(++b1(200), 200));    // OK
+   BOOST_MP_ASSERT(!bit_test(b1(200), 200));     // OK
+   BOOST_MP_ASSERT(bit_test(++b1(200), 200));    // OK
 
 And of course if we flip the n'th bit after increment, then we should get back to zero:
 
-   BOOST_ASSERT(!bit_flip(++b1(200), 200));   // OK
+   BOOST_MP_ASSERT(!bit_flip(++b1(200), 200));   // OK
 */
 
 //]
@@ -180,9 +180,9 @@ int main()
 
    std::cout << std::hex << std::showbase << b1(200) << std::endl;
    std::cout << std::hex << std::showbase << b2(200) << std::endl;
-   BOOST_ASSERT(!bit_test(b1(200), 200));  // OK
-   BOOST_ASSERT(bit_test(++b1(200), 200));    // OK
-   BOOST_ASSERT(!bit_flip(++b1(200), 200));   // OK
+   BOOST_MP_ASSERT(!bit_test(b1(200), 200));  // OK
+   BOOST_MP_ASSERT(bit_test(++b1(200), 200));    // OK
+   BOOST_MP_ASSERT(!bit_flip(++b1(200), 200));   // OK
    return 0;
 }
 

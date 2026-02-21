@@ -6,8 +6,9 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../../boost_asio.html" title="Boost.Asio">
 <link rel="up" href="../reference.html" title="Reference">
-<link rel="prev" href="associated_executor/type.html" title="associated_executor::type">
+<link rel="prev" href="associator.html" title="associator">
 <link rel="next" href="async_completion/async_completion.html" title="async_completion::async_completion">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,21 +21,23 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="associated_executor/type.html"><img src="../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../boost_asio.html"><img src="../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="async_completion/async_completion.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="associator.html"><img src="../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../boost_asio.html"><img src="../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="async_completion/async_completion.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="boost_asio.reference.async_completion"></a><a class="link" href="async_completion.html" title="async_completion">async_completion</a>
 </h3></div></div></div>
 <p>
-        Helper template to deduce the handler type from a CompletionToken, capture
-        a local copy of the handler, and then create an <a class="link" href="async_result.html" title="async_result"><code class="computeroutput">async_result</code></a>
-        for the handler.
+        <a class="indexterm" name="boost_asio.indexterm.async_completion"></a>
       </p>
-<pre class="programlisting">template&lt;
-    typename CompletionToken,
-    typename Signature&gt;
-struct async_completion
+<p>
+        (Legacy.) Helper template to deduce the handler type from a CompletionToken,
+        capture a local copy of the handler, and then create an <a class="link" href="async_result.html" title="async_result"><code class="computeroutput"><span class="identifier">async_result</span></code></a> for the handler.
+      </p>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">typename</span> <span class="identifier">CompletionToken</span><span class="special">,</span>
+    <span class="keyword">typename</span><span class="special">...</span> <span class="identifier">Signatures</span><span class="special">&gt;</span>
+<span class="keyword">struct</span> <span class="identifier">async_completion</span>
 </pre>
 <h5>
 <a name="boost_asio.reference.async_completion.h0"></a>
@@ -164,18 +167,15 @@ struct async_completion
         <span class="emphasis"><em>Convenience header: </em></span><code class="literal">boost/asio.hpp</code>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2020 Christopher M.
+<div class="copyright-footer">Copyright © 2003-2025 Christopher M.
       Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="associated_executor/type.html"><img src="../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../boost_asio.html"><img src="../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="async_completion/async_completion.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="associator.html"><img src="../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../boost_asio.html"><img src="../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="async_completion/async_completion.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

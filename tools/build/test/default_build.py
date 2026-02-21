@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright 2003 Dave Abrahams
 # Copyright 2002, 2003 Vladimir Prus
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
+# (See accompanying file LICENSE.txt or https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 # Test that default build clause actually has any effect.
 
@@ -29,8 +29,8 @@ t.expect_nothing_more()
 # Now check that we can specify explicit build request and default-build will be
 # combined with it.
 t.run_build_system(["optimization=space"])
-t.expect_addition("bin/$toolset/debug/optimization-space*/a.exe")
-t.expect_addition("bin/$toolset/release/optimization-space*/a.exe")
+t.expect_addition("bin/$toolset/debug*/optimization-space*/a.exe")
+t.expect_addition("bin/$toolset/release*/optimization-space*/a.exe")
 
 # Test that default-build must be identical in all alternatives. Error case.
 t.write("jamfile.jam", """\

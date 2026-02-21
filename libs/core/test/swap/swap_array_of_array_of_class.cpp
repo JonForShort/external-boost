@@ -4,9 +4,9 @@
 // (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-// Tests swapping an array of arrays of swap_test_class objects by means of boost::swap.
+// Tests swapping an array of arrays of swap_test_class objects by means of boost::core::invoke_swap.
 
-#include <boost/utility/swap.hpp>
+#include <boost/core/invoke_swap.hpp>
 #include <boost/core/lightweight_test.hpp>
 #define BOOST_CHECK BOOST_TEST
 #define BOOST_CHECK_EQUAL BOOST_TEST_EQ
@@ -16,6 +16,10 @@
 
 #include <algorithm> //for std::copy and std::equal
 #include <cstddef> //for std::size_t
+
+#if defined(__clang__)
+# pragma clang diagnostic ignored "-Wunused-function"
+#endif
 
 //Provide swap function in both the namespace of swap_test_class
 //(which is the global namespace), and the std namespace.
@@ -55,7 +59,7 @@ int main()
     ptr2[i].set_data( static_cast<int>(i + number_of_elements) );
   }
 
-  boost::swap(array1, array2);
+  boost::core::invoke_swap(array1, array2);
 
   for (std::size_t i = 0; i < number_of_elements; ++i)
   {

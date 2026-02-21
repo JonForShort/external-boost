@@ -4,10 +4,11 @@
 <title>Roman Numerals</title>
 <link rel="stylesheet" href="../../../../../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Spirit X3 3.0.4">
+<link rel="home" href="../../index.html" title="Spirit X3 3.10">
 <link rel="up" href="../tutorials.html" title="Tutorials">
 <link rel="prev" href="number_list_attribute___one_more__with_style.html" title="Number List Attribute - one more, with style">
 <link rel="next" href="employee.html" title="Employee - Parsing into structs">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -239,24 +240,9 @@
 </pre>
 <p>
         Behind the scenes, what's actually happening is that we are defining a <code class="computeroutput"><span class="identifier">parse_rule</span></code> function in the client namespace
-        that tells X3 how to invoke the rule. For example, given a rule named <code class="computeroutput"><span class="identifier">my_rule</span></code> and a corresponding definition
-        named <code class="computeroutput"><span class="identifier">my_rule_def</span></code>, <code class="computeroutput"><span class="identifier">BOOST_SPIRIT_DEFINE</span><span class="special">(</span><span class="identifier">my_rule</span><span class="special">)</span></code>
-        expands to this code:
-      </p>
-<pre class="programlisting"><span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Iterator</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">Context</span><span class="special">&gt;</span>
-<span class="keyword">inline</span> <span class="keyword">bool</span> <span class="identifier">parse_rule</span><span class="special">(</span>
-    <span class="keyword">decltype</span><span class="special">(</span><span class="identifier">my_rule</span><span class="special">)</span>
-  <span class="special">,</span> <span class="identifier">Iterator</span><span class="special">&amp;</span> <span class="identifier">first</span><span class="special">,</span> <span class="identifier">Iterator</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">last</span>
-  <span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">context</span><span class="special">,</span> <span class="keyword">decltype</span><span class="special">(</span><span class="identifier">my_rule</span><span class="special">)::</span><span class="identifier">attribute_type</span><span class="special">&amp;</span> <span class="identifier">attr</span><span class="special">)</span>
-<span class="special">{</span>
-    <span class="keyword">using</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">spirit</span><span class="special">::</span><span class="identifier">x3</span><span class="special">::</span><span class="identifier">unused</span><span class="special">;</span>
-    <span class="keyword">static</span> <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">def_</span> <span class="special">=</span> <span class="identifier">my_rule_def</span><span class="special">;</span>
-    <span class="keyword">return</span> <span class="identifier">def_</span><span class="special">.</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">unused</span><span class="special">,</span> <span class="identifier">attr</span><span class="special">);</span>
-<span class="special">}</span>
-</pre>
-<p>
-        And so for each rule defined using <code class="computeroutput"><span class="identifier">BOOST_SPIRIT_DEFINE</span></code>,
-        there is an overloaded <code class="computeroutput"><span class="identifier">parse_rule</span></code>
+        that tells X3 how to invoke the rule. And so for each rule defined using
+        <code class="computeroutput"><span class="identifier">BOOST_SPIRIT_DEFINE</span></code>, there
+        is an overloaded <code class="computeroutput"><span class="identifier">parse_rule</span></code>
         function. At parse time, Spirit X3 recursively calls the appropriate <code class="computeroutput"><span class="identifier">parse_rule</span></code> function.
       </p>
 <div class="note"><table border="0" summary="Note">
@@ -288,9 +274,9 @@
     <span class="keyword">using</span> <span class="identifier">x3</span><span class="special">::</span><span class="identifier">_attr</span><span class="special">;</span>
     <span class="keyword">using</span> <span class="identifier">ascii</span><span class="special">::</span><span class="identifier">char_</span><span class="special">;</span>
 
-    <span class="keyword">auto</span> <span class="identifier">set_zero</span> <span class="special">=</span> <span class="special">[&amp;](</span><span class="keyword">auto</span><span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">){</span> <span class="identifier">_val</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span> <span class="special">};</span>
-    <span class="keyword">auto</span> <span class="identifier">add1000</span> <span class="special">=</span> <span class="special">[&amp;](</span><span class="keyword">auto</span><span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">){</span> <span class="identifier">_val</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)</span> <span class="special">+=</span> <span class="number">1000</span><span class="special">;</span> <span class="special">};</span>
-    <span class="keyword">auto</span> <span class="identifier">add</span> <span class="special">=</span> <span class="special">[&amp;](</span><span class="keyword">auto</span><span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">){</span> <span class="identifier">_val</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)</span> <span class="special">+=</span> <span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">);</span> <span class="special">};</span>
+    <span class="keyword">auto</span> <span class="identifier">set_zero</span> <span class="special">=</span> <span class="special">[](</span><span class="keyword">auto</span><span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">){</span> <span class="identifier">_val</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span> <span class="special">};</span>
+    <span class="keyword">auto</span> <span class="identifier">add1000</span> <span class="special">=</span> <span class="special">[](</span><span class="keyword">auto</span><span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">){</span> <span class="identifier">_val</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)</span> <span class="special">+=</span> <span class="number">1000</span><span class="special">;</span> <span class="special">};</span>
+    <span class="keyword">auto</span> <span class="identifier">add</span> <span class="special">=</span> <span class="special">[](</span><span class="keyword">auto</span><span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">){</span> <span class="identifier">_val</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)</span> <span class="special">+=</span> <span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">);</span> <span class="special">};</span>
 
     <span class="identifier">x3</span><span class="special">::</span><span class="identifier">rule</span><span class="special">&lt;</span><span class="keyword">class</span> <span class="identifier">roman</span><span class="special">,</span> <span class="keyword">unsigned</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">roman</span> <span class="special">=</span> <span class="string">"roman"</span><span class="special">;</span>
 
@@ -377,15 +363,12 @@
         The full cpp file for this example can be found here: <a href="../../../../../example/x3/roman.cpp" target="_top">roman.cpp</a>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2001-2018 Joel de Guzman,
+<div class="copyright-footer">Copyright © 2001-2018 Joel de Guzman,
       Hartmut Kaiser<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="number_list_attribute___one_more__with_style.html"><img src="../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorials.html"><img src="../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="employee.html"><img src="../../../../../../../doc/src/images/next.png" alt="Next"></a>

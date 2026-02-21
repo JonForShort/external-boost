@@ -3,8 +3,8 @@
 # Copyright 2005, 2006, 2007 Rene Rivera
 # Copyright 2003, 2004, 2005 Vladimir Prus
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt)
+# (See accompanying file LICENSE.txt or copy at
+# https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 # This module defines rules to handle generation of documentation from BoostBook
 # sources.
@@ -25,6 +25,7 @@
 # <format> is an implicit feature, so for example, typing pdf on the command
 # line is a short-cut for format=pdf.
 
+import args ;
 import build-system ;
 import "class" : new ;
 import common ;
@@ -51,8 +52,7 @@ import xsltproc ;
 project.initialize $(__name__) ;
 project boostbook ;
 
-.debug-configuration = [ MATCH ^(--debug-configuration)$ : [ modules.peek : ARGV
-    ] ] ;
+.debug-configuration = [ args.get-arg debug-configuration ] ;
 
 feature.feature format
     : html xhtml htmlhelp onehtml man pdf ps docbook fo tests none

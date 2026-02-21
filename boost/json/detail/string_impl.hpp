@@ -11,6 +11,7 @@
 #ifndef BOOST_JSON_DETAIL_STRING_IMPL_HPP
 #define BOOST_JSON_DETAIL_STRING_IMPL_HPP
 
+#include <boost/core/detail/static_assert.hpp>
 #include <boost/json/detail/config.hpp>
 #include <boost/json/kind.hpp>
 #include <boost/json/storage_ptr.hpp>
@@ -18,9 +19,11 @@
 #include <algorithm>
 #include <iterator>
 
-BOOST_JSON_NS_BEGIN
+namespace boost {
+namespace json {
 
 class value;
+class string;
 
 namespace detail {
 
@@ -83,13 +86,13 @@ class string_impl
     };
 
 #if BOOST_JSON_ARCH == 64
-    BOOST_STATIC_ASSERT(sizeof(sbo) <= 16);
-    BOOST_STATIC_ASSERT(sizeof(pointer) <= 16);
-    BOOST_STATIC_ASSERT(sizeof(key) <= 16);
+    BOOST_CORE_STATIC_ASSERT( sizeof(sbo) <= 16 );
+    BOOST_CORE_STATIC_ASSERT( sizeof(pointer) <= 16 );
+    BOOST_CORE_STATIC_ASSERT( sizeof(key) <= 16 );
 #elif BOOST_JSON_ARCH == 32
-    BOOST_STATIC_ASSERT(sizeof(sbo) <= 24);
-    BOOST_STATIC_ASSERT(sizeof(pointer) <= 24);
-    BOOST_STATIC_ASSERT(sizeof(key) <= 24);
+    BOOST_CORE_STATIC_ASSERT( sizeof(sbo) <= 24 );
+    BOOST_CORE_STATIC_ASSERT( sizeof(pointer) <= 24 );
+    BOOST_CORE_STATIC_ASSERT( sizeof(key) <= 24 );
 #endif
 
 public:
@@ -140,7 +143,13 @@ public:
         std::random_access_iterator_tag)
         : string_impl(last - first, sp)
     {
-        std::copy(first, last, data());
+        char* out = data();
+#if defined(_MSC_VER) && _MSC_VER <= 1900
+        while( first != last )
+            *out++ = *first++;
+#else
+        std::copy(first, last, out);
+#endif
     }
 
     template<class InputIt>
@@ -351,7 +360,27 @@ public:
     }
 };
 
+template<class T>
+string_view
+to_string_view(T const& t) noexcept
+{
+    return string_view(t);
+}
+
+template<class T, class U>
+using string_and_stringlike = std::integral_constant<bool,
+    std::is_same<T, string>::value &&
+    std::is_convertible<U const&, string_view>::value>;
+
+template<class T, class U>
+using string_comp_op_requirement
+    = typename std::enable_if<
+        string_and_stringlike<T, U>::value ||
+        string_and_stringlike<U, T>::value,
+        bool>::type;
+
 } // detail
-BOOST_JSON_NS_END
+} // namespace json
+} // namespace boost
 
 #endif

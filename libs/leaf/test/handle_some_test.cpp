@@ -1,11 +1,15 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/handle_errors.hpp>
-#include <boost/leaf/pred.hpp>
-#include <boost/leaf/result.hpp>
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/handle_errors.hpp>
+#   include <boost/leaf/pred.hpp>
+#   include <boost/leaf/result.hpp>
+#endif
+
 #include "_test_ec.hpp"
 #include "lightweight_test.hpp"
 
@@ -23,17 +27,20 @@ enum class my_error_code
 
 struct e_my_error_code { my_error_code value; };
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
 struct e_std_error_code { std::error_code value; };
+#endif
 
 template <class R>
 leaf::result<R> f( my_error_code ec )
 {
-    if( ec==my_error_code::ok )
+    if( ec == my_error_code::ok )
         return R(42);
     else
         return leaf::new_error(ec, e_my_error_code{ec}, info<1>{1}, info<2>{2}, info<3>{3});
 }
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
 template <class R, class Errc>
 leaf::result<R> f_errc( Errc ec )
 {
@@ -45,6 +52,7 @@ leaf::result<R> f_errc_wrapped( Errc ec )
 {
     return leaf::new_error(e_std_error_code{make_error_code(ec)}, info<1>{1}, info<2>{2}, info<3>{3});
 }
+#endif
 
 int main()
 {
@@ -80,7 +88,7 @@ int main()
             },
             [&c]( my_error_code ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec==my_error_code::error1);
+                BOOST_TEST(ec == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
@@ -90,6 +98,7 @@ int main()
         BOOST_TEST(r);
     }
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
     // void, try_handle_some (failure, matched), match cond_x (single enum value)
     {
         int c=0;
@@ -111,7 +120,9 @@ int main()
         BOOST_TEST_EQ(c, 1);
         BOOST_TEST(r);
     }
+#endif
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
     // void, try_handle_some (failure, matched), match cond_x (wrapped std::error_code)
     {
         int c=0;
@@ -133,6 +144,7 @@ int main()
         BOOST_TEST_EQ(c, 1);
         BOOST_TEST(r);
     }
+#endif
 
     // void, try_handle_some (failure, matched), match enum (single enum value)
     {
@@ -151,7 +163,7 @@ int main()
             },
             [&c]( leaf::match<my_error_code, my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched==my_error_code::error1);
+                BOOST_TEST(ec.matched == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
@@ -178,7 +190,7 @@ int main()
             },
             [&c]( leaf::match<my_error_code, my_error_code::error2, my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched==my_error_code::error1);
+                BOOST_TEST(ec.matched == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
@@ -205,7 +217,7 @@ int main()
             },
             [&c]( leaf::match_value<e_my_error_code, my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched.value==my_error_code::error1);
+                BOOST_TEST(ec.matched.value == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
@@ -232,7 +244,7 @@ int main()
             },
             [&c]( leaf::match_value<e_my_error_code, my_error_code::error2, my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched.value==my_error_code::error1);
+                BOOST_TEST(ec.matched.value == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
@@ -266,13 +278,13 @@ int main()
             },
             [&c]( my_error_code ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec==my_error_code::error1);
+                BOOST_TEST(ec == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -280,6 +292,7 @@ int main()
         BOOST_TEST_EQ(c, 2);
     }
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
     // void, try_handle_some (failure, initially not matched), match cond_x (single enum value)
     {
         int c=0;
@@ -310,14 +323,16 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
             } );
         BOOST_TEST_EQ(c, 2);
     }
+#endif
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
     // void, try_handle_some (failure, initially not matched), match cond_x (wrapped std::error_code)
     {
         int c=0;
@@ -348,13 +363,14 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
             } );
         BOOST_TEST_EQ(c, 2);
     }
+#endif
 
     // void, try_handle_some (failure, initially not matched), match enum (single enum value)
     {
@@ -380,13 +396,13 @@ int main()
             },
             [&c]( leaf::match<my_error_code, my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched==my_error_code::error1);
+                BOOST_TEST(ec.matched == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -418,13 +434,13 @@ int main()
             },
             [&c]( leaf::match<my_error_code, my_error_code::error2, my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched==my_error_code::error1);
+                BOOST_TEST(ec.matched == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -456,13 +472,13 @@ int main()
             },
             [&c]( leaf::match_value<e_my_error_code, my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched.value==my_error_code::error1);
+                BOOST_TEST(ec.matched.value == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -494,13 +510,13 @@ int main()
             },
             [&c]( leaf::match_value<e_my_error_code, my_error_code::error2, my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched.value==my_error_code::error1);
+                BOOST_TEST(ec.matched.value == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -523,7 +539,7 @@ int main()
                     },
                     [&c]( my_error_code ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec==my_error_code::error1);
+                        BOOST_TEST(ec == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         BOOST_TEST_EQ(c, 0);
@@ -538,7 +554,7 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -546,6 +562,7 @@ int main()
         BOOST_TEST_EQ(c, 1);
     }
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
     // void, try_handle_some (failure, initially matched), match cond_x (single enum value)
     {
         int c=0;
@@ -576,14 +593,16 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
             } );
         BOOST_TEST_EQ(c, 1);
     }
+#endif
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
     // void, try_handle_some (failure, initially matched), match cond_x (wrapped std::error_code)
     {
         int c=0;
@@ -614,13 +633,15 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
             } );
         BOOST_TEST_EQ(c, 1);
     }
+#endif
+
     // void, try_handle_some (failure, initially matched), match enum (single enum value)
     {
         int c=0;
@@ -636,7 +657,7 @@ int main()
                     },
                     [&c]( leaf::match<my_error_code, my_error_code::error1> ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec.matched==my_error_code::error1);
+                        BOOST_TEST(ec.matched == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         BOOST_TEST_EQ(c, 0);
@@ -651,7 +672,7 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -674,7 +695,7 @@ int main()
                     },
                     [&c]( leaf::match<my_error_code, my_error_code::error2, my_error_code::error1> ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec.matched==my_error_code::error1);
+                        BOOST_TEST(ec.matched == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         BOOST_TEST_EQ(c, 0);
@@ -689,7 +710,7 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -712,7 +733,7 @@ int main()
                     },
                     [&c]( leaf::match_value<e_my_error_code, my_error_code::error1> ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec.matched.value==my_error_code::error1);
+                        BOOST_TEST(ec.matched.value == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         BOOST_TEST_EQ(c, 0);
@@ -727,7 +748,7 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -750,7 +771,7 @@ int main()
                     },
                     [&c]( leaf::match_value<e_my_error_code, my_error_code::error2,my_error_code::error1> ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec.matched.value==my_error_code::error1);
+                        BOOST_TEST(ec.matched.value == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         BOOST_TEST_EQ(c, 0);
@@ -765,7 +786,7 @@ int main()
                 BOOST_TEST_EQ(c, 0);
                 c = 2;
             },
-            [&c]()
+            [&c]
             {
                 BOOST_TEST_EQ(c, 0);
                 c = 3;
@@ -773,7 +794,7 @@ int main()
         BOOST_TEST_EQ(c, 1);
     }
 
-    //////////////////////////////////////
+    ////////////////////////////////////////
 
     // int, try_handle_some (success)
     {
@@ -800,7 +821,7 @@ int main()
             },
             []( my_error_code ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec==my_error_code::error1);
+                BOOST_TEST(ec == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 1;
@@ -809,6 +830,7 @@ int main()
         BOOST_TEST_EQ(*r, 1);
     }
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
     // int, try_handle_some (failure, matched), match cond_x (single enum value)
     {
         leaf::result<int> r = leaf::try_handle_some(
@@ -831,6 +853,7 @@ int main()
         BOOST_TEST(r);
         BOOST_TEST_EQ(*r, 2);
     }
+#endif
 
     // int, try_handle_some (failure, matched), match enum (single enum value)
     {
@@ -846,7 +869,7 @@ int main()
             },
             []( leaf::match<my_error_code,my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched==my_error_code::error1);
+                BOOST_TEST(ec.matched == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -869,7 +892,7 @@ int main()
             },
             []( leaf::match<my_error_code,my_error_code::error2,my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched==my_error_code::error1);
+                BOOST_TEST(ec.matched == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -892,7 +915,7 @@ int main()
             },
             []( leaf::match_value<e_my_error_code,my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched.value==my_error_code::error1);
+                BOOST_TEST(ec.matched.value == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -915,7 +938,7 @@ int main()
             },
             []( leaf::match_value<e_my_error_code,my_error_code::error2,my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched.value==my_error_code::error1);
+                BOOST_TEST(ec.matched.value == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -929,7 +952,7 @@ int main()
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -939,12 +962,12 @@ int main()
                     {
                         return 1;
                     } );
-                BOOST_TEST(!r);
-                return r;
+                BOOST_TEST(!r1);
+                return r1;
             },
             []( my_error_code ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec==my_error_code::error1);
+                BOOST_TEST(ec == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -956,12 +979,13 @@ int main()
         BOOST_TEST_EQ(r, 2);
     }
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
     // int, try_handle_some (failure, initially not matched), match cond_x (single enum value)
     {
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f_errc<int>(errc_a::a0));
@@ -971,8 +995,8 @@ int main()
                     {
                         return 1;
                     } );
-                BOOST_TEST(!r);
-                return r;
+                BOOST_TEST(!r1);
+                return r1;
             },
             []( leaf::match<leaf::condition<cond_x>, cond_x::x00> ec, info<1> const & x, info<2> y )
             {
@@ -987,13 +1011,48 @@ int main()
             } );
         BOOST_TEST_EQ(r, 2);
     }
+#endif
+
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
+    // int, try_handle_some (failure, initially not matched), match cond_x (wrapped std::error_code)
+    {
+        int r = leaf::try_handle_all(
+            []
+            {
+                leaf::result<int> r1 = leaf::try_handle_some(
+                    []() -> leaf::result<int>
+                    {
+                        BOOST_LEAF_AUTO(answer, f_errc_wrapped<int>(errc_a::a0));
+                        return answer;
+                    },
+                    []( leaf::match_value<leaf::condition<e_std_error_code, cond_x>, cond_x::x11> )
+                    {
+                        return 1;
+                    } );
+                BOOST_TEST(!r1);
+                return r1;
+            },
+            []( leaf::match_value<leaf::condition<e_std_error_code, cond_x>, cond_x::x00> ec, info<1> const & x, info<2> y )
+            {
+                BOOST_TEST_EQ(ec.matched.value, make_error_code(errc_a::a0));
+                BOOST_TEST_EQ(x.value, 1);
+                BOOST_TEST_EQ(y.value, 2);
+                return 2;
+            },
+            []
+            {
+                return 3;
+            } );
+        BOOST_TEST_EQ(r, 2);
+    }
+#endif
 
     // int, try_handle_some (failure, initially not matched), match enum (single enum value)
     {
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1003,12 +1062,12 @@ int main()
                     {
                         return 1;
                     } );
-                BOOST_TEST(!r);
-                return r;
+                BOOST_TEST(!r1);
+                return r1;
             },
             []( leaf::match<my_error_code,my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched==my_error_code::error1);
+                BOOST_TEST(ec.matched == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -1025,7 +1084,7 @@ int main()
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1035,12 +1094,12 @@ int main()
                     {
                         return 1;
                     } );
-                BOOST_TEST(!r);
-                return r;
+                BOOST_TEST(!r1);
+                return r1;
             },
             []( leaf::match<my_error_code,my_error_code::error2,my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched==my_error_code::error1);
+                BOOST_TEST(ec.matched == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -1057,7 +1116,7 @@ int main()
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1067,12 +1126,12 @@ int main()
                     {
                         return 1;
                     } );
-                BOOST_TEST(!r);
-                return r;
+                BOOST_TEST(!r1);
+                return r1;
             },
             []( leaf::match_value<e_my_error_code,my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched.value==my_error_code::error1);
+                BOOST_TEST(ec.matched.value == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -1089,7 +1148,7 @@ int main()
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1099,12 +1158,12 @@ int main()
                     {
                         return 1;
                     } );
-                BOOST_TEST(!r);
-                return r;
+                BOOST_TEST(!r1);
+                return r1;
             },
             []( leaf::match_value<e_my_error_code,my_error_code::error2,my_error_code::error1> ec, info<1> const & x, info<2> y )
             {
-                BOOST_TEST(ec.matched.value==my_error_code::error1);
+                BOOST_TEST(ec.matched.value == my_error_code::error1);
                 BOOST_TEST_EQ(x.value, 1);
                 BOOST_TEST_EQ(y.value, 2);
                 return 2;
@@ -1121,7 +1180,7 @@ int main()
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1129,13 +1188,13 @@ int main()
                     },
                     []( my_error_code ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec==my_error_code::error1);
+                        BOOST_TEST(ec == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         return 1;
                     } );
-                BOOST_TEST(r);
-                return r;
+                BOOST_TEST(r1);
+                return r1;
             },
             []( info<4> )
             {
@@ -1148,12 +1207,80 @@ int main()
         BOOST_TEST_EQ(r, 1);
     }
 
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
+    // int, try_handle_some (failure, initially matched), match cond_x (single enum value)
+    {
+        int r = leaf::try_handle_all(
+            []
+            {
+                leaf::result<int> r1 = leaf::try_handle_some(
+                    []() -> leaf::result<int>
+                    {
+                        BOOST_LEAF_AUTO(answer, f_errc<int>(errc_a::a0));
+                        return answer;
+                    },
+                    []( leaf::match<leaf::condition<cond_x>, cond_x::x00> ec, info<1> const & x, info<2> y )
+                    {
+                        BOOST_TEST_EQ(ec.matched, make_error_code(errc_a::a0));
+                        BOOST_TEST_EQ(x.value, 1);
+                        BOOST_TEST_EQ(y.value, 2);
+                        return 1;
+                    } );
+                BOOST_TEST(r1);
+                return r1;
+            },
+            []( leaf::match<leaf::condition<cond_x>, cond_x::x11> )
+            {
+                return 2;
+            },
+            []
+            {
+                return 3;
+            } );
+        BOOST_TEST_EQ(r, 1);
+    }
+#endif
+
+#if BOOST_LEAF_CFG_STD_SYSTEM_ERROR
+    // int, try_handle_some (failure, initially matched), match cond_x (wrapped std::error_code)
+    {
+        int r = leaf::try_handle_all(
+            []
+            {
+                leaf::result<int> r1 = leaf::try_handle_some(
+                    []() -> leaf::result<int>
+                    {
+                        BOOST_LEAF_AUTO(answer, f_errc_wrapped<int>(errc_a::a0));
+                        return answer;
+                    },
+                    []( leaf::match_value<leaf::condition<e_std_error_code, cond_x>, cond_x::x00> ec, info<1> const & x, info<2> y )
+                    {
+                        BOOST_TEST_EQ(ec.matched.value, make_error_code(errc_a::a0));
+                        BOOST_TEST_EQ(x.value, 1);
+                        BOOST_TEST_EQ(y.value, 2);
+                        return 1;
+                    } );
+                BOOST_TEST(r1);
+                return r1;
+            },
+            []( leaf::match_value<leaf::condition<e_std_error_code, cond_x>, cond_x::x11> )
+            {
+                return 2;
+            },
+            []
+            {
+                return 3;
+            } );
+        BOOST_TEST_EQ(r, 1);
+    }
+#endif
+
     // int, try_handle_some (failure, initially matched), match enum (single enum value)
     {
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1161,13 +1288,13 @@ int main()
                     },
                     []( leaf::match<my_error_code,my_error_code::error1> ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec.matched==my_error_code::error1);
+                        BOOST_TEST(ec.matched == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         return 1;
                     } );
-                BOOST_TEST(r);
-                return r;
+                BOOST_TEST(r1);
+                return r1;
             },
             []( leaf::match<my_error_code,my_error_code::error2> )
             {
@@ -1185,7 +1312,7 @@ int main()
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1193,13 +1320,13 @@ int main()
                     },
                     []( leaf::match<my_error_code,my_error_code::error2,my_error_code::error1> ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec.matched==my_error_code::error1);
+                        BOOST_TEST(ec.matched == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         return 1;
                     } );
-                BOOST_TEST(r);
-                return r;
+                BOOST_TEST(r1);
+                return r1;
             },
             []( leaf::match<my_error_code,my_error_code::error2> )
             {
@@ -1217,7 +1344,7 @@ int main()
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1225,13 +1352,13 @@ int main()
                     },
                     []( leaf::match_value<e_my_error_code,my_error_code::error1> ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec.matched.value==my_error_code::error1);
+                        BOOST_TEST(ec.matched.value == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         return 1;
                     } );
-                BOOST_TEST(r);
-                return r;
+                BOOST_TEST(r1);
+                return r1;
             },
             []( leaf::match_value<e_my_error_code,my_error_code::error2> )
             {
@@ -1249,7 +1376,7 @@ int main()
         int r = leaf::try_handle_all(
             []
             {
-                leaf::result<int> r = leaf::try_handle_some(
+                leaf::result<int> r1 = leaf::try_handle_some(
                     []() -> leaf::result<int>
                     {
                         BOOST_LEAF_AUTO(answer, f<int>(my_error_code::error1));
@@ -1257,13 +1384,13 @@ int main()
                     },
                     []( leaf::match_value<e_my_error_code,my_error_code::error2,my_error_code::error1> ec, info<1> const & x, info<2> y )
                     {
-                        BOOST_TEST(ec.matched.value==my_error_code::error1);
+                        BOOST_TEST(ec.matched.value == my_error_code::error1);
                         BOOST_TEST_EQ(x.value, 1);
                         BOOST_TEST_EQ(y.value, 2);
                         return 1;
                     } );
-                BOOST_TEST(r);
-                return r;
+                BOOST_TEST(r1);
+                return r1;
             },
             []( leaf::match_value<e_my_error_code,my_error_code::error2> )
             {
@@ -1275,6 +1402,114 @@ int main()
             } );
         BOOST_TEST_EQ(r, 1);
     }
+
+    ////////////////////////////////////////
+
+    // no exception caught, error handled
+    {
+        int handle_some_handler_called = 0;
+        leaf::result<int> r = leaf::try_handle_some(
+            []() -> leaf::result<int>
+            {
+                return leaf::new_error( info<0>{1} );
+            },
+            [&]( info<0> & x )
+            {
+                BOOST_TEST_EQ(x.value, 1);
+                ++handle_some_handler_called;
+                return 1;
+            } );
+        BOOST_TEST_EQ(r.value(), 1);
+        BOOST_TEST_EQ(handle_some_handler_called, 1);
+    }
+
+    // no exception caught, error not handled
+    {
+        int handle_some_handler_called = 0;
+        int r = leaf::try_handle_all(
+            [&]
+            {
+                leaf::result<int> r1 = leaf::try_handle_some(
+                    []() -> leaf::result<int>
+                    {
+                        return leaf::new_error( info<0>{1} );
+                    },
+                    [&]( leaf::error_info const & e, info<0> & x ) -> leaf::result<int>
+                    {
+                        BOOST_TEST_EQ(x.value, 1);
+                        ++handle_some_handler_called;
+                        return e.error();
+                    } );
+                BOOST_TEST(!r1);
+                BOOST_TEST_EQ(handle_some_handler_called, 1);
+                return r1;
+            },
+            [](info<0> & x)
+            {
+                BOOST_TEST_EQ(x.value, 1);
+                return 1;
+            },
+            []
+            {
+                return 2;
+            });
+        BOOST_TEST_EQ(r, 1);
+    }
+
+#ifndef BOOST_LEAF_NO_EXCEPTIONS
+    // exception caught, error handled
+    {
+        int handle_some_handler_called = 0;
+        leaf::result<int> r = leaf::try_handle_some(
+            []() -> leaf::result<int>
+            {
+                BOOST_LEAF_THROW_EXCEPTION( info<0>{1} );
+            },
+            [&]( info<0> & x ) -> leaf::result<int>
+            {
+                BOOST_TEST_EQ(x.value, 1);
+                ++handle_some_handler_called;
+                return 1;
+            } );
+        BOOST_TEST_EQ(r.value(), 1);
+        BOOST_TEST_EQ(handle_some_handler_called, 1);
+    }
+#endif
+
+#ifndef BOOST_LEAF_NO_EXCEPTIONS
+    // exception caught, error not handled
+    {     
+        int handle_some_handler_called = 0;
+        int r = leaf::try_handle_all(
+            [&]
+            {
+                leaf::result<int> r = leaf::try_handle_some(
+                    []() -> leaf::result<int>
+                    {
+                        BOOST_LEAF_THROW_EXCEPTION( info<0>{1} );
+                    },
+                    [&]( leaf::error_info const & e, info<0> & x ) -> leaf::result<int>
+                    {
+                        BOOST_TEST_EQ(x.value, 1);
+                        ++handle_some_handler_called;
+                        return e.error();
+                    } );
+                BOOST_TEST(!r);
+                BOOST_TEST_EQ(handle_some_handler_called, 1);
+                return r;
+            },
+            []( info<0> & x )
+            {
+                BOOST_TEST_EQ(x.value, 1);
+                return 1;
+            },
+            []
+            {
+                return 2;
+            });
+        BOOST_TEST_EQ(r, 1);
+    }
+#endif
 
     return boost::report_errors();
 }

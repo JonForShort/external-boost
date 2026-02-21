@@ -9,7 +9,7 @@
  *  Copyright 2005 Rene Rivera.
  *  Copyright 2015 Artur Shepilko.
  *  Distributed under the Boost Software License, Version 1.0.
- *  (See accompanying file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
+ *  (See accompanying file LICENSE.txt or https://www.bfgroup.xyz/b2/LICENSE.txt)
  */
 
 
@@ -19,6 +19,9 @@
 #include "object.h"
 #include "pathsys.h"
 #include "jam_strings.h"
+
+#include <algorithm>
+#include <cctype>
 
 
 #ifdef OS_VMS
@@ -229,7 +232,7 @@ file_cvttime(
     unsigned int *curtime,
     time_t *unixtime )
 {
-    static const size_t divisor = 10000000;
+    static const int32_t divisor = 10000000;
     static unsigned int bastim[2] = { 0x4BEB4000, 0x007C9567 }; /* 1/1/1970 */
     int delta[2], remainder;
 
@@ -310,9 +313,12 @@ static unsigned int set_archive_member( struct dsc$descriptor_s *module,
         file_info_t * member = 0;
 
         /* Construct member's filename as lowercase "module.obj" */
-        sprintf( buf, "%s.obj", filename );
-        downcase_inplace( buf );
-        archive->members = filelist_push_back( archive->members, object_new( buf ) );
+        std::string name = filename;
+        name += ".obj";
+        std::transform(name.begin(), name.end(), name.begin(),
+            [](unsigned char c) { return std::tolower(c); });
+        archive->members = filelist_push_back( archive->members,
+            b2::value::make( name ) );
 
         member = filelist_back( archive->members );
         member->is_file = 1;
@@ -339,7 +345,7 @@ void file_archscan( char const * arch, scanback func, void * closure )
 
     if ( filelist_empty( archive->members ) )
     {
-        if ( DEBUG_BINDSCAN )
+        if ( is_debug_bindscan() )
             out_printf( "scan archive %s\n", object_str( archive->file->name ) );
 
         if ( file_collect_archive_content_( archive ) < 0 )
@@ -350,7 +356,6 @@ void file_archscan( char const * arch, scanback func, void * closure )
     {
         FILELISTITER iter = filelist_begin( archive->members );
         FILELISTITER const end = filelist_end( archive->members );
-        char buf[ MAXJPATH ];
 
         for ( ; iter != end ; iter = filelist_next( iter ) )
         {
@@ -359,11 +364,10 @@ void file_archscan( char const * arch, scanback func, void * closure )
 
             /* Construct member path: 'archive-path(member-name)'
              */
-            sprintf( buf, "%s(%s)",
-                object_str( archive->file->name ),
-                object_str( member_file->name ) );
             {
-                OBJECT * const member = object_new( buf );
+                OBJECT * member = b2::value::format( "%s(%s)",
+                    object_str( archive->file->name ),
+                    object_str( member_file->name ) );
                 (*func)( closure, member, 1 /* time valid */, &member_file->time );
                 object_free( member );
             }

@@ -20,15 +20,13 @@
 //              reference type from operator* (David Abrahams)
 //  19 Jan 2001 Initial version with iterator operators (David Abrahams)
 
-#include <boost/type_traits/is_same.hpp>
 #include <boost/operators.hpp>
-#include <boost/static_assert.hpp>
 #include <boost/config.hpp>
 #include <iterator>
 #include <vector>
 #include <list>
 #include <boost/core/lightweight_test.hpp>
-#include <iostream>
+#include <type_traits>
 
 // A UDT for which we can specialize std::iterator_traits<element*> on
 // compilers which don't support partial specialization. There's no
@@ -98,7 +96,7 @@ template <> struct assertion<true>
 
 template <class T, class U>
 struct assert_same
-    : assertion<(::boost::is_same<T,U>::value)>
+    : assertion<(std::is_same<T,U>::value)>
 {
 };
 
@@ -155,10 +153,11 @@ input_iterator_test<std::istream_iterator<int>, int, std::ptrdiff_t, int*, int&,
 
 // C++20 changed ostream_iterator::difference_type to ptrdiff_t.
 // Note: gcc 10.1 defines __cplusplus to a value less than 202002L, but greater than 201703L in C++20 mode.
-#if __cplusplus > 201703L && (\
-    (defined(BOOST_LIBSTDCXX_VERSION) && BOOST_LIBSTDCXX_VERSION >= 100100) \
-    ) || \
-    defined(_MSVC_LANG) && _MSVC_LANG > 201703L && _MSVC_STL_UPDATE >= 202010L
+#if (__cplusplus > 201703L && ( \
+        (defined(BOOST_LIBSTDCXX_VERSION) && BOOST_LIBSTDCXX_VERSION >= 100100) || \
+        (defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 12000) \
+    )) || \
+    (defined(_MSVC_LANG) && _MSVC_LANG > 201703L && _MSVC_STL_UPDATE >= 202010L)
 #define BOOST_ITERATOR_CXX20_OSTREAM_ITERATOR
 #endif
 

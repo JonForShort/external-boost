@@ -22,6 +22,7 @@
 #endif
 
 #include <boost/intrusive/detail/algorithm.hpp>
+#include <boost/move/utility_core.hpp>
 
 namespace boost {
 namespace container {
@@ -118,6 +119,34 @@ InputIt find_if(InputIt first, InputIt last, UnaryPredicate p)
    return last;
 }
 
+template<class ForwardIt1, class ForwardIt2, class BinaryPredicate>
+  ForwardIt1 find_end (ForwardIt1 first1, ForwardIt1 last1
+                      ,ForwardIt2 first2, ForwardIt2 last2
+                      ,BinaryPredicate p)
+{
+   if (first2==last2)
+      return last1;  // specified in C++11
+
+   ForwardIt1 ret = last1;
+
+   while (first1!=last1)
+   {
+      ForwardIt1 it1 = first1;
+      ForwardIt2 it2 = first2;
+      while ( p(*it1, *it2) ) {
+         ++it1; ++it2;
+         if (it2==last2) {
+            ret=first1;
+            break;
+         }
+         if (it1==last1)
+         return ret;
+      }
+      ++first1;
+   }
+   return ret;
+}
+
 template<class InputIt, class ForwardIt, class BinaryPredicate>
 InputIt find_first_of(InputIt first1, InputIt last1, ForwardIt first2, ForwardIt last2, BinaryPredicate p)
 {
@@ -149,6 +178,61 @@ ForwardIt1 search(ForwardIt1 first1, ForwardIt1 last1,
          }
       }
    }
+}
+
+template<class InpIt, class U>
+InpIt find(InpIt first, InpIt last, const U& value)
+{
+    for (; first != last; ++first)
+        if (*first == value)
+            return first;
+ 
+    return last;
+}
+
+
+template<class FwdIt, class U>
+FwdIt remove(FwdIt first, FwdIt last, const U& value)
+{
+    first = find(first, last, value);
+    if (first != last)
+        for (FwdIt i = first; ++i != last;)
+            if (!(*i == value))
+                *first++ = boost::move(*i);
+    return first;
+}
+
+template<class FwdIt, class Pred>
+FwdIt remove_if(FwdIt first, FwdIt last, Pred p)
+{
+    first = find_if(first, last, p);
+    if (first != last)
+        for (FwdIt i = first; ++i != last;)
+            if (!p(*i))
+                *first++ = boost::move(*i);
+    return first;
+}
+
+template <class Cont, class Pred>
+typename Cont::size_type container_erase_if(Cont& c, Pred p)
+{
+   typedef typename Cont::size_type size_type;
+   typedef typename Cont::iterator  it_t;
+
+   size_type prev_size = c.size();
+   it_t it         = c.begin();
+
+   //end() must be called each loop for non-node containers
+   while ( it != c.end() ) {
+      if (p(*it)) {
+         it = c.erase(it);
+      }
+      else {
+         ++it;
+      }
+   }
+
+   return prev_size - c.size();
 }
 
 }  //namespace container {

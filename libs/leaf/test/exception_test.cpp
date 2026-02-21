@@ -1,9 +1,9 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/detail/config.hpp>
+#include <boost/leaf/config.hpp>
+
 #ifdef BOOST_LEAF_NO_EXCEPTIONS
 
 #include <iostream>
@@ -16,25 +16,49 @@ int main()
 
 #else
 
-#include <boost/leaf/handle_errors.hpp>
-#include <boost/leaf/pred.hpp>
-#include <boost/leaf/exception.hpp>
-#include <boost/leaf/on_error.hpp>
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/diagnostics.hpp>
+#   include <boost/leaf/pred.hpp>
+#   include <boost/leaf/exception.hpp>
+#   include <boost/leaf/on_error.hpp>
+#endif
+
 #include "lightweight_test.hpp"
 
 namespace leaf = boost::leaf;
 
 struct info { int value; };
 
-struct my_exception: std::exception
+struct abstract_base_exception
+{
+    virtual ~abstract_base_exception() { }
+    virtual int get_val() const = 0;
+};
+
+struct my_exception:
+    std::exception,
+    abstract_base_exception
 {
     int val;;
-    explicit my_exception(int val): val{val} { }
+    explicit my_exception(int v): val{v} { }
+    int get_val() const { return val; }
 };
+
+int get_val( abstract_base_exception const & ex )
+{
+    return ex.get_val();
+}
 
 int get_val( my_exception const & ex )
 {
     return ex.val;
+}
+
+int get_val( leaf::catch_<abstract_base_exception> const & ex )
+{
+    return ex.matched.get_val();
 }
 
 int get_val( leaf::catch_<my_exception> const & ex )
@@ -57,7 +81,7 @@ int test( F && f )
             BOOST_TEST_EQ(get_val(ex), 42);
             return 20;
         },
-        []( Ex ex, leaf::match_value<info,42>, info x )
+        []( Ex ex, leaf::match_value<info,42>, info )
         {
             BOOST_TEST_EQ(get_val(ex), 42);
             return 21;
@@ -76,7 +100,7 @@ int test( F && f )
         {
             return 40;
         },
-        []( leaf::match_value<info,42>, info x )
+        []( leaf::match_value<info,42>, info )
         {
             return 41;
         },
@@ -93,67 +117,76 @@ int test( F && f )
 int main()
 {
     BOOST_TEST_EQ(20, test<leaf::catch_<my_exception>>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(20, test<leaf::catch_<my_exception>>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(21, test<leaf::catch_<my_exception>>([]{ throw leaf::exception(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<leaf::catch_<my_exception>>([]{ leaf::throw_exception(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<leaf::catch_<my_exception>>([]{ my_exception exc(42); leaf::throw_exception(exc, info{42}); }));
+    BOOST_TEST_EQ(21, test<leaf::catch_<my_exception>>([]{ my_exception const exc(42); leaf::throw_exception(exc, info{42}); }));
     BOOST_TEST_EQ(22, test<leaf::catch_<my_exception>>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(22, test<leaf::catch_<my_exception>>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(23, test<leaf::catch_<my_exception>>([]{ throw leaf::exception(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<leaf::catch_<my_exception>>([]{ leaf::throw_exception(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<leaf::catch_<my_exception>>([]{ my_exception exc(42); leaf::throw_exception(exc); }));
+    BOOST_TEST_EQ(23, test<leaf::catch_<my_exception>>([]{ my_exception const exc(42); leaf::throw_exception(exc); }));
 
     BOOST_TEST_EQ(20, test<my_exception const &>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(20, test<my_exception const &>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(21, test<my_exception const &>([]{ throw leaf::exception(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<my_exception const &>([]{ leaf::throw_exception(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<my_exception const &>([]{ my_exception exc(42); leaf::throw_exception(exc, info{42}); }));
+    BOOST_TEST_EQ(21, test<my_exception const &>([]{ my_exception const exc(42); leaf::throw_exception(exc, info{42}); }));
     BOOST_TEST_EQ(22, test<my_exception const &>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(22, test<my_exception const &>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(23, test<my_exception const &>([]{ throw leaf::exception(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<my_exception const &>([]{ leaf::throw_exception(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<my_exception const &>([]{ my_exception exc(42); leaf::throw_exception(exc); }));
+    BOOST_TEST_EQ(23, test<my_exception const &>([]{ my_exception const exc(42); leaf::throw_exception(exc); }));
 
     BOOST_TEST_EQ(40, test<my_exception &>([]{ BOOST_LEAF_THROW_EXCEPTION(info{42}); }));
-    BOOST_TEST_EQ(40, test<my_exception &>([]{ throw BOOST_LEAF_EXCEPTION(info{42}); }));
-    BOOST_TEST_EQ(41, test<my_exception &>([]{ throw leaf::exception(info{42}); }));
+    BOOST_TEST_EQ(41, test<my_exception &>([]{ leaf::throw_exception(info{42}); }));
+    BOOST_TEST_EQ(41, test<my_exception &>([]{ info inf{42}; leaf::throw_exception(inf); }));
+    BOOST_TEST_EQ(41, test<my_exception &>([]{ info const inf{42}; leaf::throw_exception(inf); }));
     BOOST_TEST_EQ(42, test<my_exception &>([]{ BOOST_LEAF_THROW_EXCEPTION(); }));
-    BOOST_TEST_EQ(42, test<my_exception &>([]{ throw BOOST_LEAF_EXCEPTION(); }));
-    BOOST_TEST_EQ(43, test<my_exception &>([]{ throw leaf::exception(); }));
-
-    BOOST_TEST_EQ(20, test<my_exception const &>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(20, test<my_exception const &>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(21, test<my_exception const &>([]{ throw leaf::exception(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(22, test<my_exception const &>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(22, test<my_exception const &>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(23, test<my_exception const &>([]{ throw leaf::exception(my_exception(42)); }));
-
-    BOOST_TEST_EQ(40, test<my_exception &>([]{ BOOST_LEAF_THROW_EXCEPTION(info{42}); }));
-    BOOST_TEST_EQ(40, test<my_exception &>([]{ throw BOOST_LEAF_EXCEPTION(info{42}); }));
-    BOOST_TEST_EQ(41, test<my_exception &>([]{ throw leaf::exception(info{42}); }));
-    BOOST_TEST_EQ(42, test<my_exception &>([]{ BOOST_LEAF_THROW_EXCEPTION(); }));
-    BOOST_TEST_EQ(42, test<my_exception &>([]{ throw BOOST_LEAF_EXCEPTION(); }));
-    BOOST_TEST_EQ(43, test<my_exception &>([]{ throw leaf::exception(); }));
+    BOOST_TEST_EQ(43, test<my_exception &>([]{ leaf::throw_exception(); }));
+    BOOST_TEST_EQ(23, test<my_exception &>([]{ my_exception exc(42); leaf::throw_exception(exc); }));
+    BOOST_TEST_EQ(23, test<my_exception &>([]{ my_exception const exc(42); leaf::throw_exception(exc); }));
 
     BOOST_TEST_EQ(20, test<my_exception const>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(20, test<my_exception const>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(21, test<my_exception const>([]{ throw leaf::exception(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<my_exception const>([]{ leaf::throw_exception(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<my_exception const>([]{ my_exception exc(42); leaf::throw_exception(exc, info{42}); }));
+    BOOST_TEST_EQ(21, test<my_exception const>([]{ my_exception const exc(42); leaf::throw_exception(exc, info{42}); }));
     BOOST_TEST_EQ(22, test<my_exception const>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(22, test<my_exception const>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(23, test<my_exception const>([]{ throw leaf::exception(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<my_exception const>([]{ leaf::throw_exception(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<my_exception const>([]{ my_exception exc(42); leaf::throw_exception(exc); }));
+    BOOST_TEST_EQ(23, test<my_exception const>([]{ my_exception const exc(42); leaf::throw_exception(exc); }));
 
     BOOST_TEST_EQ(40, test<my_exception>([]{ BOOST_LEAF_THROW_EXCEPTION(info{42}); }));
-    BOOST_TEST_EQ(40, test<my_exception>([]{ throw BOOST_LEAF_EXCEPTION(info{42}); }));
-    BOOST_TEST_EQ(41, test<my_exception>([]{ throw leaf::exception(info{42}); }));
+    BOOST_TEST_EQ(41, test<my_exception>([]{ leaf::throw_exception(info{42}); }));
+    BOOST_TEST_EQ(41, test<my_exception>([]{ info inf{42}; leaf::throw_exception(inf); }));
+    BOOST_TEST_EQ(41, test<my_exception>([]{ info const inf{42}; leaf::throw_exception(inf); }));
     BOOST_TEST_EQ(42, test<my_exception>([]{ BOOST_LEAF_THROW_EXCEPTION(); }));
-    BOOST_TEST_EQ(42, test<my_exception>([]{ throw BOOST_LEAF_EXCEPTION(); }));
-    BOOST_TEST_EQ(43, test<my_exception>([]{ throw leaf::exception(); }));
+    BOOST_TEST_EQ(43, test<my_exception>([]{ leaf::throw_exception(); }));
+    BOOST_TEST_EQ(23, test<my_exception>([]{ my_exception exc(42); leaf::throw_exception(exc); }));
+    BOOST_TEST_EQ(23, test<my_exception>([]{ my_exception const exc(42); leaf::throw_exception(exc); }));
 
-    BOOST_TEST_EQ(20, test<my_exception const>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(20, test<my_exception const>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(21, test<my_exception const>([]{ throw leaf::exception(my_exception(42), info{42}); }));
-    BOOST_TEST_EQ(22, test<my_exception const>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(22, test<my_exception const>([]{ throw BOOST_LEAF_EXCEPTION(my_exception(42)); }));
-    BOOST_TEST_EQ(23, test<my_exception const>([]{ throw leaf::exception(my_exception(42)); }));
+    BOOST_TEST_EQ(20, test<leaf::catch_<abstract_base_exception>>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<leaf::catch_<abstract_base_exception>>([]{ leaf::throw_exception(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<leaf::catch_<abstract_base_exception>>([]{ my_exception exc(42); leaf::throw_exception(exc, info{42}); }));
+    BOOST_TEST_EQ(21, test<leaf::catch_<abstract_base_exception>>([]{ my_exception const exc(42); leaf::throw_exception(exc, info{42}); }));
+    BOOST_TEST_EQ(22, test<leaf::catch_<abstract_base_exception>>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<leaf::catch_<abstract_base_exception>>([]{ leaf::throw_exception(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<leaf::catch_<abstract_base_exception>>([]{ my_exception exc(42); leaf::throw_exception(exc); }));
+    BOOST_TEST_EQ(23, test<leaf::catch_<abstract_base_exception>>([]{ my_exception const exc(42); leaf::throw_exception(exc); }));
 
-    BOOST_TEST_EQ(40, test<my_exception>([]{ BOOST_LEAF_THROW_EXCEPTION(info{42}); }));
-    BOOST_TEST_EQ(40, test<my_exception>([]{ throw BOOST_LEAF_EXCEPTION(info{42}); }));
-    BOOST_TEST_EQ(41, test<my_exception>([]{ throw leaf::exception(info{42}); }));
-    BOOST_TEST_EQ(42, test<my_exception>([]{ BOOST_LEAF_THROW_EXCEPTION(); }));
-    BOOST_TEST_EQ(42, test<my_exception>([]{ throw BOOST_LEAF_EXCEPTION(); }));
-    BOOST_TEST_EQ(43, test<my_exception>([]{ throw leaf::exception(); }));
+    BOOST_TEST_EQ(20, test<abstract_base_exception const &>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<abstract_base_exception const &>([]{ leaf::throw_exception(my_exception(42), info{42}); }));
+    BOOST_TEST_EQ(21, test<abstract_base_exception const &>([]{ my_exception exc(42); leaf::throw_exception(exc, info{42}); }));
+    BOOST_TEST_EQ(21, test<abstract_base_exception const &>([]{ my_exception const exc(42); leaf::throw_exception(exc, info{42}); }));
+    BOOST_TEST_EQ(22, test<abstract_base_exception const &>([]{ BOOST_LEAF_THROW_EXCEPTION(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<abstract_base_exception const &>([]{ leaf::throw_exception(my_exception(42)); }));
+    BOOST_TEST_EQ(23, test<abstract_base_exception const &>([]{ my_exception exc(42); leaf::throw_exception(exc); }));
+    BOOST_TEST_EQ(23, test<abstract_base_exception const &>([]{ my_exception const exc(42); leaf::throw_exception(exc); }));
+
+    BOOST_TEST_EQ(40, test<abstract_base_exception &>([]{ BOOST_LEAF_THROW_EXCEPTION(info{42}); }));
+    BOOST_TEST_EQ(41, test<abstract_base_exception &>([]{ leaf::throw_exception(info{42}); }));
+    BOOST_TEST_EQ(41, test<abstract_base_exception &>([]{ info inf{42}; leaf::throw_exception(inf); }));
+    BOOST_TEST_EQ(41, test<abstract_base_exception &>([]{ info const inf{42}; leaf::throw_exception(inf); }));
+    BOOST_TEST_EQ(42, test<abstract_base_exception &>([]{ BOOST_LEAF_THROW_EXCEPTION(); }));
+    BOOST_TEST_EQ(43, test<abstract_base_exception &>([]{ leaf::throw_exception(); }));
+    BOOST_TEST_EQ(23, test<abstract_base_exception &>([]{ my_exception exc(42); leaf::throw_exception(exc); }));
+    BOOST_TEST_EQ(23, test<abstract_base_exception &>([]{ my_exception const exc(42); leaf::throw_exception(exc); }));
 
     {
         char const * wh = 0;
@@ -166,33 +199,33 @@ int main()
             {
                 wh = ex.what();
             } );
-        BOOST_TEST(wh!=0 || !strcmp(wh,"Test"));
+        BOOST_TEST(wh != 0 || !strcmp(wh,"Test"));
     }
 
     {
-        int const id = leaf::leaf_detail::current_id();
+        int const id = leaf::detail::current_id();
         BOOST_TEST_EQ( 21, test<my_exception const &>( []
         {
             auto load = leaf::on_error(info{42});
             throw my_exception(42);
         } ) );
-        BOOST_TEST_NE(id, leaf::leaf_detail::current_id());
+        BOOST_TEST_NE(id, leaf::detail::current_id());
     }
 
     {
-        int const id = leaf::leaf_detail::current_id();
+        int const id = leaf::detail::current_id();
         BOOST_TEST_EQ( 21, test<my_exception &>( []
         {
             auto load = leaf::on_error(info{42});
             throw my_exception(42);
         } ) );
-        BOOST_TEST_NE(id, leaf::leaf_detail::current_id());
+        BOOST_TEST_NE(id, leaf::detail::current_id());
     }
 
     {
         BOOST_TEST_EQ( 23, test<my_exception const &>( []
         {
-            int const id = leaf::leaf_detail::current_id();
+            int const id = leaf::detail::current_id();
             try
             {
                 leaf::try_catch(
@@ -203,7 +236,7 @@ int main()
             }
             catch(...)
             {
-                BOOST_TEST_EQ(id, leaf::leaf_detail::current_id());
+                BOOST_TEST_EQ(id, leaf::detail::current_id());
                 throw;
             }
         } ) );
@@ -212,7 +245,7 @@ int main()
     {
         BOOST_TEST_EQ( 23, test<my_exception &>( []
         {
-            int const id = leaf::leaf_detail::current_id();
+            int const id = leaf::detail::current_id();
             try
             {
                 leaf::try_catch(
@@ -223,7 +256,7 @@ int main()
             }
             catch(...)
             {
-                BOOST_TEST_EQ(id, leaf::leaf_detail::current_id());
+                BOOST_TEST_EQ(id, leaf::detail::current_id());
                 throw;
             }
         } ) );
@@ -233,7 +266,7 @@ int main()
         leaf::try_catch(
             []
             {
-                throw leaf::exception( info{42} );
+                leaf::throw_exception( info{42} );
             },
             []( info x )
             {
@@ -244,7 +277,7 @@ int main()
             {
                 throw std::exception();
             },
-            []( info x )
+            []( info )
             {
                 return -1;
             },

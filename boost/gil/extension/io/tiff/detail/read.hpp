@@ -12,11 +12,11 @@
 #include <boost/gil/extension/io/tiff/detail/is_allowed.hpp>
 #include <boost/gil/extension/io/tiff/detail/reader_backend.hpp>
 
+#include <boost/gil/io/detail/dynamic.hpp>
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/bit_operations.hpp>
 #include <boost/gil/io/conversion_policies.hpp>
 #include <boost/gil/io/device.hpp>
-#include <boost/gil/io/dynamic_io_new.hpp>
 #include <boost/gil/io/reader_base.hpp>
 #include <boost/gil/io/row_buffer_helper.hpp>
 
@@ -277,7 +277,7 @@ private:
 
                 break;
             }
-            case PHOTOMETRIC_SEPARATED: // CYMK
+            case PHOTOMETRIC_SEPARATED: // CMYK
             {
                 switch( this->_info._bits_per_sample )
                 {
@@ -663,9 +663,9 @@ private:
 
         std::size_t element_size = sizeof( Pixel );
 
-        std::size_t ret = std::max( width
-                                  , (( scanline_size_in_bytes + element_size - 1 ) / element_size )
-                                  );
+        std::size_t ret = (std::max)( width
+                                    , (( scanline_size_in_bytes + element_size - 1 ) / element_size )
+                                    );
 
         return ret;
     }
@@ -766,8 +766,8 @@ public:
                                     , parent_t
                                     > op( this );
 
-            apply_operation( view( images )
-                           , op
+            variant2::visit( op
+                           , view( images )
                            );
         }
     }

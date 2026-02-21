@@ -8,6 +8,7 @@
 <link rel="up" href="../ref.html" title="This Page Intentionally Left Blank 2/2">
 <link rel="prev" href="boost__beast__buffers_suffix/consume.html" title="buffers_suffix::consume">
 <link rel="next" href="boost__beast__http__chunk_body/value_type.html" title="http::chunk_body::value_type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -126,7 +127,7 @@
 <tr>
 <td>
                 <p>
-                  <span class="bold"><strong><a class="link" href="boost__beast__http__chunk_body/chunk_body.html" title="http::chunk_body::chunk_body">chunk_body</a></strong></span>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__chunk_body/chunk_body.html" title="http::chunk_body::chunk_body">chunk_body</a> <span class="silver">[constructor]</span></strong></span>
                 </p>
               </td>
 <td>
@@ -161,12 +162,15 @@
 <span class="identifier">chunk</span><span class="special">-</span><span class="identifier">size</span>      <span class="special">=</span> <span class="number">1</span><span class="special">*</span><span class="identifier">HEXDIG</span>
 <span class="identifier">chunk</span><span class="special">-</span><span class="identifier">ext</span>       <span class="special">=</span> <span class="special">*(</span> <span class="string">";"</span> <span class="identifier">chunk</span><span class="special">-</span><span class="identifier">ext</span><span class="special">-</span><span class="identifier">name</span> <span class="special">[</span> <span class="string">"="</span> <span class="identifier">chunk</span><span class="special">-</span><span class="identifier">ext</span><span class="special">-</span><span class="identifier">val</span> <span class="special">]</span> <span class="special">)</span>
 <span class="identifier">chunk</span><span class="special">-</span><span class="identifier">ext</span><span class="special">-</span><span class="identifier">name</span>  <span class="special">=</span> <span class="identifier">token</span>
-<span class="identifier">chunk</span><span class="special">-</span><span class="identifier">ext</span><span class="special">-</span><span class="identifier">val</span>   <span class="special">=</span> <span class="identifier">token</span> <span class="special">/</span> <span class="identifier">quoted</span><span class="special">-</span><span class="identifier">string</span>
+<span class="identifier">chunk</span><span class="special">-</span><span class="identifier">ext</span><span class="special">-</span><span class="identifier">val</span>   <span class="special">=</span> <span class="identifier">token</span> <span class="special">/</span> <span class="identifier">quoted</span><span class="special">-</span> <span class="identifier">string</span>
 <span class="identifier">chunk</span><span class="special">-</span><span class="identifier">data</span>      <span class="special">=</span> <span class="number">1</span><span class="special">*</span><span class="identifier">OCTET</span> <span class="special">;</span> <span class="identifier">a</span> <span class="identifier">sequence</span> <span class="identifier">of</span> <span class="identifier">chunk</span><span class="special">-</span><span class="identifier">size</span> <span class="identifier">octets</span>
 </pre>
 <p>
-        The chunk extension is optional. To use this class, pass an instance of it
-        to a stream algorithm as the buffer sequence.
+        The chunk extension is optional.
+      </p>
+<p>
+        To use this class, pass an instance of it to a stream algorithm as the buffer
+        sequence.
       </p>
 <h5>
 <a name="beast.ref.boost__beast__http__chunk_body.h4"></a>
@@ -177,15 +181,12 @@
         <a href="https://tools.ietf.org/html/rfc7230#section-4.1" target="_top">https://tools.ietf.org/html/rfc7230#section-4.1</a>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2016-2019 Vinnie
+<div class="copyright-footer">Copyright © 2016-2019 Vinnie
       Falco<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="boost__beast__buffers_suffix/consume.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__http__chunk_body/value_type.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>

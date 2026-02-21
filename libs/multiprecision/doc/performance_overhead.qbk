@@ -34,7 +34,7 @@ for the [@../../performance/voronoi_performance.cpp voronoi-diagram builder test
 
 [table
 [[Type][Relative time]]
-[[`int64_t`][[*1.0](0.0128646s)]]
+[[`int64_t`][[*1.0] (0.0128646s)]]
 [[`number<arithmetic_backend<int64_t>, et_off>`][1.005 (0.0129255s)]]
 ]
 
@@ -42,10 +42,12 @@ This test involves mainly creating a lot of temporaries and performing a small a
 with very little difference in performance between the native and "wrapped" types.
 
 [table:platform Platform Details
-[[Platform][Linux 5.3.0-24-generic, version \#26-Ubuntu SMP Thu Nov 14 01:33:18 UTC 2019, x86_64]]
-[[Compiler][GNU C++ version 9.2.1 20191008]]
-[[Boost][1.72.0]]
-[[Run date][Dec 13 2019]]
+[[][Version]]
+[[Compiler][GNU C++ version 10.3.0]]
+[[GMP][6.2.0]]
+[[MPFR][262146]]
+[[Boost][107800]]
+[[Run date][Sep 30 2021]]
 ]
 
 [endsect]

@@ -34,35 +34,41 @@ namespace beast {
 namespace {
 
 #if defined(BOOST_ASIO_NO_TS_EXECUTORS)
+
+static struct ex1_context : net::execution_context
+{
+
+} ex1ctx;
+
 struct ex1_type
 {
 
     net::execution_context &
-    query(net::execution::context_t c) const noexcept
-    { return *reinterpret_cast<net::execution_context *>(0); }
+    query(net::execution::context_t) const noexcept
+    { return *reinterpret_cast<net::execution_context *>(&ex1ctx); }
 
     net::execution::blocking_t
     query(net::execution::blocking_t) const noexcept
     { return net::execution::blocking; };
 
     net::execution::outstanding_work_t
-    query(net::execution::outstanding_work_t w) const noexcept
+    query(net::execution::outstanding_work_t) const noexcept
     { return net::execution::outstanding_work; }
 
     ex1_type
-    require(net::execution::blocking_t::possibly_t b) const
+    require(net::execution::blocking_t::possibly_t) const
     { return *this; }
 
     ex1_type
-    require(net::execution::blocking_t::never_t b) const
+    require(net::execution::blocking_t::never_t) const
     { return *this; };
 
     ex1_type
-    prefer(net::execution::outstanding_work_t::untracked_t w) const
+    prefer(net::execution::outstanding_work_t::untracked_t) const
     { return *this; };
 
     ex1_type
-    prefer(net::execution::outstanding_work_t::tracked_t w) const
+    prefer(net::execution::outstanding_work_t::tracked_t) const
     { return *this; };
 
     template<class F>
@@ -77,7 +83,7 @@ struct ex1_type
     operator!=(ex1_type const &) const noexcept
     { return false; }
 };
-BOOST_STATIC_ASSERT(net::execution::is_executor<ex1_type>::value);
+BOOST_CORE_STATIC_ASSERT(net::execution::is_executor<ex1_type>::value);
 #else
 struct ex1_type
 {
@@ -88,7 +94,7 @@ struct ex1_type
     template<class F> void post(F&&) {}
     template<class F> void defer(F&&) {}
 };
-BOOST_STATIC_ASSERT(net::is_executor<ex1_type>::value);
+BOOST_CORE_STATIC_ASSERT(net::is_executor<ex1_type>::value);
 #endif
 
 
@@ -101,6 +107,11 @@ struct nested_alloc
     struct allocator_type
     {
     };
+
+    allocator_type get_allocator() const noexcept
+    {
+        return allocator_type{};
+    }
 };
 
 struct intrusive_alloc
@@ -108,11 +119,21 @@ struct intrusive_alloc
     struct allocator_type
     {
     };
+
+    allocator_type get_allocator() const noexcept
+    {
+        return allocator_type{};
+    }
 };
 
 struct no_ex
 {
     using executor_type = net::system_executor;
+
+    executor_type get_executor() const noexcept
+    {
+        return executor_type{};
+    }
 };
 
 struct nested_ex
@@ -120,6 +141,11 @@ struct nested_ex
     struct executor_type
     {
     };
+
+    executor_type get_executor() const noexcept
+    {
+        return executor_type{};
+    }
 };
 
 struct intrusive_ex
@@ -127,6 +153,11 @@ struct intrusive_ex
     struct executor_type
     {
     };
+
+    executor_type get_executor() const noexcept
+    {
+        return executor_type{};
+    }
 };
 
 template<class E, class A>
@@ -220,7 +251,7 @@ class async_base_test : public beast::unit_test::suite
 public:
     // no associated allocator
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             std::allocator<void>,
             net::associated_allocator_t<
@@ -229,7 +260,7 @@ public:
                     net::io_context::executor_type>
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             std::allocator<int>,
             net::associated_allocator_t<
@@ -239,7 +270,7 @@ public:
                     std::allocator<int>>
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             std::allocator<void>,
             net::associated_allocator_t<
@@ -249,7 +280,7 @@ public:
                 std::allocator<int> // ignored
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             std::allocator<int>,
             net::associated_allocator_t<
@@ -262,7 +293,7 @@ public:
 
     // nested associated allocator
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             nested_alloc::allocator_type,
             net::associated_allocator_t<
@@ -271,7 +302,7 @@ public:
                     net::io_context::executor_type>
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             nested_alloc::allocator_type,
             net::associated_allocator_t<
@@ -281,7 +312,7 @@ public:
                     std::allocator<int>> // ignored
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             nested_alloc::allocator_type,
             net::associated_allocator_t<
@@ -291,7 +322,7 @@ public:
                 std::allocator<int> // ignored
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             nested_alloc::allocator_type,
             net::associated_allocator_t<
@@ -304,7 +335,7 @@ public:
 
     // intrusive associated allocator
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             intrusive_alloc::allocator_type,
             net::associated_allocator_t<
@@ -313,7 +344,7 @@ public:
                     net::io_context::executor_type>
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             intrusive_alloc::allocator_type,
             net::associated_allocator_t<
@@ -323,7 +354,7 @@ public:
                     std::allocator<int>> // ignored
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             intrusive_alloc::allocator_type,
             net::associated_allocator_t<
@@ -333,7 +364,7 @@ public:
                 std::allocator<int> // ignored
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             intrusive_alloc::allocator_type,
             net::associated_allocator_t<
@@ -346,7 +377,7 @@ public:
 
     // no associated executor
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             ex1_type,
             net::associated_executor_t<
@@ -355,7 +386,7 @@ public:
                     ex1_type>
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             ex1_type,
             net::associated_executor_t<
@@ -367,7 +398,7 @@ public:
 
     // nested associated executor
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             nested_ex::executor_type,
             net::associated_executor_t<
@@ -376,7 +407,7 @@ public:
                     ex1_type>
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             nested_ex::executor_type,
             net::associated_executor_t<
@@ -388,7 +419,7 @@ public:
 
     // intrusive associated executor
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             intrusive_ex::executor_type,
             net::associated_executor_t<
@@ -397,7 +428,7 @@ public:
                     ex1_type>
         >>::value);
 
-    BOOST_STATIC_ASSERT(
+    BOOST_CORE_STATIC_ASSERT(
         std::is_same<
             intrusive_ex::executor_type,
             net::associated_executor_t<
@@ -565,7 +596,7 @@ public:
                     ioc1.get_executor());
             op->complete(false);
             delete op;
-            BEAST_EXPECT(ioc1.run() == 0);
+            BEAST_EXPECT(ioc1.run() == 1);
             BEAST_EXPECT(ioc2.run() == 1);
         }
         {
@@ -716,9 +747,9 @@ public:
 
                 net::steady_timer timer;
 
-                temporary_data(std::string message_, net::io_context& ctx)
+                temporary_data(std::string message_, net::any_io_executor ex)
                     : message(std::move(message_))
-                    , timer(ctx)
+                    , timer(std::move(ex))
                 {
                 }
             };
@@ -733,7 +764,7 @@ public:
                 , repeats_(repeats)
                 , data_(allocate_stable<temporary_data>(*this,
                     std::move(message),
-                    net::query(stream.get_executor(), net::execution::context)))
+                    stream.get_executor()))
             {
                 (*this)(); // start the operation
             }

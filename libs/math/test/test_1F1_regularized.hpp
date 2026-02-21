@@ -25,7 +25,7 @@
 #include <boost/math/special_functions/hypergeometric_1F1.hpp>
 #include <boost/math/quadrature/exp_sinh.hpp>
 
-#ifdef BOOST_MSVC
+#ifdef _MSC_VER
 #pragma warning(disable:4127)
 #endif
 
@@ -64,7 +64,11 @@ void do_test_1F1(const T& data, const char* type_name, const char* test_name)
 template <class T>
 void test_spots1(T, const char* type_name)
 {
+#ifdef TEST_MP
+#include "hypergeometric_1f1_large_regularized_mp.ipp"
+#else
 #include "hypergeometric_1f1_large_regularized.ipp"
+#endif
 
    do_test_1F1<T>(hypergeometric_1f1_large_regularized, type_name, "Large random values - regularized");
 }
@@ -73,5 +77,21 @@ template <class T>
 void test_spots(T z, const char* type_name)
 {
    test_spots1(z, type_name);
+
+   //
+   // Special cases for coverage:
+   //
+   BOOST_IF_CONSTEXPR(std::numeric_limits<T>::has_infinity)
+   {
+      BOOST_CHECK_EQUAL(boost::math::hypergeometric_1F1_regularized(600.25, 102.75, 11512.0), std::numeric_limits<T>::infinity());
+      BOOST_IF_CONSTEXPR(std::numeric_limits<long double>::max_exponent > 16000)
+      {
+         BOOST_CHECK_EQUAL(boost::math::hypergeometric_1F1_regularized(600.25, 102.75, 9985.0), std::numeric_limits<T>::infinity());
+      }
+      else BOOST_IF_CONSTEXPR(std::numeric_limits<T>::max_exponent <= std::numeric_limits<double>::max_exponent)
+      {
+         BOOST_CHECK_EQUAL(boost::math::hypergeometric_1F1_regularized(600.25, 102.75, 514.0), std::numeric_limits<T>::infinity());
+      }
+   }
 }
 

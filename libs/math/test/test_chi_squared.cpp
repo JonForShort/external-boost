@@ -16,9 +16,17 @@
 #  pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
-#include <boost/math/tools/test.hpp> // for real_concept
+#ifdef BOOST_MATH_ENABLE_SYCL
+#include "sycl/sycl.hpp"
+#endif
+
+#include <boost/math/tools/config.hpp>
+#include "../include_private/boost/math/tools/test.hpp"
+
+#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 using ::boost::math::concepts::real_concept;
+#endif
 
 #include <boost/math/distributions/chi_squared.hpp> // for chi_squared_distribution
 #include <boost/math/distributions/non_central_chi_squared.hpp> // for chi_squared_distribution
@@ -36,6 +44,8 @@ using std::cout;
 using std::endl;
 #include <limits>
 using std::numeric_limits;
+#include <cmath>
+using std::log;
 
 template <class RealType>
 RealType naive_pdf(RealType df, RealType x)
@@ -59,6 +69,8 @@ void test_spot(
       cdf(dist, cs), P, tol);
    BOOST_CHECK_CLOSE(
       pdf(dist, cs), naive_pdf(dist.degrees_of_freedom(), cs), tol);
+   BOOST_CHECK_CLOSE(
+      logpdf(dist, cs), log(pdf(dist, cs)), tol);
    if((P < 0.99) && (Q < 0.99))
    {
       //

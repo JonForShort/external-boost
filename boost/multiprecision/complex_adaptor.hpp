@@ -1,19 +1,22 @@
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright 2018 John Maddock. Distributed under the Boost
+//  Copyright 2018 - 2025 John Maddock.
+//  Copyright 2025 Christopher Kormanyos.
+//  Distributed under the Boost
 //  Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_MULTIPRECISION_COMPLEX_ADAPTOR_HPP
-#define BOOST_MULTIPRECISION_COMPLEX_ADAPTOR_HPP
+#ifndef BOOST_MP_COMPLEX_ADAPTOR_HPP
+#define BOOST_MP_COMPLEX_ADAPTOR_HPP
 
 #include <boost/multiprecision/number.hpp>
-#include <boost/cstdint.hpp>
 #include <boost/multiprecision/detail/digits.hpp>
-#include <boost/functional/hash_fwd.hpp>
-#include <boost/type_traits/is_complex.hpp>
-#include <cmath>
+#include <boost/multiprecision/detail/hash.hpp>
+#include <boost/multiprecision/detail/no_exceptions_support.hpp>
+
 #include <algorithm>
+#include <cmath>
 #include <complex>
+#include <cstdint>
 
 namespace boost {
 namespace multiprecision {
@@ -43,19 +46,23 @@ struct complex_adaptor
       return m_imag;
    }
 
-   typedef typename Backend::signed_types   signed_types;
-   typedef typename Backend::unsigned_types unsigned_types;
-   typedef typename Backend::float_types    float_types;
-   typedef typename Backend::exponent_type  exponent_type;
+   using signed_types = typename Backend::signed_types  ;
+   using unsigned_types = typename Backend::unsigned_types;
+   using float_types = typename Backend::float_types   ;
+   using exponent_type = typename Backend::exponent_type ;
 
    complex_adaptor() {}
    complex_adaptor(const complex_adaptor& o) : m_real(o.real_data()), m_imag(o.imag_data()) {}
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+   // Rvalue construct:
    complex_adaptor(complex_adaptor&& o) : m_real(std::move(o.real_data())), m_imag(std::move(o.imag_data()))
    {}
-#endif
    complex_adaptor(const Backend& val)
        : m_real(val)
+   {}
+
+   template <class T>
+   complex_adaptor(const T& val, const typename std::enable_if<std::is_convertible<T, Backend>::value>::type* = nullptr)
+       : m_real(val) 
    {}
 
    complex_adaptor(const std::complex<float>& val)
@@ -73,6 +80,18 @@ struct complex_adaptor
       m_real = val.real();
       m_imag = val.imag();
    }
+   template <class T, class U>
+   complex_adaptor(const T& a, const U& b, typename std::enable_if<std::is_constructible<Backend, T const&>::value&& std::is_constructible<Backend, U const&>::value>::type const* = nullptr)
+      : m_real(a), m_imag(b) {}
+   template <class T, class U>
+   complex_adaptor(T&& a, const U& b, typename std::enable_if<std::is_constructible<Backend, T>::value&& std::is_constructible<Backend, U>::value>::type const* = nullptr)
+      : m_real(static_cast<T&&>(a)), m_imag(b) {}
+   template <class T, class U>
+   complex_adaptor(T&& a, U&& b, typename std::enable_if<std::is_constructible<Backend, T>::value&& std::is_constructible<Backend, U>::value>::type const* = nullptr)
+      : m_real(static_cast<T&&>(a)), m_imag(static_cast<U&&>(b)) {}
+   template <class T, class U>
+   complex_adaptor(const T& a, U&& b, typename std::enable_if<std::is_constructible<Backend, T>::value&& std::is_constructible<Backend, U>::value>::type const* = nullptr)
+      : m_real(a), m_imag(static_cast<U&&>(b)) {}
 
    complex_adaptor& operator=(const complex_adaptor& o)
    {
@@ -80,18 +99,17 @@ struct complex_adaptor
       m_imag = o.imag_data();
       return *this;
    }
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-   complex_adaptor& operator=(complex_adaptor&& o) BOOST_NOEXCEPT
+   // rvalue assign:
+   complex_adaptor& operator=(complex_adaptor&& o) noexcept
    {
       m_real = std::move(o.real_data());
       m_imag = std::move(o.imag_data());
       return *this;
    }
-#endif
    template <class V>
-   complex_adaptor& operator=(const V& v)
+   typename std::enable_if<std::is_assignable<Backend, V>::value, complex_adaptor&>::type operator=(const V& v)
    {
-      typedef typename mpl::front<unsigned_types>::type ui_type;
+      using ui_type = typename std::tuple_element<0, unsigned_types>::type;
       m_real = v;
       m_imag = ui_type(0u);
       return *this;
@@ -105,7 +123,7 @@ struct complex_adaptor
    }
    complex_adaptor& operator=(const char* s)
    {
-      typedef typename mpl::front<unsigned_types>::type ui_type;
+      using ui_type = typename std::tuple_element<0, unsigned_types>::type;
       ui_type                                           zero = 0u;
 
       using default_ops::eval_fpclassify;
@@ -136,7 +154,7 @@ struct complex_adaptor
          else
             imag_data() = zero;
 
-         if (eval_fpclassify(imag_data()) == (int)FP_NAN)
+         if (eval_fpclassify(imag_data()) == static_cast<int>(FP_NAN))
          {
             real_data() = imag_data();
          }
@@ -177,10 +195,60 @@ struct complex_adaptor
       m_real.negate();
       m_imag.negate();
    }
+
+   //
+   // Default precision:
+   //
+   static BOOST_MP_CXX14_CONSTEXPR unsigned default_precision() noexcept
+   {
+      return Backend::default_precision();
+   }
+   static BOOST_MP_CXX14_CONSTEXPR void default_precision(unsigned digits10)
+   {
+      Backend::default_precision(digits10);
+      Backend::thread_default_precision(digits10);
+   }
+   static BOOST_MP_CXX14_CONSTEXPR unsigned thread_default_precision() noexcept
+   {
+      return Backend::thread_default_precision();
+   }
+   static BOOST_MP_CXX14_CONSTEXPR void thread_default_precision(unsigned digits10)
+   {
+      Backend::thread_default_precision(digits10);
+   }
+   BOOST_MP_CXX14_CONSTEXPR unsigned precision() const noexcept
+   {
+      return m_real.precision();
+   }
+   BOOST_MP_CXX14_CONSTEXPR void precision(unsigned digits10)
+   {
+      m_real.precision(digits10);
+      m_imag.precision(digits10);
+   }
+   //
+   // Variable precision options:
+   // 
+   static constexpr variable_precision_options default_variable_precision_options()noexcept
+   {
+      return Backend::default_variable_precision_options();
+   }
+   static constexpr variable_precision_options thread_default_variable_precision_options()noexcept
+   {
+      return Backend::thread_default_variable_precision_options();
+   }
+   static BOOST_MP_CXX14_CONSTEXPR void default_variable_precision_options(variable_precision_options opts)
+   {
+      Backend::default_variable_precision_options(opts);
+      Backend::thread_default_variable_precision_options(opts);
+   }
+   static BOOST_MP_CXX14_CONSTEXPR void thread_default_variable_precision_options(variable_precision_options opts)
+   {
+      Backend::thread_default_variable_precision_options(opts);
+   }
 };
 
 template <class Backend, class T>
-inline typename enable_if<is_arithmetic<T>, bool>::type eval_eq(const complex_adaptor<Backend>& a, const T& b) BOOST_NOEXCEPT
+inline typename std::enable_if<boost::multiprecision::detail::is_arithmetic<T>::value, bool>::type eval_eq(const complex_adaptor<Backend>& a, const T& b) noexcept
 {
    return a.compare(b) == 0;
 }
@@ -207,8 +275,8 @@ inline void eval_multiply(complex_adaptor<Backend>& result, const complex_adapto
    eval_multiply(t1, result.real_data(), o.imag_data());
    eval_multiply(t2, result.imag_data(), o.real_data());
    eval_add(t1, t2);
-   result.real_data() = BOOST_MP_MOVE(t3);
-   result.imag_data() = BOOST_MP_MOVE(t1);
+   result.real_data() = std::move(t3);
+   result.imag_data() = std::move(t1);
 }
 template <class Backend>
 inline void eval_divide(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& z)
@@ -222,71 +290,106 @@ inline void eval_divide(complex_adaptor<Backend>& result, const complex_adaptor<
    using default_ops::eval_subtract;
    Backend t1, t2;
 
+   //
+   // Backup sign bits for later, so we can fix up
+   // signed zeros at the end:
+   //
+   int a_sign = eval_signbit(result.real_data());
+   int b_sign = eval_signbit(result.imag_data());
+   int c_sign = eval_signbit(z.real_data());
+   int d_sign = eval_signbit(z.imag_data());
+
    if (eval_is_zero(z.imag_data()))
    {
       eval_divide(result.real_data(), z.real_data());
       eval_divide(result.imag_data(), z.real_data());
-      return;
-   }
-
-   eval_fabs(t1, z.real_data());
-   eval_fabs(t2, z.imag_data());
-   if (t1.compare(t2) < 0)
-   {
-      eval_divide(t1, z.real_data(), z.imag_data()); // t1 = c/d
-      eval_multiply(t2, z.real_data(), t1);
-      eval_add(t2, z.imag_data()); // denom = c * (c/d) + d
-      Backend t_real(result.real_data());
-      // real = (a * (c/d) + b) / (denom)
-      eval_multiply(result.real_data(), t1);
-      eval_add(result.real_data(), result.imag_data());
-      eval_divide(result.real_data(), t2);
-      // imag = (b * c/d - a) / denom
-      eval_multiply(result.imag_data(), t1);
-      eval_subtract(result.imag_data(), t_real);
-      eval_divide(result.imag_data(), t2);
    }
    else
    {
-      eval_divide(t1, z.imag_data(), z.real_data()); // t1 = d/c
-      eval_multiply(t2, z.imag_data(), t1);
-      eval_add(t2, z.real_data()); // denom = d * d/c + c
+      eval_fabs(t1, z.real_data());
+      eval_fabs(t2, z.imag_data());
+      if (t1.compare(t2) < 0)
+      {
+         eval_divide(t1, z.real_data(), z.imag_data()); // t1 = c/d
+         eval_multiply(t2, z.real_data(), t1);
+         eval_add(t2, z.imag_data()); // denom = c * (c/d) + d
+         Backend t_real(result.real_data());
+         // real = (a * (c/d) + b) / (denom)
+         eval_multiply(result.real_data(), t1);
+         eval_add(result.real_data(), result.imag_data());
+         eval_divide(result.real_data(), t2);
+         // imag = (b * c/d - a) / denom
+         eval_multiply(result.imag_data(), t1);
+         eval_subtract(result.imag_data(), t_real);
+         eval_divide(result.imag_data(), t2);
+      }
+      else
+      {
+         eval_divide(t1, z.imag_data(), z.real_data()); // t1 = d/c
+         eval_multiply(t2, z.imag_data(), t1);
+         eval_add(t2, z.real_data()); // denom = d * d/c + c
 
-      Backend r_t(result.real_data());
-      Backend i_t(result.imag_data());
+         Backend r_t(result.real_data());
+         Backend i_t(result.imag_data());
 
-      // real = (b * d/c + a) / denom
-      eval_multiply(result.real_data(), result.imag_data(), t1);
-      eval_add(result.real_data(), r_t);
-      eval_divide(result.real_data(), t2);
-      // imag = (-a * d/c + b) / denom
-      eval_multiply(result.imag_data(), r_t, t1);
-      result.imag_data().negate();
-      eval_add(result.imag_data(), i_t);
-      eval_divide(result.imag_data(), t2);
+         // real = (b * d/c + a) / denom
+         eval_multiply(result.real_data(), result.imag_data(), t1);
+         eval_add(result.real_data(), r_t);
+         eval_divide(result.real_data(), t2);
+         // imag = (-a * d/c + b) / denom
+         eval_multiply(result.imag_data(), r_t, t1);
+         result.imag_data().negate();
+         eval_add(result.imag_data(), i_t);
+         eval_divide(result.imag_data(), t2);
+      }
+   }
+   //
+   // Finish off by fixing up signed zeros.
+   // 
+   // This sets the signs "as if" we had evaluated the result using:
+   // 
+   // real = (ac + bd) / (c^2 + d^2)
+   // imag = (bc - ad) / (c^2 + d^2)
+   // 
+   // ie a zero is negative only if the two parts of the numerator
+   // are both negative and zero.
+   //
+   if (eval_is_zero(result.real_data()))
+   {
+      int r_sign = eval_signbit(result.real_data());
+      int r_required = (a_sign != c_sign) && (b_sign != d_sign);
+      if (r_required != r_sign)
+         result.real_data().negate();
+   }
+   if (eval_is_zero(result.imag_data()))
+   {
+      int i_sign = eval_signbit(result.imag_data());
+      int i_required = (b_sign != c_sign) && (a_sign == d_sign);
+      if (i_required != i_sign)
+         result.imag_data().negate();
    }
 }
 template <class Backend, class T>
-inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>::value>::type eval_add(complex_adaptor<Backend>& result, const T& scalar)
+inline typename std::enable_if< !std::is_same<complex_adaptor<Backend>, T>::value>::type eval_add(complex_adaptor<Backend>& result, const T& scalar)
 {
    using default_ops::eval_add;
    eval_add(result.real_data(), scalar);
 }
 template <class Backend, class T>
-inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>::value>::type eval_subtract(complex_adaptor<Backend>& result, const T& scalar)
+inline typename std::enable_if< !std::is_same<complex_adaptor<Backend>, T>::value>::type eval_subtract(complex_adaptor<Backend>& result, const T& scalar)
 {
    using default_ops::eval_subtract;
    eval_subtract(result.real_data(), scalar);
 }
 template <class Backend, class T>
-inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>::value>::type eval_multiply(complex_adaptor<Backend>& result, const T& scalar)
+inline typename std::enable_if< !std::is_same<complex_adaptor<Backend>, T>::value>::type eval_multiply(complex_adaptor<Backend>& result, const T& scalar)
 {
    using default_ops::eval_multiply;
    eval_multiply(result.real_data(), scalar);
    eval_multiply(result.imag_data(), scalar);
 }
 template <class Backend, class T>
-inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>::value>::type eval_divide(complex_adaptor<Backend>& result, const T& scalar)
+inline typename std::enable_if< !std::is_same<complex_adaptor<Backend>, T>::value>::type eval_divide(complex_adaptor<Backend>& result, const T& scalar)
 {
    using default_ops::eval_divide;
    eval_divide(result.real_data(), scalar);
@@ -294,28 +397,28 @@ inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>:
 }
 // Optimised 3 arg versions:
 template <class Backend, class T>
-inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>::value>::type eval_add(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& a, const T& scalar)
+inline typename std::enable_if< !std::is_same<complex_adaptor<Backend>, T>::value>::type eval_add(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& a, const T& scalar)
 {
    using default_ops::eval_add;
    eval_add(result.real_data(), a.real_data(), scalar);
    result.imag_data() = a.imag_data();
 }
 template <class Backend, class T>
-inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>::value>::type eval_subtract(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& a, const T& scalar)
+inline typename std::enable_if< !std::is_same<complex_adaptor<Backend>, T>::value>::type eval_subtract(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& a, const T& scalar)
 {
    using default_ops::eval_subtract;
    eval_subtract(result.real_data(), a.real_data(), scalar);
    result.imag_data() = a.imag_data();
 }
 template <class Backend, class T>
-inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>::value>::type eval_multiply(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& a, const T& scalar)
+inline typename std::enable_if< !std::is_same<complex_adaptor<Backend>, T>::value>::type eval_multiply(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& a, const T& scalar)
 {
    using default_ops::eval_multiply;
    eval_multiply(result.real_data(), a.real_data(), scalar);
    eval_multiply(result.imag_data(), a.imag_data(), scalar);
 }
 template <class Backend, class T>
-inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>::value>::type eval_divide(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& a, const T& scalar)
+inline typename std::enable_if< !std::is_same<complex_adaptor<Backend>, T>::value>::type eval_divide(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& a, const T& scalar)
 {
    using default_ops::eval_divide;
    eval_divide(result.real_data(), a.real_data(), scalar);
@@ -323,7 +426,7 @@ inline typename boost::disable_if_c<boost::is_same<complex_adaptor<Backend>, T>:
 }
 
 template <class Backend>
-inline bool eval_is_zero(const complex_adaptor<Backend>& val) BOOST_NOEXCEPT
+inline bool eval_is_zero(const complex_adaptor<Backend>& val) noexcept
 {
    using default_ops::eval_is_zero;
    return eval_is_zero(val.real_data()) && eval_is_zero(val.imag_data());
@@ -331,18 +434,18 @@ inline bool eval_is_zero(const complex_adaptor<Backend>& val) BOOST_NOEXCEPT
 template <class Backend>
 inline int eval_get_sign(const complex_adaptor<Backend>&)
 {
-   BOOST_STATIC_ASSERT_MSG(sizeof(Backend) == UINT_MAX, "Complex numbers have no sign bit."); // designed to always fail
+   static_assert(sizeof(Backend) == UINT_MAX, "Complex numbers have no sign bit."); // designed to always fail
    return 0;
 }
 
 template <class Result, class Backend>
-inline typename disable_if_c<boost::is_complex<Result>::value>::type eval_convert_to(Result* result, const complex_adaptor<Backend>& val)
+inline typename std::enable_if< !boost::multiprecision::detail::is_complex<Result>::value>::type eval_convert_to(Result* result, const complex_adaptor<Backend>& val)
 {
    using default_ops::eval_convert_to;
    using default_ops::eval_is_zero;
    if (!eval_is_zero(val.imag_data()))
    {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Could not convert imaginary number to scalar."));
+      BOOST_MP_THROW_EXCEPTION(std::runtime_error("Could not convert imaginary number to scalar."));
    }
    eval_convert_to(result, val.real_data());
 }
@@ -373,43 +476,43 @@ inline void eval_sqrt(complex_adaptor<Backend>& result, const complex_adaptor<Ba
 
    if (eval_is_zero(val.imag_data()) && (eval_get_sign(val.real_data()) >= 0))
    {
-      static const typename mpl::front<typename Backend::unsigned_types>::type zero = 0u;
+      constexpr typename std::tuple_element<0, typename Backend::unsigned_types>::type zero = 0u;
       eval_sqrt(result.real_data(), val.real_data());
       result.imag_data() = zero;
       return;
    }
 
-   const bool __my_real_part_is_neg(eval_get_sign(val.real_data()) < 0);
+   const bool my_real_part_is_neg(eval_get_sign(val.real_data()) < 0);
 
-   Backend __my_real_part_fabs(val.real_data());
-   if (__my_real_part_is_neg)
-      __my_real_part_fabs.negate();
+   Backend my_real_part_fabs(val.real_data());
+   if (my_real_part_is_neg)
+      my_real_part_fabs.negate();
 
-   Backend t, __my_sqrt_part;
-   eval_abs(__my_sqrt_part, val);
-   eval_add(__my_sqrt_part, __my_real_part_fabs);
-   eval_ldexp(t, __my_sqrt_part, -1);
-   eval_sqrt(__my_sqrt_part, t);
+   Backend t, my_sqrt_part;
+   eval_abs(my_sqrt_part, val);
+   eval_add(my_sqrt_part, my_real_part_fabs);
+   eval_ldexp(t, my_sqrt_part, -1);
+   eval_sqrt(my_sqrt_part, t);
 
-   if (__my_real_part_is_neg == false)
+   if (my_real_part_is_neg == false)
    {
-      eval_ldexp(t, __my_sqrt_part, 1);
+      eval_ldexp(t, my_sqrt_part, 1);
       eval_divide(result.imag_data(), val.imag_data(), t);
-      result.real_data() = __my_sqrt_part;
+      result.real_data() = my_sqrt_part;
    }
    else
    {
-      const bool __my_imag_part_is_neg(eval_get_sign(val.imag_data()) < 0);
+      const bool my_imag_part_is_neg(eval_get_sign(val.imag_data()) < 0);
 
-      Backend __my_imag_part_fabs(val.imag_data());
-      if (__my_imag_part_is_neg)
-         __my_imag_part_fabs.negate();
+      Backend my_imag_part_fabs(val.imag_data());
+      if (my_imag_part_is_neg)
+         my_imag_part_fabs.negate();
 
-      eval_ldexp(t, __my_sqrt_part, 1);
-      eval_divide(result.real_data(), __my_imag_part_fabs, t);
-      if (__my_imag_part_is_neg)
-         __my_sqrt_part.negate();
-      result.imag_data() = __my_sqrt_part;
+      eval_ldexp(t, my_sqrt_part, 1);
+      eval_divide(result.real_data(), my_imag_part_fabs, t);
+      if (my_imag_part_is_neg)
+         my_sqrt_part.negate();
+      result.imag_data() = my_sqrt_part;
    }
 }
 
@@ -436,7 +539,7 @@ inline void eval_pow(complex_adaptor<Backend>& result, const complex_adaptor<Bac
 
    if (eval_is_zero(e))
    {
-      typename mpl::front<typename Backend::unsigned_types>::type one(1);
+      typename std::tuple_element<0, typename Backend::unsigned_types>::type one(1);
       result = one;
       return;
    }
@@ -452,7 +555,7 @@ inline void eval_pow(complex_adaptor<Backend>& result, const complex_adaptor<Bac
       {
          Backend n          = std::numeric_limits<number<Backend> >::infinity().backend();
          result.real_data() = n;
-         typename mpl::front<typename Backend::unsigned_types>::type zero(0);
+         typename std::tuple_element<0, typename Backend::unsigned_types>::type zero(0);
          if (eval_is_zero(e.imag_data()))
             result.imag_data() = zero;
          else
@@ -460,7 +563,7 @@ inline void eval_pow(complex_adaptor<Backend>& result, const complex_adaptor<Bac
       }
       else
       {
-         typename mpl::front<typename Backend::unsigned_types>::type zero(0);
+         typename std::tuple_element<0, typename Backend::unsigned_types>::type zero(0);
          result = zero;
       }
       return;
@@ -483,7 +586,7 @@ inline void eval_exp(complex_adaptor<Backend>& result, const complex_adaptor<Bac
    if (eval_is_zero(arg.imag_data()))
    {
       eval_exp(result.real_data(), arg.real_data());
-      typename mpl::front<typename Backend::unsigned_types>::type zero(0);
+      typename std::tuple_element<0, typename Backend::unsigned_types>::type zero(0);
       result.imag_data() = zero;
       return;
    }
@@ -512,7 +615,7 @@ inline void eval_log(complex_adaptor<Backend>& result, const complex_adaptor<Bac
    if (eval_is_zero(arg.imag_data()) && (eval_get_sign(arg.real_data()) >= 0))
    {
       eval_log(result.real_data(), arg.real_data());
-      typename mpl::front<typename Backend::unsigned_types>::type zero(0);
+      typename std::tuple_element<0, typename Backend::unsigned_types>::type zero(0);
       result.imag_data() = zero;
       return;
    }
@@ -532,7 +635,7 @@ inline void eval_log10(complex_adaptor<Backend>& result, const complex_adaptor<B
    using default_ops::eval_divide;
    using default_ops::eval_log;
 
-   typedef typename mpl::front<typename Backend::unsigned_types>::type ui_type;
+   using ui_type = typename std::tuple_element<0, typename Backend::unsigned_types>::type;
 
    Backend ten;
    ten = ui_type(10);
@@ -590,7 +693,7 @@ void tanh_imp(const T& r, const T& i, T& r_result, T& i_result)
    using default_ops::eval_fpclassify;
    using default_ops::eval_get_sign;
 
-   typedef typename boost::mpl::front<typename T::unsigned_types>::type ui_type;
+   using ui_type = typename std::tuple_element<0, typename T::unsigned_types>::type;
    ui_type one(1);
    //
    // Set:
@@ -674,7 +777,7 @@ inline void eval_asin(complex_adaptor<Backend>& result, const complex_adaptor<Ba
 template <class Backend>
 inline void eval_acos(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& arg)
 {
-   typedef typename mpl::front<typename Backend::unsigned_types>::type ui_type;
+   using ui_type = typename std::tuple_element<0, typename Backend::unsigned_types>::type;
 
    using default_ops::eval_asin;
 
@@ -689,7 +792,7 @@ inline void eval_acos(complex_adaptor<Backend>& result, const complex_adaptor<Ba
 template <class Backend>
 inline void eval_atan(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& arg)
 {
-   typedef typename mpl::front<typename Backend::unsigned_types>::type ui_type;
+   using ui_type = typename std::tuple_element<0, typename Backend::unsigned_types>::type;
    ui_type                                                             one = (ui_type)1u;
 
    using default_ops::eval_add;
@@ -697,13 +800,13 @@ inline void eval_atan(complex_adaptor<Backend>& result, const complex_adaptor<Ba
    using default_ops::eval_log;
    using default_ops::eval_subtract;
 
-   complex_adaptor<Backend> __my_z_times_i, t1, t2, t3;
-   assign_components(__my_z_times_i, arg.imag_data(), arg.real_data());
-   __my_z_times_i.real_data().negate();
+   complex_adaptor<Backend> my_z_times_i, t1, t2, t3;
+   assign_components(my_z_times_i, arg.imag_data(), arg.real_data());
+   my_z_times_i.real_data().negate();
 
-   eval_add(t1, __my_z_times_i, one);
+   eval_add(t1, my_z_times_i, one);
    eval_log(t2, t1);
-   eval_subtract(t1, one, __my_z_times_i);
+   eval_subtract(t1, one, my_z_times_i);
    eval_log(t3, t1);
    eval_subtract(t1, t3, t2);
 
@@ -754,7 +857,7 @@ inline void eval_cosh(complex_adaptor<Backend>& result, const complex_adaptor<Ba
 template <class Backend>
 inline void eval_asinh(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& arg)
 {
-   typedef typename mpl::front<typename Backend::unsigned_types>::type ui_type;
+   using ui_type = typename std::tuple_element<0, typename Backend::unsigned_types>::type;
    ui_type                                                             one = (ui_type)1u;
 
    using default_ops::eval_add;
@@ -772,7 +875,7 @@ inline void eval_asinh(complex_adaptor<Backend>& result, const complex_adaptor<B
 template <class Backend>
 inline void eval_acosh(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& arg)
 {
-   typedef typename mpl::front<typename Backend::unsigned_types>::type ui_type;
+   using ui_type = typename std::tuple_element<0, typename Backend::unsigned_types>::type;
    ui_type                                                             one = (ui_type)1u;
 
    using default_ops::eval_add;
@@ -781,15 +884,15 @@ inline void eval_acosh(complex_adaptor<Backend>& result, const complex_adaptor<B
    using default_ops::eval_multiply;
    using default_ops::eval_subtract;
 
-   complex_adaptor<Backend> __my_zp(arg);
-   eval_add(__my_zp.real_data(), one);
-   complex_adaptor<Backend> __my_zm(arg);
-   eval_subtract(__my_zm.real_data(), one);
+   complex_adaptor<Backend> my_zp(arg);
+   eval_add(my_zp.real_data(), one);
+   complex_adaptor<Backend> my_zm(arg);
+   eval_subtract(my_zm.real_data(), one);
 
    complex_adaptor<Backend> t1, t2;
-   eval_divide(t1, __my_zm, __my_zp);
+   eval_divide(t1, my_zm, my_zp);
    eval_sqrt(t2, t1);
-   eval_multiply(t2, __my_zp);
+   eval_multiply(t2, my_zp);
    eval_add(t2, arg);
    eval_log(result, t2);
 }
@@ -797,7 +900,7 @@ inline void eval_acosh(complex_adaptor<Backend>& result, const complex_adaptor<B
 template <class Backend>
 inline void eval_atanh(complex_adaptor<Backend>& result, const complex_adaptor<Backend>& arg)
 {
-   typedef typename mpl::front<typename Backend::unsigned_types>::type ui_type;
+   using ui_type = typename std::tuple_element<0, typename Backend::unsigned_types>::type;
    ui_type                                                             one = (ui_type)1u;
 
    using default_ops::eval_add;
@@ -829,7 +932,7 @@ inline void eval_proj(complex_adaptor<Backend>& result, const complex_adaptor<Ba
 {
    using default_ops::eval_get_sign;
 
-   typedef typename mpl::front<typename Backend::unsigned_types>::type ui_type;
+   using ui_type = typename std::tuple_element<0, typename Backend::unsigned_types>::type;
    ui_type                                                             zero = (ui_type)0u;
 
    int c1 = eval_fpclassify(arg.real_data());
@@ -884,28 +987,59 @@ inline std::size_t hash_value(const complex_adaptor<Backend>& val)
 {
    std::size_t result  = hash_value(val.real_data());
    std::size_t result2 = hash_value(val.imag_data());
-   boost::hash_combine(result, result2);
+   boost::multiprecision::detail::hash_combine(result, result2);
    return result;
 }
 
 } // namespace backends
 
-using boost::multiprecision::backends::complex_adaptor;
-
 template <class Backend>
-struct number_category<complex_adaptor<Backend> > : public boost::mpl::int_<boost::multiprecision::number_kind_complex>
+struct number_category<complex_adaptor<Backend> > : public std::integral_constant<int, boost::multiprecision::number_kind_complex>
 {};
 
 template <class Backend, expression_template_option ExpressionTemplates>
 struct component_type<number<complex_adaptor<Backend>, ExpressionTemplates> >
 {
-   typedef number<Backend, ExpressionTemplates> type;
+   using type = number<Backend, ExpressionTemplates>;
 };
 
 template <class Backend, expression_template_option ExpressionTemplates>
 struct complex_result_from_scalar<number<Backend, ExpressionTemplates> >
 {
-   typedef number<complex_adaptor<Backend>, ExpressionTemplates> type;
+   using type = number<complex_adaptor<Backend>, ExpressionTemplates>;
+};
+
+namespace detail {
+   template <class Backend>
+   struct is_variable_precision<complex_adaptor<Backend> > : public is_variable_precision<Backend>
+   {};
+#ifdef BOOST_HAS_INT128
+   template <class Backend>
+   struct is_convertible_arithmetic<int128_type, complex_adaptor<Backend> > : is_convertible_arithmetic<int128_type, Backend>
+   {};
+   template <class Backend>
+   struct is_convertible_arithmetic<uint128_type, complex_adaptor<Backend> > : is_convertible_arithmetic<uint128_type, Backend>
+   {};
+#endif
+#ifdef BOOST_HAS_FLOAT128
+   template <class Backend>
+   struct is_convertible_arithmetic<float128_type, complex_adaptor<Backend> > : is_convertible_arithmetic<float128_type, Backend>
+   {};
+#endif
+   } // namespace detail
+
+
+
+template <class Backend, expression_template_option ExpressionTemplates>
+struct complex_result_from_scalar<number<backends::debug_adaptor<Backend>, ExpressionTemplates> >
+{
+   using type = number<backends::debug_adaptor<complex_adaptor<Backend> >, ExpressionTemplates>;
+};
+
+template <class Backend, expression_template_option ExpressionTemplates>
+struct complex_result_from_scalar<number<backends::logged_adaptor<Backend>, ExpressionTemplates> >
+{
+   using type = number<backends::logged_adaptor<complex_adaptor<Backend> >, ExpressionTemplates>;
 };
 
 }

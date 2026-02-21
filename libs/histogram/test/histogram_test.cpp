@@ -6,8 +6,9 @@
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/histogram/accumulators.hpp>
+#include <boost/histogram/accumulators/mean.hpp>
 #include <boost/histogram/accumulators/ostream.hpp>
+#include <boost/histogram/accumulators/weighted_mean.hpp>
 #include <boost/histogram/algorithm/sum.hpp>
 #include <boost/histogram/axis.hpp>
 #include <boost/histogram/axis/ostream.hpp>
@@ -20,12 +21,12 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include "allocator.hpp"
+#include "axis.hpp"
+#include "histogram.hpp"
 #include "is_close.hpp"
-#include "std_ostream.hpp"
+#include "ostream.hpp"
 #include "throw_exception.hpp"
-#include "utility_allocator.hpp"
-#include "utility_axis.hpp"
-#include "utility_histogram.hpp"
 
 using namespace boost::histogram;
 using namespace boost::histogram::literals; // to get _c suffix
@@ -147,7 +148,17 @@ void run_tests() {
     // need to cast here for this to work with Tag == dynamic_tag, too
     const auto& ca = axis::get<axis::category<>>(c.axis());
     BOOST_TEST_EQ(ca.bin(0), 1);
+    // gcc-13 warns here, that a reference to a temporary is created, but the
+    // return object has the same lifetime as the histogram, and the pointer address
+    // is also correct (proving no copies are made), so we can ignore this warning
+#if BOOST_WORKAROUND(BOOST_GCC, >= 13)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
     const auto& ca2 = axis::get<axis::category<>>(c.axis(0));
+#if BOOST_WORKAROUND(BOOST_GCC, >= 13)
+#pragma GCC diagnostic pop
+#endif
     BOOST_TEST_EQ(&ca2, &ca);
   }
 
@@ -214,6 +225,20 @@ void run_tests() {
 
     BOOST_TEST_EQ(h.at(0), 2);
     BOOST_TEST_EQ(h.at(1), 0);
+  }
+
+  // 1D without underflow
+  {
+    using opt = axis::option::overflow_t;
+    auto h = make(Tag(), axis::integer<int, axis::null_type, opt>{1, 3});
+
+    int x[] = {-1, 0, 1, 2, 3, 4, 5};
+    for (auto&& xi : x) h(xi);
+
+    BOOST_TEST_EQ(algorithm::sum(h), 5);
+    BOOST_TEST_EQ(h.at(0), 1);
+    BOOST_TEST_EQ(h.at(1), 1);
+    BOOST_TEST_EQ(h.at(2), 3);
   }
 
   // 1D category axis

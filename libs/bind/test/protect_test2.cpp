@@ -6,11 +6,16 @@
 
 #include <boost/bind/protect.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/core/is_same.hpp>
+#include <boost/config.hpp>
+
+#if defined(BOOST_MSVC)
+# pragma warning( disable: 4510 ) // default constructor could not be generated
+# pragma warning( disable: 4610 ) // class can never be instantiated - constructor required
+#endif
 
 template<class T, class F> void test( F )
 {
-    BOOST_TEST_TRAIT_TRUE((boost::core::is_same<typename T::result_type, typename F::result_type>));
+    BOOST_TEST_TRAIT_SAME(typename T::result_type, typename F::result_type);
 }
 
 struct X
@@ -29,14 +34,14 @@ template<class T, class U> struct inherit: T, U
 template<class F> void test2( F )
 {
     // test that F doesn't have ::result_type
-    BOOST_TEST_TRAIT_TRUE((boost::core::is_same<typename inherit<F, X>::result_type, typename X::result_type>));
+    BOOST_TEST_TRAIT_SAME(typename inherit<F, X>::result_type, typename X::result_type);
 }
 
 int main()
 {
     test<X>( boost::protect( X() ) );
 
-#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_DECLTYPE)
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_DECLTYPE) && !(defined(BOOST_GCC) && BOOST_GCC < 40600)
 
     test2( boost::protect( Y() ) );
 

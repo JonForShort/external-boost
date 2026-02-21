@@ -1,11 +1,15 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/context.hpp>
-#include <boost/leaf/handle_errors.hpp>
-#include <boost/leaf/result.hpp>
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/context.hpp>
+#   include <boost/leaf/diagnostics.hpp>
+#   include <boost/leaf/result.hpp>
+#endif
+
 #include "lightweight_test.hpp"
 #include <iostream>
 
@@ -29,10 +33,10 @@ int main()
     auto handlers = std::make_tuple(
         []( info<1> x )
         {
-            BOOST_TEST(x.value==1);
+            BOOST_TEST_EQ(x.value, 1);
             return 1;
         },
-        []( leaf::verbose_diagnostic_info const & info )
+        []( leaf::diagnostic_details const & info )
         {
             std::cout << info;
             return 2;
@@ -43,6 +47,8 @@ int main()
     {
         leaf::result<int> r1 = f(ctx);
         BOOST_TEST(!r1);
+
+        std::cout << "ctx contents:" << std::endl << ctx;
 
         int r2 = ctx.handle_error<int>(
             r1.error(),

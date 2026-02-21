@@ -8,6 +8,7 @@
 <link rel="up" href="../floats.html" title="Floating-point Types">
 <link rel="prev" href="cpp_dec_float.html" title="cpp_dec_float">
 <link rel="next" href="mpfr_float.html" title="mpfr_float">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -44,9 +45,9 @@
 </pre>
 <p>
           The <code class="computeroutput"><span class="identifier">gmp_float</span></code> back-end
-          is used in conjunction with <code class="computeroutput"><span class="identifier">number</span></code>
-          : it acts as a thin wrapper around the <a href="http://gmplib.org" target="_top">GMP</a>
-          <code class="computeroutput"><span class="identifier">mpf_t</span></code> to provide an real-number
+          is used in conjunction with <code class="computeroutput"><span class="identifier">number</span></code>:
+          it acts as a thin wrapper around the <a href="http://gmplib.org" target="_top">GMP</a>
+          <code class="computeroutput"><span class="identifier">mpf_t</span></code> to provide a real-number
           type that is a drop-in replacement for the native C++ floating-point types,
           but with much greater precision.
         </p>
@@ -109,7 +110,7 @@
 <li class="listitem">
               This backend supports rvalue-references and is move-aware, making instantiations
               of <code class="computeroutput"><span class="identifier">number</span></code> on this backend
-              move aware.
+              move-aware.
             </li>
 <li class="listitem">
               It is not possible to round-trip objects of this type to and from a
@@ -127,7 +128,7 @@
               to segfault).
             </li>
 <li class="listitem">
-              This type can equally be used with <a href="http://mpir.org/" target="_top">MPIR</a>
+              This type can equally be used with <a href="https://github.com/wbhart/mpir/" target="_top">MPIR</a>
               as the underlying implementation - indeed that is the recommended option
               on Win32.
             </li>
@@ -178,15 +179,13 @@
 <span class="special">}</span>
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2002-2020 John
-      Maddock and Christopher Kormanyos<p>
+<div class="copyright-footer">Copyright © 2002-2025 Matthew
+      Borland, Paul A. Bristow, Christopher Kormanyos, Janek Kozicki, John Maddock
+      and Fahad Syed<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="cpp_dec_float.html"><img src="../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../floats.html"><img src="../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="mpfr_float.html"><img src="../../../../../../../doc/src/images/next.png" alt="Next"></a>

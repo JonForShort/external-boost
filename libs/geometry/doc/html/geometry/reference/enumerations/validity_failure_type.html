@@ -8,6 +8,7 @@
 <link rel="up" href="../enumerations.html" title="Enumerations">
 <link rel="prev" href="result_code.html" title="result_code">
 <link rel="next" href="../exceptions.html" title="Exceptions">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -27,21 +28,27 @@
 <a name="geometry.reference.enumerations.validity_failure_type"></a><a class="link" href="validity_failure_type.html" title="validity_failure_type">validity_failure_type</a>
 </h4></div></div></div>
 <p>
-          <a class="indexterm" name="idm45353175820432"></a>
-<a class="indexterm" name="idm45353175819616"></a>
-<a class="indexterm" name="idm45353175818800"></a>
-<a class="indexterm" name="idm45353175817984"></a>
-<a class="indexterm" name="idm45353175817152"></a>
-<a class="indexterm" name="idm45353175816336"></a>
-<a class="indexterm" name="idm45353175815504"></a>
-<a class="indexterm" name="idm45353175814688"></a>
-<a class="indexterm" name="idm45353175813856"></a>
-<a class="indexterm" name="idm45353175813024"></a>
-<a class="indexterm" name="idm45353175812192"></a>
-<a class="indexterm" name="idm45353175811360"></a>
-<a class="indexterm" name="idm45353175810528"></a>
-<a class="indexterm" name="idm45353175809696"></a>
-<a class="indexterm" name="idm45353175808864"></a>
+          <a class="indexterm" name="id73988"></a>
+<a class="indexterm" name="id73990"></a>
+<a class="indexterm" name="id73992"></a>
+<a class="indexterm" name="id73994"></a>
+<a class="indexterm" name="id73996"></a>
+<a class="indexterm" name="id73998"></a>
+<a class="indexterm" name="id74000"></a>
+<a class="indexterm" name="id74002"></a>
+<a class="indexterm" name="id74004"></a>
+<a class="indexterm" name="id74006"></a>
+<a class="indexterm" name="id74008"></a>
+<a class="indexterm" name="id74010"></a>
+<a class="indexterm" name="id74012"></a>
+<a class="indexterm" name="id74014"></a>
+<a class="indexterm" name="id74016"></a>
+<a class="indexterm" name="id74018"></a>
+<a class="indexterm" name="id74020"></a>
+<a class="indexterm" name="id74022"></a>
+<a class="indexterm" name="id74024"></a>
+<a class="indexterm" name="id74026"></a>
+<a class="indexterm" name="id74028"></a>
 Enumerates the possible validity failure types for a geometry.
         </p>
 <h6>
@@ -75,7 +82,13 @@ Enumerates the possible validity failure types for a geometry.
     <span class="identifier">failure_disconnected_interior</span> <span class="special">=</span> <span class="number">32</span><span class="special">,</span>
     <span class="identifier">failure_intersecting_interiors</span> <span class="special">=</span> <span class="number">40</span><span class="special">,</span>
     <span class="identifier">failure_wrong_corner_order</span> <span class="special">=</span> <span class="number">50</span><span class="special">,</span>
-    <span class="identifier">failure_invalid_coordinate</span> <span class="special">=</span> <span class="number">60</span>
+    <span class="identifier">failure_invalid_coordinate</span> <span class="special">=</span> <span class="number">60</span><span class="special">,</span>
+    <span class="identifier">failure_collinear_points_on_face</span> <span class="special">=</span> <span class="number">70</span><span class="special">,</span>
+    <span class="identifier">failure_non_coplanar_points_on_face</span> <span class="special">=</span> <span class="number">71</span><span class="special">,</span>
+    <span class="identifier">failure_few_points_on_face</span> <span class="special">=</span> <span class="number">72</span><span class="special">,</span>
+    <span class="identifier">failure_inconsistent_orientation</span> <span class="special">=</span> <span class="number">73</span><span class="special">,</span>
+    <span class="identifier">failure_invalid_intersection</span> <span class="special">=</span> <span class="number">74</span><span class="special">,</span>
+    <span class="identifier">failure_disconnected_surface</span> <span class="special">=</span> <span class="number">75</span>
 <span class="special">};</span></pre>
 <p>
         </p>
@@ -286,6 +299,88 @@ Enumerates the possible validity failure types for a geometry.
                   </p>
                 </td>
 </tr>
+<tr>
+<td>
+                  <p>
+                    failure_collinear_points_on_face
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The geometry has colinear points on the same face (applies to
+                    polyhedral surfaces only)
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    failure_non_coplanar_points_on_face
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The geometry has non-coplanar points on the same face The points
+                    do not lie on the same plane and thus cannot define a face (applies
+                    to polyhedral surfaces only)
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    failure_few_points_on_face
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The geometry has a very small number of points on the same face
+                    The face must have at least 3 points to be defined (applies to
+                    polyhedral surfaces only)
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    failure_inconsistent_orientation
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The geometry has inconsistent orientation of at least one edge
+                    The edge has the same orientation in both faces it belongs to
+                    (applies to polyhedral surfaces only)
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    failure_invalid_intersection
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The geometry has invalid intersection of the faces The faces
+                    do not intersect in a valid way, i.e. on a common edge (applies
+                    to polyhedral surfaces only)
+                  </p>
+                </td>
+</tr>
+<tr>
+<td>
+                  <p>
+                    failure_disconnected_surface
+                  </p>
+                </td>
+<td>
+                  <p>
+                    The geometry has disconnected faces, i.e. it is not continuous
+                    (applies to polyhedral surfaces only)
+                  </p>
+                </td>
+</tr>
 </tbody>
 </table></div>
 <h6>
@@ -305,15 +400,12 @@ Enumerates the possible validity failure types for a geometry.
           taking a reference to validity_failure_type as second argument</a>
         </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2009-2019 Barend Gehrels, Bruno Lalande, Mateusz Loskot, Adam
+<div class="copyright-footer">Copyright © 2009-2024 Barend Gehrels, Bruno Lalande, Mateusz Loskot, Adam
       Wulkiewicz, Oracle and/or its affiliates<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="result_code.html"><img src="../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../enumerations.html"><img src="../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../exceptions.html"><img src="../../../../../../../doc/src/images/next.png" alt="Next"></a>

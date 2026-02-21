@@ -5,8 +5,6 @@
 // See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt
 //
-#define BOOST_GIL_IO_ADD_FS_PATH_SUPPORT
-#define BOOST_FILESYSTEM_VERSION 3
 #include <boost/gil.hpp>
 #include <boost/gil/extension/io/bmp.hpp>
 
@@ -22,7 +20,7 @@
 
 #include "paths.hpp"
 
-namespace fs = boost::filesystem;
+namespace fs  = boost::gil::detail::filesystem;
 namespace gil = boost::gil;
 
 void test_make_reader_backend()
@@ -169,7 +167,7 @@ void test_make_dynamic_image_reader()
 
 void test_make_writer()
 {
-    // Empty files may be created, but noo image data is written.
+    // Empty files may be created, but no image data is written.
     {
         using writer_t = gil::get_writer<char const*, gil::bmp_tag>::type;
 
@@ -222,7 +220,7 @@ void test_make_writer()
 
 void test_make_dynamic_image_writer()
 {
-    // Empty files may be created, but noo image data is written.
+    // Empty files may be created, but no image data is written.
     {
         gil::get_dynamic_image_writer<const char*, gil::bmp_tag>::type writer_char =
             gil::make_dynamic_image_writer(

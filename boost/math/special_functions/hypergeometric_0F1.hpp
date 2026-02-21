@@ -46,7 +46,7 @@ namespace boost { namespace math { namespace detail {
    T hypergeometric_0F1_cf_imp(T b, T z, const Policy& pol, const char* function)
    {
       hypergeometric_0F1_cf<T> evaluator(b, z);
-      boost::uintmax_t max_iter = policies::get_max_series_iterations<Policy>();
+      std::uintmax_t max_iter = policies::get_max_series_iterations<Policy>();
       T cf = tools::continued_fraction_b(evaluator, policies::get_epsilon<T, Policy>(), max_iter);
       policies::check_series_iterations<T>(function, max_iter, pol);
       return cf;
@@ -64,9 +64,7 @@ namespace boost { namespace math { namespace detail {
             return T(1);
 
       if ((b <= 0) && (b == floor(b)))
-         return policies::raise_pole_error<T>(
-            function,
-            "Evaluation of 0f1 with nonpositive integer b = %1%.", b, pol);
+         return policies::raise_pole_error<T>(function, "Evaluation of 0f1 with nonpositive integer b = %1%.", b, pol);
 
       if (z < -5 && b > -5)
       {

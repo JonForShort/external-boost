@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright (c) Steven Watanabe 2018.
 # Distributed under the Boost Software License, Version 1.0. (See
-# accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt)
+# accompanying file LICENSE.txt or copy at
+# https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 # Tests that a single main target can be used for
 # implicit dependencies of multiple different types.
@@ -87,14 +87,14 @@ explicit input ;
 flags make-ccc AAAPATH : <aaa-path> ;
 rule make-ccc ( target : sources * : properties * )
 {
-    ECHO aaa path\: [ on $(target) return $(AAAPATH) ] ;
+    ECHO aaa path\\: [ on $(target) return $(AAAPATH) ] ;
     common.copy $(target) : $(sources) ;
 }
 
 flags make-ddd BBBPATH : <bbb-path> ;
 rule make-ddd ( target : sources * : properties * )
 {
-    ECHO bbb path\: [ on $(target) return $(BBBPATH) ] ;
+    ECHO bbb path\\: [ on $(target) return $(BBBPATH) ] ;
     common.copy $(target) : $(sources) ;
 }
 

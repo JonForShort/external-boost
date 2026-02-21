@@ -71,7 +71,7 @@ allows us to define variables with 50 decimal digit precision just like __fundam
 
   0.14285714285714285714285714285714285714285714285714
 
-We can also use Boost.Math __math_constants like [pi],
+We can also use __math_constants like [pi],
 guaranteed to be initialized with the very last bit of precision for the floating-point type.
 */
    std::cout << "pi = " << boost::math::constants::pi<cpp_bin_float_50>() << std::endl;
@@ -129,8 +129,8 @@ which is different from the 'better' `cpp_bin_float_50` representation of the fr
 
    // constexpr cpp_bin_float_50 seventh_constexpr (cpp_bin_float_50(1) / 7);
    // std::cout << "seventh_constexpr = " << seventh_constexpr << std::endl; //
-   // nor use the macro BOOST_CONSTEXPR_OR_CONST unless it returns `const`
-   // BOOST_CONSTEXPR_OR_CONST cpp_bin_float_50 seventh_constexpr(seventh_const);
+   // nor use the macro constexpr unless it returns `const`
+   // constexpr cpp_bin_float_50 seventh_constexpr(seventh_const);
 
 //]  [/big_seventh_example_constexpr]
 
@@ -140,7 +140,7 @@ but if one is implementing a formula involving a fraction from integers,
 including decimal fractions like 1/10, 1/100, then comparison with other computations like __WolframAlpha
 will reveal differences whose cause may be perplexing.
 
-To get as precise-as-possible decimal fractions like 1.234, we can write
+To get as-precise-as-possible decimal fractions like 1.234, we can write
 */
 
   const cpp_bin_float_50 f1(cpp_bin_float_50(1234) / 1000);  // Construct from a fraction.

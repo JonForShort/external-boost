@@ -8,6 +8,7 @@
 <link rel="up" href="../testing_tools.html" title="Writing unit tests">
 <link rel="prev" href="custom_predicates.html" title="Custom predicate support">
 <link rel="next" href="internal_details.html" title="BOOST_TEST: details on expressions">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -47,7 +48,7 @@
         very fast.
       </p>
 <p>
-        The class <code class="computeroutput"><a class="link" href="../../boost/test_tools/output_test_stream.html" title="Class output_test_stream">boost::test_tools::output_test_stream</a></code>
+        The class <code class="computeroutput"><a class="link" href="../../doxygen/a01052.html" title="Class output_test_stream">boost::test_tools::output_test_stream</a></code>
         is designed to automate these tasks for you. This is a simple, but powerful
         tool for testing standard <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span></code>
         based output operation. The class <code class="computeroutput"><span class="identifier">output_test_stream</span></code>
@@ -122,7 +123,7 @@
                 </p>
               </th></tr></thead>
 <tbody><tr><td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="preprocessor">#define</span> <span class="identifier">BOOST_TEST_MODULE</span> <span class="identifier">example</span>
+<pre class="table-programlisting"><span class="preprocessor">#define</span> <span class="identifier">BOOST_TEST_MODULE</span> <span class="identifier">example</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">test</span><span class="special">/</span><span class="identifier">included</span><span class="special">/</span><span class="identifier">unit_test</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">test</span><span class="special">/</span><span class="identifier">tools</span><span class="special">/</span><span class="identifier">output_test_stream</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 <span class="keyword">using</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">test_tools</span><span class="special">::</span><span class="identifier">output_test_stream</span><span class="special">;</span>
@@ -147,7 +148,7 @@
                 </p>
               </th></tr></thead>
 <tbody><tr><td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="special">&gt;</span> <span class="identifier">example</span>
+<pre class="table-programlisting"><span class="special">&gt;</span> <span class="identifier">example</span>
 <span class="identifier">Running</span> <span class="number">1</span> <span class="identifier">test</span> <span class="keyword">case</span><span class="special">...</span>
 <span class="identifier">test</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">(</span><span class="number">15</span><span class="special">):</span> <span class="identifier">error</span> <span class="identifier">in</span> <span class="string">"test"</span><span class="special">:</span> <span class="identifier">check</span> <span class="identifier">output</span><span class="special">.</span><span class="identifier">is_equal</span><span class="special">(</span> <span class="string">"i=3"</span> <span class="special">)</span> <span class="identifier">has</span> <span class="identifier">failed</span><span class="special">.</span> <span class="identifier">Output</span> <span class="identifier">content</span><span class="special">:</span> <span class="string">"i=2"</span>
 
@@ -209,7 +210,7 @@ File: test.cpp Line:XXX
                 </p>
               </th></tr></thead>
 <tbody><tr><td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="preprocessor">#define</span> <span class="identifier">BOOST_TEST_MODULE</span> <span class="identifier">example</span>
+<pre class="table-programlisting"><span class="preprocessor">#define</span> <span class="identifier">BOOST_TEST_MODULE</span> <span class="identifier">example</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">test</span><span class="special">/</span><span class="identifier">included</span><span class="special">/</span><span class="identifier">unit_test</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">test</span><span class="special">/</span><span class="identifier">tools</span><span class="special">/</span><span class="identifier">output_test_stream</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 <span class="keyword">using</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">test_tools</span><span class="special">::</span><span class="identifier">output_test_stream</span><span class="special">;</span>
@@ -241,7 +242,7 @@ File: test.cpp Line:XXX
                 </p>
               </th></tr></thead>
 <tbody><tr><td>
-<pre xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="table-programlisting"><span class="special">&gt;</span> <span class="identifier">example</span>
+<pre class="table-programlisting"><span class="special">&gt;</span> <span class="identifier">example</span>
 <span class="identifier">Running</span> <span class="number">1</span> <span class="identifier">test</span> <span class="keyword">case</span><span class="special">...</span>
 <span class="identifier">test</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">(</span><span class="number">16</span><span class="special">):</span> <span class="identifier">error</span> <span class="identifier">in</span> <span class="string">"test"</span><span class="special">:</span> <span class="identifier">check</span> <span class="identifier">output</span><span class="special">.</span><span class="identifier">match_pattern</span><span class="special">()</span> <span class="identifier">has</span> <span class="identifier">failed</span><span class="special">.</span> <span class="identifier">Mismatch</span> <span class="identifier">at</span> <span class="identifier">position</span> <span class="number">23</span>
 <span class="special">...</span><span class="number">5.</span><span class="special">..</span>
@@ -264,18 +265,15 @@ File: test.cpp Line:XXX
 <div class="footnotes">
 <br><hr style="width:100; text-align:left;margin-left: 0">
 <div id="ftn.boost_test.testing_tools.output_stream_testing.f0" class="footnote"><p><a href="#boost_test.testing_tools.output_stream_testing.f0" class="para"><sup class="para">[16] </sup></a>
-          This parameter is supported on all comparison methods, see the class <code class="computeroutput"><a class="link" href="../../boost/test_tools/output_test_stream.html" title="Class output_test_stream">documentation.</a></code>
+          This parameter is supported on all comparison methods, see the class <code class="computeroutput"><a class="link" href="../../doxygen/a01052.html" title="Class output_test_stream">documentation.</a></code>
         </p></div>
 </div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2001-2020 Boost.Test contributors<p>
+<div class="copyright-footer">Copyright © 2001-2022 Boost.Test contributors<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="custom_predicates.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../testing_tools.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="internal_details.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>

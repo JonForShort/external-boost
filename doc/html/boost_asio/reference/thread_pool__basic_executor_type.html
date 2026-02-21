@@ -8,6 +8,7 @@
 <link rel="up" href="../reference.html" title="Reference">
 <link rel="prev" href="thread_pool/_thread_pool.html" title="thread_pool::~thread_pool">
 <link rel="next" href="thread_pool__basic_executor_type/basic_executor_type.html" title="thread_pool::basic_executor_type::basic_executor_type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -27,75 +28,18 @@
 <a name="boost_asio.reference.thread_pool__basic_executor_type"></a><a class="link" href="thread_pool__basic_executor_type.html" title="thread_pool::basic_executor_type">thread_pool::basic_executor_type</a>
 </h3></div></div></div>
 <p>
+        <a class="indexterm" name="boost_asio.indexterm.thread_pool__basic_executor_type"></a>
+      </p>
+<p>
         Executor implementation type used to submit functions to a thread pool.
       </p>
-<pre class="programlisting">template&lt;
-    typename Allocator,
-    unsigned int Bits&gt;
-class basic_executor_type
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">typename</span> <span class="identifier">Allocator</span><span class="special">,</span>
+    <span class="keyword">unsigned</span> <span class="keyword">int</span> <span class="identifier">Bits</span><span class="special">&gt;</span>
+<span class="keyword">class</span> <span class="identifier">basic_executor_type</span>
 </pre>
 <h5>
 <a name="boost_asio.reference.thread_pool__basic_executor_type.h0"></a>
-        <span class="phrase"><a name="boost_asio.reference.thread_pool__basic_executor_type.types"></a></span><a class="link" href="thread_pool__basic_executor_type.html#boost_asio.reference.thread_pool__basic_executor_type.types">Types</a>
-      </h5>
-<div class="informaltable"><table class="table">
-<colgroup>
-<col>
-<col>
-</colgroup>
-<thead><tr>
-<th>
-                <p>
-                  Name
-                </p>
-              </th>
-<th>
-                <p>
-                  Description
-                </p>
-              </th>
-</tr></thead>
-<tbody>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="thread_pool__basic_executor_type/index_type.html" title="thread_pool::basic_executor_type::index_type"><span class="bold"><strong>index_type</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  The bulk execution index type.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="thread_pool__basic_executor_type/sender_type.html" title="thread_pool::basic_executor_type::sender_type"><span class="bold"><strong>sender_type</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  The sender type, when this type is used as a scheduler.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="thread_pool__basic_executor_type/shape_type.html" title="thread_pool::basic_executor_type::shape_type"><span class="bold"><strong>shape_type</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  The bulk execution shape type.
-                </p>
-              </td>
-</tr>
-</tbody>
-</table></div>
-<h5>
-<a name="boost_asio.reference.thread_pool__basic_executor_type.h1"></a>
         <span class="phrase"><a name="boost_asio.reference.thread_pool__basic_executor_type.member_functions"></a></span><a class="link" href="thread_pool__basic_executor_type.html#boost_asio.reference.thread_pool__basic_executor_type.member_functions">Member
         Functions</a>
       </h5>
@@ -126,30 +70,6 @@ class basic_executor_type
 <td>
                 <p>
                   Copy constructor. <br> <span class="silver"> —</span><br> Move constructor.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="thread_pool__basic_executor_type/bulk_execute.html" title="thread_pool::basic_executor_type::bulk_execute"><span class="bold"><strong>bulk_execute</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Bulk execution function.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="thread_pool__basic_executor_type/connect.html" title="thread_pool::basic_executor_type::connect"><span class="bold"><strong>connect</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Connect function.
                 </p>
               </td>
 </tr>
@@ -274,9 +194,9 @@ class basic_executor_type
               </td>
 <td>
                 <p>
-                  Query the current value of the bulk_guarantee property. <br>
-                  <span class="silver"> —</span><br> Query the current value of the mapping property. <br>
-                  <span class="silver"> —</span><br> Query the current value of the outstanding_work property.
+                  Query the current value of the mapping property. <br> <span class="silver"> —</span><br>
+                  Query the current value of the inline_exception_handling property.
+                  <br> <span class="silver"> —</span><br> Query the current value of the outstanding_work property.
                 </p>
               </td>
 </tr>
@@ -316,18 +236,6 @@ class basic_executor_type
 <tr>
 <td>
                 <p>
-                  <a class="link" href="thread_pool__basic_executor_type/schedule.html" title="thread_pool::basic_executor_type::schedule"><span class="bold"><strong>schedule</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Schedule function.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
                   <a class="link" href="thread_pool__basic_executor_type/_basic_executor_type.html" title="thread_pool::basic_executor_type::~basic_executor_type"><span class="bold"><strong>~basic_executor_type</strong></span></a> <span class="silver">[destructor]</span>
                 </p>
               </td>
@@ -340,7 +248,7 @@ class basic_executor_type
 </tbody>
 </table></div>
 <h5>
-<a name="boost_asio.reference.thread_pool__basic_executor_type.h2"></a>
+<a name="boost_asio.reference.thread_pool__basic_executor_type.h1"></a>
         <span class="phrase"><a name="boost_asio.reference.thread_pool__basic_executor_type.friends"></a></span><a class="link" href="thread_pool__basic_executor_type.html#boost_asio.reference.thread_pool__basic_executor_type.friends">Friends</a>
       </h5>
 <div class="informaltable"><table class="table">
@@ -388,7 +296,7 @@ class basic_executor_type
 </tbody>
 </table></div>
 <h5>
-<a name="boost_asio.reference.thread_pool__basic_executor_type.h3"></a>
+<a name="boost_asio.reference.thread_pool__basic_executor_type.h2"></a>
         <span class="phrase"><a name="boost_asio.reference.thread_pool__basic_executor_type.requirements"></a></span><a class="link" href="thread_pool__basic_executor_type.html#boost_asio.reference.thread_pool__basic_executor_type.requirements">Requirements</a>
       </h5>
 <p>
@@ -398,15 +306,12 @@ class basic_executor_type
         <span class="emphasis"><em>Convenience header: </em></span><code class="literal">boost/asio.hpp</code>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2020 Christopher M.
+<div class="copyright-footer">Copyright © 2003-2025 Christopher M.
       Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="thread_pool/_thread_pool.html"><img src="../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../boost_asio.html"><img src="../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="thread_pool__basic_executor_type/basic_executor_type.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a>

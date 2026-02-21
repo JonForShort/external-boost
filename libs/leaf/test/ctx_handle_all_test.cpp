@@ -1,11 +1,15 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/context.hpp>
-#include <boost/leaf/handle_errors.hpp>
-#include <boost/leaf/result.hpp>
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/context.hpp>
+#   include <boost/leaf/diagnostics.hpp>
+#   include <boost/leaf/result.hpp>
+#endif
+
 #include "lightweight_test.hpp"
 #include <iostream>
 
@@ -26,7 +30,7 @@ leaf::result<int> f( Ctx & ctx )
 
 int main()
 {
-    leaf::context<info<1>, leaf::verbose_diagnostic_info const &> ctx;
+    leaf::context<info<1>, leaf::diagnostic_details const &> ctx;
 
     {
         leaf::result<int> r1 = f(ctx);
@@ -36,10 +40,10 @@ int main()
             r1.error(),
             []( info<1> x )
             {
-                BOOST_TEST(x.value==1);
+                BOOST_TEST_EQ(x.value, 1);
                 return 1;
             },
-            []( leaf::verbose_diagnostic_info const & info )
+            []( leaf::diagnostic_details const & info )
             {
                 std::cout << info;
                 return 2;

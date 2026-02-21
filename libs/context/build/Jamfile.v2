@@ -6,25 +6,19 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          http://www.boost.org/LICENSE_1_0.txt)
 
+import-search /boost/config/checks ;
+
 import common ;
-import feature ;
 import indirect ;
 import modules ;
 import os ;
 import toolset ;
- import ../../config/checks/config : requires ;
+import config : requires ;
 
-feature.feature segmented-stacks : on : optional propagated composite ;
-feature.compose <segmented-stacks>on : <define>BOOST_USE_SEGMENTED_STACKS ;
-
-feature.feature htm : tsx : optional propagated composite ;
-feature.compose <htm>tsx : <define>BOOST_USE_TSX ;
-
-feature.feature valgrind : on : optional propagated composite ;
-feature.compose <valgrind>on : <define>BOOST_USE_VALGRIND ;
-
-project boost/context
+project
+    : common-requirements <library>$(boost_dependencies)
     : requirements
+      <target-os>windows,<architecture>arm,<address-model>64:<context-impl>winfib
       <target-os>windows:<define>_WIN32_WINNT=0x0601
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
@@ -45,70 +39,16 @@ project boost/context
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
       <define>BOOST_CONTEXT_SOURCE
       <threading>multi
+      <toolset>msvc,<address-model>32:<asmflags>/safeseh
+      <toolset>clang-win,<address-model>32:<asmflags>/safeseh
     : usage-requirements
       <link>shared:<define>BOOST_CONTEXT_DYN_LINK=1
+      <define>BOOST_CONTEXT_NO_LIB=1
       <optimization>speed:<define>BOOST_DISABLE_ASSERTS
       <variant>release:<define>BOOST_DISABLE_ASSERTS
     : source-location ../src
     ;
 
-
-local rule default_binary_format ( )
-{
-    local tmp = elf ;
-    if [ os.name ] = "NT" { tmp = pe ; }
-    else if [ os.name ] = "CYGWIN" { tmp = pe ; }
-    else if [ os.name ] = "AIX" { tmp = xcoff ; }
-    else if [ os.name ] = "MACOSX" { tmp = mach-o ; }
-    return $(tmp) ;
-}
-
-feature.feature binary-format
-   : elf
-     mach-o
-     pe
-     xcoff
-   : propagated
-   ;
-feature.set-default binary-format : [ default_binary_format ] ;
-
-
-local rule default_abi ( )
-{
-    local tmp = sysv ;
-    if [ os.name ] = "NT" { tmp = ms ; }
-    else if [ os.name ] = "CYGWIN" { tmp = ms ; }
-    else if [ os.platform ] = "ARM" { tmp = aapcs ; }
-    else if [ os.platform ] = "MIPS32" { tmp = o32 ; }
-    else if [ os.platform ] = "MIPS64" { tmp = n64 ; }
-    return $(tmp) ;
-}
-
-feature.feature abi
-   : aapcs
-     eabi
-     ms
-     n32
-     n64
-     o32
-     o64
-     sysv
-     x32
-   : propagated
-   ;
-feature.set-default abi : [ default_abi ] ;
-
-
-feature.feature context-impl
-    : fcontext
-      ucontext
-      winfib
-    : propagated
-      composite
-    ;
-feature.set-default context-impl : fcontext ;
-feature.compose <context-impl>ucontext : <define>BOOST_USE_UCONTEXT ;
-feature.compose <context-impl>winfib : <define>BOOST_USE_WINFIB ;
 
 # ARM
 # ARM/AAPCS/ELF
@@ -155,6 +95,17 @@ alias asm_sources
      <architecture>arm
      <binary-format>mach-o
      <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_arm64_aapcs_macho_gas.S
+     asm/jump_arm64_aapcs_macho_gas.S
+     asm/ontop_arm64_aapcs_macho_gas.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>mach-o
+     <toolset>gcc
    ;
 
 alias asm_sources
@@ -228,6 +179,64 @@ alias asm_sources
      <toolset>darwin
    ;
 
+alias asm_sources
+   : asm/make_arm64_aapcs_macho_gas.S
+     asm/jump_arm64_aapcs_macho_gas.S
+     asm/ontop_arm64_aapcs_macho_gas.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>mach-o
+     <toolset>gcc
+   ;
+
+# ARM64/AAPCS/PE
+alias asm_sources
+   : asm/make_arm64_aapcs_pe_armasm.asm
+     asm/jump_arm64_aapcs_pe_armasm.asm
+     asm/ontop_arm64_aapcs_pe_armasm.asm
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>pe
+     <toolset>msvc
+   ;
+
+alias asm_sources
+   : asm/make_arm64_aapcs_pe_armclang.S
+     asm/jump_arm64_aapcs_pe_armclang.S
+     asm/ontop_arm64_aapcs_pe_armclang.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>pe
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_arm64_aapcs_pe_armclang.S
+     asm/jump_arm64_aapcs_pe_armclang.S
+     asm/ontop_arm64_aapcs_pe_armclang.S
+   : <abi>aapcs
+     <address-model>64
+     <architecture>arm
+     <binary-format>pe
+     <toolset>gcc
+   ;
+
+# LOONGARCH64
+# LOONGARCH64/SYSV/ELF
+alias asm_sources
+   : asm/make_loongarch64_sysv_elf_gas.S
+     asm/jump_loongarch64_sysv_elf_gas.S
+     asm/ontop_loongarch64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>loongarch
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
 # MIPS
 # MIPS32/O32/ELF
 alias asm_sources
@@ -236,7 +245,7 @@ alias asm_sources
      asm/ontop_mips32_o32_elf_gas.S
    : <abi>o32
      <address-model>32
-     <architecture>mips1
+     <architecture>mips
      <binary-format>elf
      <toolset>clang
    ;
@@ -247,7 +256,7 @@ alias asm_sources
      asm/ontop_mips32_o32_elf_gas.S
    : <abi>o32
      <address-model>32
-     <architecture>mips1
+     <architecture>mips
      <binary-format>elf
      <toolset>gcc
    ;
@@ -259,7 +268,7 @@ alias asm_sources
      asm/ontop_mips64_n64_elf_gas.S
    : <abi>n64
      <address-model>64
-     <architecture>mips1
+     <architecture>mips
      <binary-format>elf
      <toolset>clang
    ;
@@ -270,7 +279,7 @@ alias asm_sources
      asm/ontop_mips64_n64_elf_gas.S
    : <abi>n64
      <address-model>64
-     <architecture>mips1
+     <architecture>mips
      <binary-format>elf
      <toolset>gcc
    ;
@@ -281,7 +290,7 @@ alias asm_sources
    : asm/make_ppc32_sysv_elf_gas.S
      asm/jump_ppc32_sysv_elf_gas.S
      asm/ontop_ppc32_sysv_elf_gas.S
-     asm/tail_ppc32_sysv_elf_gas.cpp
+     asm/tail_ontop_ppc32_sysv.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -293,7 +302,7 @@ alias asm_sources
    : asm/make_ppc32_sysv_elf_gas.S
      asm/jump_ppc32_sysv_elf_gas.S
      asm/ontop_ppc32_sysv_elf_gas.S
-     asm/tail_ppc32_sysv_elf_gas.cpp
+     asm/tail_ontop_ppc32_sysv.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -301,10 +310,36 @@ alias asm_sources
      <toolset>gcc
    ;
 
+# POWERPC_32/SYSV/MACH-O
 alias asm_sources
    : asm/make_ppc32_sysv_macho_gas.S
      asm/jump_ppc32_sysv_macho_gas.S
      asm/ontop_ppc32_sysv_macho_gas.S
+     asm/tail_ontop_ppc32_sysv.cpp
+   : <abi>sysv
+     <address-model>32
+     <architecture>power
+     <binary-format>mach-o
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_ppc32_sysv_macho_gas.S
+     asm/jump_ppc32_sysv_macho_gas.S
+     asm/ontop_ppc32_sysv_macho_gas.S
+     asm/tail_ontop_ppc32_sysv.cpp
+   : <abi>sysv
+     <address-model>32
+     <architecture>power
+     <binary-format>mach-o
+     <toolset>gcc
+   ;
+
+alias asm_sources
+   : asm/make_ppc32_sysv_macho_gas.S
+     asm/jump_ppc32_sysv_macho_gas.S
+     asm/ontop_ppc32_sysv_macho_gas.S
+     asm/tail_ontop_ppc32_sysv.cpp
    : <abi>sysv
      <address-model>32
      <architecture>power
@@ -381,6 +416,18 @@ alias asm_sources
      <address-model>64
      <architecture>power
      <binary-format>mach-o
+     <toolset>gcc
+   ;
+
+alias asm_sources
+   : asm/make_ppc64_sysv_macho_gas.S
+     asm/jump_ppc64_sysv_macho_gas.S
+     asm/ontop_ppc64_sysv_macho_gas.S
+     untested.cpp
+   : <abi>sysv
+     <address-model>64
+     <architecture>power
+     <binary-format>mach-o
      <toolset>darwin
    ;
 
@@ -407,6 +454,28 @@ alias asm_sources
      <toolset>gcc
    ;
 
+alias asm_sources
+   : asm/make_ppc64_sysv_xcoff_gas.S
+     asm/jump_ppc64_sysv_xcoff_gas.S
+     asm/ontop_ppc64_sysv_xcoff_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>power
+     <binary-format>xcoff
+     <toolset>xlclang
+   ;
+
+alias asm_sources
+   : asm/make_ppc64_sysv_xcoff_gas.S
+     asm/jump_ppc64_sysv_xcoff_gas.S
+     asm/ontop_ppc64_sysv_xcoff_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>power
+     <binary-format>xcoff
+     <toolset>openxl
+   ;
+
 # POWERPC universal
 # POWERPC_32_64/SYSV/MACH-O
 alias asm_sources
@@ -429,6 +498,41 @@ alias asm_sources
      <address-model>64
      <architecture>riscv
      <binary-format>elf
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_riscv64_sysv_elf_gas.S
+     asm/jump_riscv64_sysv_elf_gas.S
+     asm/ontop_riscv64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>riscv
+     <binary-format>elf
+     <toolset>gcc
+   ;
+
+# SPARC64
+# SPARC64/SYSV/ELF
+alias asm_sources
+   : asm/make_sparc64_sysv_elf_gas.S
+     asm/jump_sparc64_sysv_elf_gas.S
+     asm/ontop_sparc64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>sparc
+     <binary-format>elf
+     <toolset>clang
+   ;
+
+alias asm_sources
+   : asm/make_sparc64_sysv_elf_gas.S
+     asm/jump_sparc64_sysv_elf_gas.S
+     asm/ontop_sparc64_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>sparc
+     <binary-format>elf
      <toolset>gcc
    ;
 
@@ -443,6 +547,17 @@ alias asm_sources
      <architecture>s390x
      <binary-format>elf
      <toolset>gcc
+   ;
+
+alias asm_sources
+   : asm/make_s390x_sysv_elf_gas.S
+     asm/jump_s390x_sysv_elf_gas.S
+     asm/ontop_s390x_sysv_elf_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>s390x
+     <binary-format>elf
+     <toolset>clang
    ;
 
 # X86
@@ -653,6 +768,17 @@ alias asm_sources
      <address-model>64
      <architecture>x86
      <binary-format>mach-o
+     <toolset>gcc
+   ;
+
+alias asm_sources
+   : asm/make_x86_64_sysv_macho_gas.S
+     asm/jump_x86_64_sysv_macho_gas.S
+     asm/ontop_x86_64_sysv_macho_gas.S
+   : <abi>sysv
+     <address-model>64
+     <architecture>x86
+     <binary-format>mach-o
      <toolset>darwin
    ;
 
@@ -727,7 +853,7 @@ alias asm_sources
      <binary-format>pe
      <toolset>msvc
    ;
-   
+
 # Embarcadero on Windows, bcc64, uses the sysv-elf format for 64-bits
 # This is configured in the embarcadero toolset as using bcc64 with the
 # command line option '-x assembler-with-cpp'.
@@ -749,7 +875,7 @@ alias asm_sources
      asm/jump_x86_64_sysv_elf_gas.S
      asm/ontop_x86_64_sysv_elf_gas.S
    : <abi>x32
-     <address-model>64
+     <address-model>32
      <architecture>x86
      <binary-format>elf
      <toolset>clang
@@ -760,7 +886,7 @@ alias asm_sources
      asm/jump_x86_64_sysv_elf_gas.S
      asm/ontop_x86_64_sysv_elf_gas.S
    : <abi>x32
-     <address-model>64
+     <address-model>32
      <architecture>x86
      <binary-format>elf
      <toolset>gcc
@@ -771,7 +897,7 @@ alias asm_sources
      asm/jump_x86_64_sysv_elf_gas.S
      asm/ontop_x86_64_sysv_elf_gas.S
    : <abi>x32
-     <address-model>64
+     <address-model>32
      <architecture>x86
      <binary-format>elf
      <toolset>intel
@@ -794,7 +920,7 @@ alias asm_sources
      asm/jump_combined_sysv_macho_gas.S
      asm/ontop_combined_sysv_macho_gas.S
    : <abi>sysv
-     <architecture>combined
+     <architecture>arm+x86
      <binary-format>mach-o
    ;
 
@@ -804,6 +930,7 @@ explicit asm_sources ;
 # fcontext_t
 alias impl_sources
     : asm_sources
+      fcontext.cpp
     : <context-impl>fcontext
     ;
 
@@ -849,26 +976,13 @@ alias impl_sources
 
 explicit impl_sources ;
 
-obj cxx11_hdr_mutex_check : ../build/cxx11_hdr_mutex.cpp ;
-explicit cxx11_hdr_mutex_check ;
-local cxx11_mutex = [ check-target-builds
-      cxx11_hdr_mutex_check "C++11 mutex"
-    :
-    : <library>/boost/thread//boost_thread
-  ] ;
-
 alias stack_traits_sources
     : windows/stack_traits.cpp
     : <target-os>windows
-    :
-    : $(cxx11_mutex)
     ;
 
 alias stack_traits_sources
     : posix/stack_traits.cpp
-    :
-    :
-    : $(cxx11_mutex)
     ;
 
 explicit stack_traits_sources ;
@@ -877,5 +991,3 @@ lib boost_context
    : impl_sources
      stack_traits_sources
    ;
-
-boost-install boost_context ;

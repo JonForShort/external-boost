@@ -7,7 +7,8 @@
 <link rel="home" href="../../index.html" title="Chapter 1. Boost.Beast">
 <link rel="up" href="../ref.html" title="This Page Intentionally Left Blank 2/2">
 <link rel="prev" href="boost__beast__http__request.html" title="http::request">
-<link rel="next" href="boost__beast__http__request_parser.html" title="http::request_parser">
+<link rel="next" href="boost__beast__http__file_body.html" title="http::file_body">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,14 +21,14 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="boost__beast__http__request.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__http__request_parser.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="boost__beast__http__request.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__http__file_body.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="beast.ref.boost__beast__http__response"></a><a class="link" href="boost__beast__http__response.html" title="http::response">http::response</a>
 </h4></div></div></div>
 <p>
-        <a class="indexterm" name="idm45692199196736"></a>
+        <a class="indexterm" name="id78670"></a>
       </p>
 <p>
         A typical HTTP response.
@@ -69,12 +70,36 @@
 <tr>
 <td>
                 <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/allocator_type.html" title="http::message::allocator_type">allocator_type</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  The type of allocator used.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <span class="bold"><strong><a class="link" href="boost__beast__http__message/body_type.html" title="http::message::body_type">body_type</a></strong></span>
                 </p>
               </td>
 <td>
                 <p>
                   The type providing the body traits.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/const_iterator.html" title="http::message::const_iterator">const_iterator</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  A constant iterator to the field sequence.
                 </p>
               </td>
 </tr>
@@ -114,6 +139,43 @@
                 </p>
               </td>
 </tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/iterator.html" title="http::message::iterator">iterator</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  A constant iterator to the field sequence.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/key_compare.html" title="http::message::key_compare">key_compare</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  A strictly less predicate for comparing keys, using a case-insensitive
+                  comparison.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/writer.html" title="http::message::writer">writer</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  The algorithm used to serialize the header.
+                </p>
+              </td>
+</tr>
 </tbody>
 </table></div>
 <h5>
@@ -142,12 +204,36 @@
 <tr>
 <td>
                 <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/at.html" title="http::message::at">at</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns the value for a field, or throws an exception.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <span class="bold"><strong><a class="link" href="boost__beast__http__message/base.html" title="http::message::base">base</a></strong></span>
                 </p>
               </td>
 <td>
                 <p>
                   Returns the header portion of the message.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/begin.html" title="http::message::begin">begin</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return a const iterator to the beginning of the field sequence.
                 </p>
               </td>
 </tr>
@@ -166,16 +252,63 @@
 <tr>
 <td>
                 <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/cbegin.html" title="http::message::cbegin">cbegin</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return a const iterator to the beginning of the field sequence.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/cend.html" title="http::message::cend">cend</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return a const iterator to the end of the field sequence.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <span class="bold"><strong><a class="link" href="boost__beast__http__message/chunked.html" title="http::message::chunked">chunked</a></strong></span>
                 </p>
               </td>
 <td>
                 <p>
                   Returns <code class="computeroutput"><span class="keyword">true</span></code> if the
-                  chunked Transfer-Encoding is specified.
+                  chunked Transfer-Encoding is specified. <br><span class="silver">—</span><br>Set
+                  or clear the chunked Transfer-Encoding.
                 </p>
+              </td>
+</tr>
+<tr>
+<td>
                 <p>
-                  Set or clear the chunked Transfer-Encoding.
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/clear.html" title="http::message::clear">clear</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Remove all fields from the container.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/contains.html" title="http::message::contains">contains</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns <code class="computeroutput"><span class="keyword">true</span></code> if there
+                  is a field with the specified name.
                 </p>
               </td>
 </tr>
@@ -188,6 +321,82 @@
 <td>
                 <p>
                   Set or clear the Content-Length field.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/count.html" title="http::message::count">count</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return the number of fields with the specified name.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/end.html" title="http::message::end">end</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return a const iterator to the end of the field sequence.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/equal_range.html" title="http::message::equal_range">equal_range</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns a range of iterators to the fields with the specified name.
+                  <br><span class="silver">—</span><br>Returns a range of iterators
+                  to the fields with the specified name.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/erase.html" title="http::message::erase">erase</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Remove a field. <br><span class="silver">—</span><br>Remove all fields
+                  with the specified name.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/find.html" title="http::message::find">find</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns an iterator to the case-insensitive matching field. <br><span class="silver">—</span><br>Returns an iterator to the case-insensitive
+                  matching field name.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/get_allocator.html" title="http::message::get_allocator">get_allocator</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return a copy of the allocator associated with the container.
                 </p>
               </td>
 </tr>
@@ -207,16 +416,39 @@
 <tr>
 <td>
                 <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/insert.html" title="http::message::insert">insert</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Insert a field. <br><span class="silver">—</span><br>
+
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <span class="bold"><strong><a class="link" href="boost__beast__http__message/keep_alive.html" title="http::message::keep_alive">keep_alive</a></strong></span>
                 </p>
               </td>
 <td>
                 <p>
                   Returns <code class="computeroutput"><span class="keyword">true</span></code> if the
-                  message semantics indicate keep-alive.
+                  message semantics indicate keep-alive. <br><span class="silver">—</span><br>Set
+                  the keep-alive message semantic option.
                 </p>
+              </td>
+</tr>
+<tr>
+<td>
                 <p>
-                  Set the keep-alive message semantic option.
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/key_comp.html" title="http::message::key_comp">key_comp</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns a copy of the key comparison function.
                 </p>
               </td>
 </tr>
@@ -228,10 +460,7 @@
               </td>
 <td>
                 <p>
-                  Constructor.
-                </p>
-                <p>
-                  Construct a message.
+                  Constructor. <br><span class="silver">—</span><br>Construct a message.
                 </p>
               </td>
 </tr>
@@ -245,9 +474,6 @@
                 <p>
                   Return the request-method verb.
                 </p>
-                <p>
-                  Set the request-method.
-                </p>
               </td>
 </tr>
 <tr>
@@ -259,9 +485,6 @@
 <td>
                 <p>
                   Return the request-method as a string.
-                </p>
-                <p>
-                  Set the request-method.
                 </p>
               </td>
 </tr>
@@ -287,6 +510,20 @@
 <td>
                 <p>
                   Assignment.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/operator__lb__rb_.html" title="http::message::operator[]">operator[]</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns the value for a field, or <code class="computeroutput"><span class="string">""</span></code>
+                  if it does not exist. <br><span class="silver">—</span><br>Returns
+                  the value for a case-insensitive matching header, or <code class="computeroutput"><span class="string">""</span></code> if it does not exist.
                 </p>
               </td>
 </tr>
@@ -324,9 +561,6 @@
                 <p>
                   Return the response reason-phrase.
                 </p>
-                <p>
-                  Set the response reason-phrase (deprecated)
-                </p>
               </td>
 </tr>
 <tr>
@@ -338,12 +572,6 @@
 <td>
                 <p>
                   The response status-code result.
-                </p>
-                <p>
-                  Set the response status-code.
-                </p>
-                <p>
-                  Set the response status-code as an integer.
                 </p>
               </td>
 </tr>
@@ -362,15 +590,38 @@
 <tr>
 <td>
                 <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/set.html" title="http::message::set">set</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Set a field value, removing any other instances of that field.
+                  <br><span class="silver">—</span><br>
+
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/swap.html" title="http::message::swap">swap</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Return a buffer sequence representing the trailers.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <span class="bold"><strong><a class="link" href="boost__beast__http__message/target.html" title="http::message::target">target</a></strong></span>
                 </p>
               </td>
 <td>
                 <p>
                   Returns the request-target string.
-                </p>
-                <p>
-                  Set the request-target string.
                 </p>
               </td>
 </tr>
@@ -384,8 +635,223 @@
                 <p>
                   Return the HTTP-version.
                 </p>
+              </td>
+</tr>
+</tbody>
+</table></div>
+<h5>
+<a name="beast.ref.boost__beast__http__response.h3"></a>
+        <span class="phrase"><a name="beast.ref.boost__beast__http__response.protected_member_functions"></a></span><a class="link" href="boost__beast__http__response.html#beast.ref.boost__beast__http__response.protected_member_functions">Protected
+        Member Functions</a>
+      </h5>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
                 <p>
-                  Set the HTTP-version.
+                  Name
+                </p>
+              </th>
+<th>
+                <p>
+                  Description
+                </p>
+              </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/get_chunked_impl.html" title="http::message::get_chunked_impl">get_chunked_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns the chunked Transfer-Encoding setting.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/get_keep_alive_impl.html" title="http::message::get_keep_alive_impl">get_keep_alive_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns the keep-alive setting.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/get_method_impl.html" title="http::message::get_method_impl">get_method_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns the request-method string.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/get_reason_impl.html" title="http::message::get_reason_impl">get_reason_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns the response reason-phrase string.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/get_target_impl.html" title="http::message::get_target_impl">get_target_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns the request-target string.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/has_content_length_impl.html" title="http::message::has_content_length_impl">has_content_length_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Returns <code class="computeroutput"><span class="keyword">true</span></code> if the
+                  Content-Length field is present.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/set_chunked_impl.html" title="http::message::set_chunked_impl">set_chunked_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Adjusts the chunked Transfer-Encoding value.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/set_content_length_impl.html" title="http::message::set_content_length_impl">set_content_length_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Sets or clears the Content-Length field.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/set_keep_alive_impl.html" title="http::message::set_keep_alive_impl">set_keep_alive_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Adjusts the Connection field.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/set_method_impl.html" title="http::message::set_method_impl">set_method_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Set or clear the method string.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/set_reason_impl.html" title="http::message::set_reason_impl">set_reason_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Set or clear the reason string.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/set_target_impl.html" title="http::message::set_target_impl">set_target_impl</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Set or clear the target string.
+                </p>
+              </td>
+</tr>
+</tbody>
+</table></div>
+<h5>
+<a name="beast.ref.boost__beast__http__response.h4"></a>
+        <span class="phrase"><a name="beast.ref.boost__beast__http__response.static_members"></a></span><a class="link" href="boost__beast__http__response.html#beast.ref.boost__beast__http__response.static_members">Static Members</a>
+      </h5>
+<div class="informaltable"><table class="table">
+<colgroup>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                <p>
+                  Name
+                </p>
+              </th>
+<th>
+                <p>
+                  Description
+                </p>
+              </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/max_name_size.html" title="http::message::max_name_size">max_name_size</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Maximum field name size.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <span class="bold"><strong><a class="link" href="boost__beast__http__message/max_value_size.html" title="http::message::max_value_size">max_value_size</a></strong></span>
+                </p>
+              </td>
+<td>
+                <p>
+                  Maximum field value size.
                 </p>
               </td>
 </tr>
@@ -397,16 +863,22 @@
         to view the declaration for the <code class="computeroutput"><span class="identifier">Fields</span></code>
         type. When using the default fields container, those declarations are in
         <a class="link" href="boost__beast__http__fields.html" title="http::fields"><code class="computeroutput"><span class="identifier">fields</span></code></a>.
+      </p>
+<p>
         A message can be a request or response, depending on the <code class="computeroutput"><span class="identifier">isRequest</span></code>
         template argument value. Requests and responses have different types; functions
-        may be overloaded based on the type if desired. The <code class="computeroutput"><span class="identifier">Body</span></code>
-        template argument type determines the model used to read or write the content
-        body of the message. Newly constructed messages objects have version set
-        to HTTP/1.1. Newly constructed response objects also have result code set
-        to <a class="link" href="boost__beast__http__status.html" title="http::status"><code class="computeroutput"><span class="identifier">status</span><span class="special">::</span><span class="identifier">ok</span></code></a>.
+        may be overloaded based on the type if desired.
+      </p>
+<p>
+        The <code class="computeroutput"><span class="identifier">Body</span></code> template argument
+        type determines the model used to read or write the content body of the message.
+      </p>
+<p>
+        Newly constructed messages objects have version set to HTTP/1.1. Newly constructed
+        response objects also have result code set to <a class="link" href="boost__beast__http__status.html" title="http::status"><code class="computeroutput"><span class="identifier">status</span><span class="special">::</span><span class="identifier">ok</span></code></a>.
       </p>
 <h5>
-<a name="beast.ref.boost__beast__http__response.h3"></a>
+<a name="beast.ref.boost__beast__http__response.h5"></a>
         <span class="phrase"><a name="beast.ref.boost__beast__http__response.template_parameters"></a></span><a class="link" href="boost__beast__http__response.html#beast.ref.boost__beast__http__response.template_parameters">Template
         Parameters</a>
       </h5>
@@ -469,23 +941,16 @@
 </tr>
 </tbody>
 </table></div>
-<h5>
-<a name="beast.ref.boost__beast__http__response.h4"></a>
-        <span class="phrase"><a name="beast.ref.boost__beast__http__response.description"></a></span><a class="link" href="boost__beast__http__response.html#beast.ref.boost__beast__http__response.description">Description</a>
-      </h5>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2016-2019 Vinnie
+<div class="copyright-footer">Copyright © 2016-2019 Vinnie
       Falco<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="boost__beast__http__request.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__http__request_parser.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="boost__beast__http__request.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__beast__http__file_body.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

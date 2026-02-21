@@ -2,6 +2,10 @@
 
 // Copyright (c) 2020 Barend Gehrels, Amsterdam, the Netherlands.
 
+// This file was modified by Oracle on 2021.
+// Modifications copyright (c) 2021, Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -38,13 +42,15 @@ struct expectation_limits
     bool has_two_limits() const { return m_lower_limit < m_upper_limit; }
 
     template<typename T>
-    bool contains_logarithmic(const T& value, double tolerance) const
+    bool contains_logarithmic(T const& value, double tolerance) const
     {
-      return abs(log(value) - std::log(m_lower_limit)) < tolerance;
+        using std::abs;
+        using std::log;
+        return abs(log(value) - std::log(m_lower_limit)) < tolerance;
     }
 
     template<typename T>
-    bool contains(const T& value, double percentage, bool logarithmic = false) const
+    bool contains(T const& value, double percentage, bool logarithmic = false) const
     {
         if (m_upper_limit < 1.0e-8)
         {
@@ -74,7 +80,7 @@ struct expectation_limits
                 : expectation_limits(this->m_lower_limit + a.m_lower_limit);
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const expectation_limits& lim)
+    friend std::ostream &operator<<(std::ostream &os, expectation_limits const& lim)
     {
         if (lim.has_two_limits())
         {

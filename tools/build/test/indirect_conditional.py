@@ -1,9 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright (C) 2006. Vladimir Prus
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or copy at
-# http://www.boost.org/LICENSE_1_0.txt)
+# (See accompanying file LICENSE.txt or copy at
+# https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 import BoostBuild
 
@@ -56,8 +56,8 @@ rule a3-rule-2 ( properties * )
     t.run_build_system()
 
     t.expect_addition("bin/$toolset/debug*/a1.exe")
-    t.expect_addition("bin/$toolset/debug/optimization-speed*/a2.exe")
-    t.expect_addition("bin/$toolset/debug/optimization-speed*/a3.exe")
+    t.expect_addition("bin/$toolset/debug*/optimization-speed*/a2.exe")
+    t.expect_addition("bin/$toolset/debug*/optimization-speed*/a3.exe")
 
     t.cleanup()
 

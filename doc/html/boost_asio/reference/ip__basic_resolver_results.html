@@ -8,6 +8,7 @@
 <link rel="up" href="../reference.html" title="Reference">
 <link rel="prev" href="ip__basic_resolver_query/v4_mapped.html" title="ip::basic_resolver_query::v4_mapped">
 <link rel="next" href="ip__basic_resolver_results/basic_resolver_results.html" title="ip::basic_resolver_results::basic_resolver_results">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -27,12 +28,15 @@
 <a name="boost_asio.reference.ip__basic_resolver_results"></a><a class="link" href="ip__basic_resolver_results.html" title="ip::basic_resolver_results">ip::basic_resolver_results</a>
 </h3></div></div></div>
 <p>
+        <a class="indexterm" name="boost_asio.indexterm.ip__basic_resolver_results"></a>
+      </p>
+<p>
         A range of entries produced by a resolver.
       </p>
-<pre class="programlisting">template&lt;
-    typename <a class="link" href="InternetProtocol.html" title="Internet protocol requirements">InternetProtocol</a>&gt;
-class basic_resolver_results :
-  public ip::basic_resolver_iterator&lt; InternetProtocol &gt;
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">typename</span> <a class="link" href="InternetProtocol.html" title="Internet protocol requirements">InternetProtocol</a><span class="special">&gt;</span>
+<span class="keyword">class</span> <span class="identifier">basic_resolver_results</span> <span class="special">:</span>
+  <span class="identifier">ip</span><span class="special">::</span><span class="identifier">basic_resolver_iterator</span><span class="special">&lt;</span> <span class="identifier">InternetProtocol</span> <span class="special">&gt;</span>
 </pre>
 <h5>
 <a name="boost_asio.reference.ip__basic_resolver_results.h0"></a>
@@ -114,30 +118,6 @@ class basic_resolver_results :
 <td>
                 <p>
                   The type of an iterator into the range.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/iterator_category.html" title="ip::basic_resolver_results::iterator_category"><span class="bold"><strong>iterator_category</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  The iterator category.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/pointer.html" title="ip::basic_resolver_results::pointer"><span class="bold"><strong>pointer</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  The type of the result of applying operator-&gt;() to the iterator.
                 </p>
               </td>
 </tr>
@@ -302,42 +282,6 @@ class basic_resolver_results :
 <tr>
 <td>
                 <p>
-                  <a class="link" href="ip__basic_resolver_results/operator__star_.html" title="ip::basic_resolver_results::operator *"><span class="bold"><strong>operator *</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Dereference an iterator.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/operator_plus__plus_.html" title="ip::basic_resolver_results::operator++"><span class="bold"><strong>operator++</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Increment operator (prefix). <br> <span class="silver"> —</span><br> Increment operator (postfix).
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/operator_arrow_.html" title="ip::basic_resolver_results::operator-&gt;"><span class="bold"><strong>operator-&gt;</strong></span></a>
-                </p>
-              </td>
-<td>
-                <p>
-                  Dereference an iterator.
-                </p>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
                   <a class="link" href="ip__basic_resolver_results/operator_eq_.html" title="ip::basic_resolver_results::operator="><span class="bold"><strong>operator=</strong></span></a>
                 </p>
               </td>
@@ -375,101 +319,6 @@ class basic_resolver_results :
 </table></div>
 <h5>
 <a name="boost_asio.reference.ip__basic_resolver_results.h2"></a>
-        <span class="phrase"><a name="boost_asio.reference.ip__basic_resolver_results.protected_member_functions"></a></span><a class="link" href="ip__basic_resolver_results.html#boost_asio.reference.ip__basic_resolver_results.protected_member_functions">Protected
-        Member Functions</a>
-      </h5>
-<div class="informaltable"><table class="table">
-<colgroup>
-<col>
-<col>
-</colgroup>
-<thead><tr>
-<th>
-                <p>
-                  Name
-                </p>
-              </th>
-<th>
-                <p>
-                  Description
-                </p>
-              </th>
-</tr></thead>
-<tbody>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/dereference.html" title="ip::basic_resolver_results::dereference"><span class="bold"><strong>dereference</strong></span></a>
-                </p>
-              </td>
-<td>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/equal.html" title="ip::basic_resolver_results::equal"><span class="bold"><strong>equal</strong></span></a>
-                </p>
-              </td>
-<td>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/increment.html" title="ip::basic_resolver_results::increment"><span class="bold"><strong>increment</strong></span></a>
-                </p>
-              </td>
-<td>
-              </td>
-</tr>
-</tbody>
-</table></div>
-<h5>
-<a name="boost_asio.reference.ip__basic_resolver_results.h3"></a>
-        <span class="phrase"><a name="boost_asio.reference.ip__basic_resolver_results.protected_data_members"></a></span><a class="link" href="ip__basic_resolver_results.html#boost_asio.reference.ip__basic_resolver_results.protected_data_members">Protected
-        Data Members</a>
-      </h5>
-<div class="informaltable"><table class="table">
-<colgroup>
-<col>
-<col>
-</colgroup>
-<thead><tr>
-<th>
-                <p>
-                  Name
-                </p>
-              </th>
-<th>
-                <p>
-                  Description
-                </p>
-              </th>
-</tr></thead>
-<tbody>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/index_.html" title="ip::basic_resolver_results::index_"><span class="bold"><strong>index_</strong></span></a>
-                </p>
-              </td>
-<td>
-              </td>
-</tr>
-<tr>
-<td>
-                <p>
-                  <a class="link" href="ip__basic_resolver_results/values_.html" title="ip::basic_resolver_results::values_"><span class="bold"><strong>values_</strong></span></a>
-                </p>
-              </td>
-<td>
-              </td>
-</tr>
-</tbody>
-</table></div>
-<h5>
-<a name="boost_asio.reference.ip__basic_resolver_results.h4"></a>
         <span class="phrase"><a name="boost_asio.reference.ip__basic_resolver_results.friends"></a></span><a class="link" href="ip__basic_resolver_results.html#boost_asio.reference.ip__basic_resolver_results.friends">Friends</a>
       </h5>
 <div class="informaltable"><table class="table">
@@ -517,26 +366,26 @@ class basic_resolver_results :
 </tbody>
 </table></div>
 <p>
-        The <a class="link" href="ip__basic_resolver_results.html" title="ip::basic_resolver_results"><code class="computeroutput">ip::basic_resolver_results</code></a>
+        The <a class="link" href="ip__basic_resolver_results.html" title="ip::basic_resolver_results"><code class="computeroutput"><span class="identifier">ip</span><span class="special">::</span><span class="identifier">basic_resolver_results</span></code></a>
         class template is used to define a range over the results returned by a resolver.
       </p>
 <p>
         The iterator's value_type, obtained when a results iterator is dereferenced,
         is:
       </p>
-<pre class="programlisting">const basic_resolver_entry&lt;InternetProtocol&gt;
+<pre class="programlisting"><span class="keyword">const</span> <span class="identifier">basic_resolver_entry</span><span class="special">&lt;</span><span class="identifier">InternetProtocol</span><span class="special">&gt;</span>
 </pre>
 <h5>
-<a name="boost_asio.reference.ip__basic_resolver_results.h5"></a>
+<a name="boost_asio.reference.ip__basic_resolver_results.h3"></a>
         <span class="phrase"><a name="boost_asio.reference.ip__basic_resolver_results.remarks"></a></span><a class="link" href="ip__basic_resolver_results.html#boost_asio.reference.ip__basic_resolver_results.remarks">Remarks</a>
       </h5>
 <p>
-        For backward compatibility, <a class="link" href="ip__basic_resolver_results.html" title="ip::basic_resolver_results"><code class="computeroutput">ip::basic_resolver_results</code></a>
-        is derived from <a class="link" href="ip__basic_resolver_iterator.html" title="ip::basic_resolver_iterator"><code class="computeroutput">ip::basic_resolver_iterator</code></a>.
+        For backward compatibility, <a class="link" href="ip__basic_resolver_results.html" title="ip::basic_resolver_results"><code class="computeroutput"><span class="identifier">ip</span><span class="special">::</span><span class="identifier">basic_resolver_results</span></code></a>
+        is derived from <a class="link" href="ip__basic_resolver_iterator.html" title="ip::basic_resolver_iterator"><code class="computeroutput"><span class="identifier">ip</span><span class="special">::</span><span class="identifier">basic_resolver_iterator</span></code></a>.
         This derivation is deprecated.
       </p>
 <h5>
-<a name="boost_asio.reference.ip__basic_resolver_results.h6"></a>
+<a name="boost_asio.reference.ip__basic_resolver_results.h4"></a>
         <span class="phrase"><a name="boost_asio.reference.ip__basic_resolver_results.thread_safety"></a></span><a class="link" href="ip__basic_resolver_results.html#boost_asio.reference.ip__basic_resolver_results.thread_safety">Thread
         Safety</a>
       </h5>
@@ -547,7 +396,7 @@ class basic_resolver_results :
         <span class="emphasis"><em>Shared</em></span> <span class="emphasis"><em>objects:</em></span> Unsafe.
       </p>
 <h5>
-<a name="boost_asio.reference.ip__basic_resolver_results.h7"></a>
+<a name="boost_asio.reference.ip__basic_resolver_results.h5"></a>
         <span class="phrase"><a name="boost_asio.reference.ip__basic_resolver_results.requirements"></a></span><a class="link" href="ip__basic_resolver_results.html#boost_asio.reference.ip__basic_resolver_results.requirements">Requirements</a>
       </h5>
 <p>
@@ -557,15 +406,12 @@ class basic_resolver_results :
         <span class="emphasis"><em>Convenience header: </em></span><code class="literal">boost/asio.hpp</code>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2020 Christopher M.
+<div class="copyright-footer">Copyright © 2003-2025 Christopher M.
       Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="ip__basic_resolver_query/v4_mapped.html"><img src="../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../boost_asio.html"><img src="../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="ip__basic_resolver_results/basic_resolver_results.html"><img src="../../../../doc/src/images/next.png" alt="Next"></a>

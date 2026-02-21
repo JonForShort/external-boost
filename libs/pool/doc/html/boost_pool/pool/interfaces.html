@@ -8,6 +8,7 @@
 <link rel="up" href="../pool.html" title="Introduction and Overview">
 <link rel="prev" href="testing.html" title="Building the Test Programs">
 <link rel="next" href="pooling.html" title="Pool in More Depth">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -84,14 +85,14 @@
         versus unordered</a>
       </h6>
 <p>
-        An ordered pool maintains it's free list in order of the address of each
-        free block - this is the most efficient way if you're likely to allocate
-        arrays of objects. However, freeing an object can be O(N) in the number of
-        currently free blocks which can be prohibitively expensive in some situations.
+        An ordered pool maintains its free list in order of the address of each free
+        block - this is the most efficient way if you're likely to allocate arrays
+        of objects. However, freeing an object can be O(N) in the number of currently
+        free blocks which can be prohibitively expensive in some situations.
       </p>
 <p>
-        An unordered pool does not maintain it's free list in any particular order,
-        as a result allocation and freeing single objects is very fast, but allocating
+        An unordered pool does not maintain its free list in any particular order,
+        as a result allocating and freeing single objects is very fast, but allocating
         arrays may be slow (and in particular the pool may not be aware that it contains
         enough free memory for the allocation request, and unnecessarily allocate
         more memory).
@@ -111,17 +112,17 @@
 <a name="boost_pool.pool.interfaces.interfaces.pool"></a><a class="link" href="interfaces.html#boost_pool.pool.interfaces.interfaces.pool" title="pool">pool</a>
 </h5></div></div></div>
 <p>
-            The <code class="computeroutput"><a class="link" href="../../boost/pool.html" title="Class template pool">pool</a></code> interface is a simple
+            The <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/classboost_1_1pool.html" title="Class template pool">pool</a></code> interface is a simple
             Object Usage interface with Null Return.
           </p>
 <p>
-            <code class="computeroutput"><a class="link" href="../../boost/pool.html" title="Class template pool">pool</a></code> is a fast memory allocator,
+            <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/classboost_1_1pool.html" title="Class template pool">pool</a></code> is a fast memory allocator,
             and guarantees proper alignment of all allocated chunks.
           </p>
 <p>
-            <code class="computeroutput"><a class="link" href="../../header/boost/pool/pool_hpp.html" title="Header &lt;boost/pool/pool.hpp&gt;">pool.hpp</a></code> provides
+            <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/pool_8hpp.html" title="Header &lt;boost/pool/pool.hpp&gt;">pool.hpp</a></code> provides
             two <a class="link" href="pooling.html#boost_pool.pool.pooling.user_allocator" title="The UserAllocator Concept">UserAllocator</a>
-            classes and a <code class="computeroutput"><a class="link" href="../../boost/pool.html" title="Class template pool">template class pool</a></code>,
+            classes and a <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/classboost_1_1pool.html" title="Class template pool">template class pool</a></code>,
             which extends and generalizes the framework provided by the <a class="link" href="pooling.html#boost_pool.pool.pooling.simple" title="Simple Segregated Storage">Simple
             Segregated Storage</a> solution. For information on other pool-based
             interfaces, see the other <a class="link" href="interfaces.html" title="Boost Pool Interfaces - What interfaces are provided and when to use each one.">Pool
@@ -132,7 +133,7 @@
           </p>
 <p>
             There are two <a class="link" href="pooling.html#boost_pool.pool.pooling.user_allocator" title="The UserAllocator Concept">UserAllocator</a>
-            classes provided. Both of them are in <code class="computeroutput"><a class="link" href="../../header/boost/pool/pool_hpp.html" title="Header &lt;boost/pool/pool.hpp&gt;">pool.hpp</a></code>.
+            classes provided. Both of them are in <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/pool_8hpp.html" title="Header &lt;boost/pool/pool.hpp&gt;">pool.hpp</a></code>.
           </p>
 <p>
             The default value for the template parameter <a class="link" href="pooling.html#boost_pool.pool.pooling.user_allocator" title="The UserAllocator Concept">UserAllocator</a>
@@ -216,14 +217,14 @@
 <a name="boost_pool.pool.interfaces.interfaces.object_pool"></a><a class="link" href="interfaces.html#boost_pool.pool.interfaces.interfaces.object_pool" title="Object_pool">Object_pool</a>
 </h5></div></div></div>
 <p>
-            The <code class="computeroutput"><a class="link" href="../../boost/object_pool.html" title="Class template object_pool">template class object_pool</a></code>
+            The <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/classboost_1_1object__pool.html" title="Class template object_pool">template class object_pool</a></code>
             interface is an Object Usage interface with Null Return, but is aware
             of the type of the object for which it is allocating chunks. On destruction,
             any chunks that have been allocated from that <code class="computeroutput"><span class="identifier">object_pool</span></code>
             will have their destructors called.
           </p>
 <p>
-            <code class="computeroutput"><a class="link" href="../../header/boost/pool/object_pool_hpp.html" title="Header &lt;boost/pool/object_pool.hpp&gt;">object_pool.hpp</a></code>
+            <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/object__pool_8hpp.html" title="Header &lt;boost/pool/object_pool.hpp&gt;">object_pool.hpp</a></code>
             provides a template type that can be used for fast and efficient memory
             allocation. It also provides automatic destruction of non-deallocated
             objects.
@@ -281,10 +282,11 @@
             for details.
           </p>
 <p>
-            <span class="bold"><strong>Example:</strong></span> struct X { ... }; // has destructor
-            with side-effects.
+            <span class="bold"><strong>Example:</strong></span>
           </p>
-<pre class="programlisting"><span class="keyword">void</span> <span class="identifier">func</span><span class="special">()</span>
+<pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">X</span> <span class="special">{</span> <span class="special">...</span> <span class="special">};</span> <span class="comment">// has destructor with side-effects.</span>
+
+<span class="keyword">void</span> <span class="identifier">func</span><span class="special">()</span>
 <span class="special">{</span>
   <span class="identifier">boost</span><span class="special">::</span><span class="identifier">object_pool</span><span class="special">&lt;</span><span class="identifier">X</span><span class="special">&gt;</span> <span class="identifier">p</span><span class="special">;</span>
   <span class="keyword">for</span> <span class="special">(</span><span class="keyword">int</span> <span class="identifier">i</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span> <span class="identifier">i</span> <span class="special">&lt;</span> <span class="number">10000</span><span class="special">;</span> <span class="special">++</span><span class="identifier">i</span><span class="special">)</span>
@@ -300,8 +302,8 @@
 <a name="boost_pool.pool.interfaces.interfaces.singleton_pool"></a><a class="link" href="interfaces.html#boost_pool.pool.interfaces.interfaces.singleton_pool" title="Singleton_pool">Singleton_pool</a>
 </h5></div></div></div>
 <p>
-            The <code class="computeroutput"><a class="link" href="../../boost/singleton_pool.html" title="Class template singleton_pool">singleton_pool interface</a></code>
-            at <code class="computeroutput"><a class="link" href="../../header/boost/pool/singleton_pool_hpp.html" title="Header &lt;boost/pool/singleton_pool.hpp&gt;">singleton_pool.hpp</a></code>
+            The <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/classboost_1_1singleton__pool.html" title="Class template singleton_pool">singleton_pool interface</a></code>
+            at <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/singleton__pool_8hpp.html" title="Header &lt;boost/pool/singleton_pool.hpp&gt;">singleton_pool.hpp</a></code>
             is a Singleton Usage interface with Null Return. It's just the same as
             the pool interface but with Singleton Usage instead.
           </p>
@@ -397,9 +399,11 @@
             from the system. See User Allocators for details.
           </p>
 <p>
-            <span class="bold"><strong>Example:</strong></span> struct MyPoolTag { };
+            <span class="bold"><strong>Example:</strong></span>
           </p>
-<pre class="programlisting"><span class="keyword">typedef</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">singleton_pool</span><span class="special">&lt;</span><span class="identifier">MyPoolTag</span><span class="special">,</span> <span class="keyword">sizeof</span><span class="special">(</span><span class="keyword">int</span><span class="special">)&gt;</span> <span class="identifier">my_pool</span><span class="special">;</span>
+<pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">MyPoolTag</span> <span class="special">{</span> <span class="special">};</span>
+
+<span class="keyword">typedef</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">singleton_pool</span><span class="special">&lt;</span><span class="identifier">MyPoolTag</span><span class="special">,</span> <span class="keyword">sizeof</span><span class="special">(</span><span class="keyword">int</span><span class="special">)&gt;</span> <span class="identifier">my_pool</span><span class="special">;</span>
 <span class="keyword">void</span> <span class="identifier">func</span><span class="special">()</span>
 <span class="special">{</span>
   <span class="keyword">for</span> <span class="special">(</span><span class="keyword">int</span> <span class="identifier">i</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span> <span class="identifier">i</span> <span class="special">&lt;</span> <span class="number">10000</span><span class="special">;</span> <span class="special">++</span><span class="identifier">i</span><span class="special">)</span>
@@ -417,7 +421,7 @@
 <a name="boost_pool.pool.interfaces.interfaces.pool_allocator"></a><a class="link" href="interfaces.html#boost_pool.pool.interfaces.interfaces.pool_allocator" title="pool_allocator">pool_allocator</a>
 </h5></div></div></div>
 <p>
-            The <code class="computeroutput"><a class="link" href="../../boost/pool_allocator.html" title="Class template pool_allocator">pool_allocator interface</a></code>
+            The <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/classboost_1_1pool__allocator.html" title="Class template pool_allocator">pool_allocator interface</a></code>
             is a Singleton Usage interface with Exceptions. It is built on the singleton_pool
             interface, and provides a Standard Allocator-compliant class (for use
             in containers, etc.).
@@ -426,7 +430,7 @@
             <span class="bold"><strong>Introduction</strong></span>
           </p>
 <p>
-            <code class="computeroutput"><a class="link" href="../../header/boost/pool/pool_alloc_hpp.html" title="Header &lt;boost/pool/pool_alloc.hpp&gt;">pool_alloc.hpp</a></code>
+            <code class="computeroutput"><a class="link" href="../../doxygen/boost_pool_c___reference/pool__alloc_8hpp.html" title="Header &lt;boost/pool/pool_alloc.hpp&gt;">pool_alloc.hpp</a></code>
           </p>
 <p>
             Provides two template types that can be used for fast and efficient memory
@@ -560,14 +564,11 @@
 </div>
 </div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2000-2006 Stephen Cleary<br>Copyright © 2011 Paul A. Bristow<p>
+<div class="copyright-footer">Copyright © 2000-2006 Stephen Cleary<br>Copyright © 2011 Paul A. Bristow<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="testing.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../pool.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="pooling.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>

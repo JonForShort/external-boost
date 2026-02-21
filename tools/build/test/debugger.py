@@ -1,8 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright 2016 Steven Watanabe
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
+# (See accompanying file LICENSE.txt or https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 # Test for the debugger
 
@@ -45,7 +45,7 @@ def test_run():
     run(t, """\
 (b2db) run -ftest.jam
 Starting program: {{bjam}} -ftest.jam
-Child {{\d+}} exited with status 0
+Child {{\\d+}} exited with status 0
 (b2db) quit
 """)
 
@@ -60,7 +60,7 @@ def test_exit_status():
 (b2db) run -ftest.jam
 Starting program: {{bjam}} -ftest.jam
 
-Child {{\d+}} exited with status 1
+Child {{\\d+}} exited with status 1
 (b2db) quit
 """)
     t.cleanup()
@@ -384,11 +384,11 @@ Breakpoint 3, h ( ) at test.jam:12
 Deleted breakpoint 3
 (b2db) run -ftest.jam
 Starting program: {{bjam}} -ftest.jam
-Child {{\d+}} exited with status 0
+Child {{\\d+}} exited with status 0
 (b2db) quit
 """)
     t.cleanup()
-    
+
 def test_breakpoints_running():
     """Tests that breakpoints can be added and modified
     while the program is running."""
@@ -473,7 +473,7 @@ Breakpoint 1, module scope at test.jam:14
 (b2db) clear test.jam:12
 Deleted breakpoint 4
 (b2db) continue
-Child {{\d+}} exited with status 0
+Child {{\\d+}} exited with status 0
 (b2db) quit
 """)
     t.cleanup()
@@ -553,7 +553,7 @@ Starting program: {{bjam}} -ftest.jam
 Breakpoint 1, module scope at test.jam:1
 1	        UPDATE ;
 (b2db) run -ftest.jam
-Child {{\d+}} exited with status 0
+Child {{\\d+}} exited with status 0
 Starting program: {{bjam}} -ftest.jam
 Breakpoint 1, module scope at test.jam:1
 1	        UPDATE ;
@@ -583,7 +583,7 @@ The program is not being run.
 """)
 
     t.cleanup()
-    
+
 def test_bad_arguments():
     t = make_tester()
     t.write("test.jam", """\

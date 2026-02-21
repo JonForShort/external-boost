@@ -9,11 +9,15 @@
 // Constants are too big for float case, but this doesn't matter for test.
 #endif
 
+#include <boost/math/tools/config.hpp>
+#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
 #include <boost/math/concepts/real_concept.hpp>
+#endif
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/math/special_functions/math_fwd.hpp>
+#include <boost/math/special_functions/ellint_1.hpp>
 #include <boost/array.hpp>
 #include "functor.hpp"
 
@@ -84,7 +88,7 @@ void test_spots(T, const char* type_name)
 {
     // Function values calculated on http://functions.wolfram.com/
     // Note that Mathematica's EllipticF accepts k^2 as the second parameter.
-    static const boost::array<boost::array<typename table_type<T>::type, 3>, 22> data1 = {{
+    static const std::array<std::array<typename table_type<T>::type, 3>, 22> data1 = {{
         {{ SC_(0.0), SC_(0.0), SC_(0.0) }},
         {{ SC_(-10.0), SC_(0.0), SC_(-10.0) }},
         {{ SC_(-1.0), SC_(-1.0), SC_(-1.2261911708835170708130609674719067527242483502207) }},
@@ -118,7 +122,7 @@ void test_spots(T, const char* type_name)
 
     // Function values calculated on http://functions.wolfram.com/
     // Note that Mathematica's EllipticK accepts k^2 as the second parameter.
-    static const boost::array<boost::array<typename table_type<T>::type, 2>, 9> data2 = {{
+    static const std::array<std::array<typename table_type<T>::type, 2>, 9> data2 = {{
         {{ SC_(0.0), SC_(1.5707963267948966192313216916397514420985846996876) }},
         {{ SC_(0.125), SC_(1.5769867712158131421244030532288080803822271060839) }},
         {{ SC_(0.25), SC_(1.5962422221317835101489690714979498795055744578951) }},
@@ -139,11 +143,13 @@ void test_spots(T, const char* type_name)
     //
     // Test error handling:
     //
+    #ifndef BOOST_MATH_NO_EXCEPTIONS
     BOOST_CHECK_GE(boost::math::ellint_1(T(1)), boost::math::tools::max_value<T>());
     BOOST_CHECK_GE(boost::math::ellint_1(T(-1)), boost::math::tools::max_value<T>());
     BOOST_CHECK_THROW(boost::math::ellint_1(T(1.0001)), std::domain_error);
     BOOST_CHECK_THROW(boost::math::ellint_1(T(-1.0001)), std::domain_error);
     BOOST_CHECK_THROW(boost::math::ellint_1(T(2.2), T(0.5)), std::domain_error);
     BOOST_CHECK_THROW(boost::math::ellint_1(T(-2.2), T(0.5)), std::domain_error);
+    #endif
 }
 

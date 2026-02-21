@@ -1,8 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Copyright 2003, 2006 Vladimir Prus
 # Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
+# (See accompanying file LICENSE.txt or https://www.bfgroup.xyz/b2/LICENSE.txt)
 
 import BoostBuild
 
@@ -39,7 +39,7 @@ exe a2 : a.cpp [ lib helper : helper.cpp ] ;
 """)
 
 t.run_build_system()
-t.expect_addition("bin/$toolset/debug/link-static*/a.exe")
+t.expect_addition("bin/$toolset/debug*/a.exe")
 t.expect_addition("bin/$toolset/debug*/a__helper.lib")
 t.expect_addition("bin/$toolset/debug*/a2__helper.lib")
 

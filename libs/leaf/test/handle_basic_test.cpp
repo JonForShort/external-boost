@@ -1,12 +1,16 @@
-// Copyright (c) 2018-2020 Emil Dotchevski and Reverge Studios, Inc.
-
+// Copyright 2018-2024 Emil Dotchevski and Reverge Studios, Inc.
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/leaf/detail/config.hpp>
-#include <boost/leaf/handle_errors.hpp>
-#include <boost/leaf/pred.hpp>
-#include <boost/leaf/result.hpp>
+#ifdef BOOST_LEAF_TEST_SINGLE_HEADER
+#   include "leaf.hpp"
+#else
+#   include <boost/leaf/config.hpp>
+#   include <boost/leaf/handle_errors.hpp>
+#   include <boost/leaf/pred.hpp>
+#   include <boost/leaf/result.hpp>
+#endif
+
 #include "lightweight_test.hpp"
 
 namespace leaf = boost::leaf;
@@ -41,7 +45,7 @@ leaf::result<int> compute_answer( int what_to_do ) noexcept
     case 5:
         return leaf::new_error(error2_tag{}, error_code::error2);
     default:
-        BOOST_LEAF_ASSERT(what_to_do==6);
+        BOOST_LEAF_ASSERT(what_to_do == 6);
         return leaf::new_error(error3_tag{}, error_code::error3);
     }
 }
@@ -167,7 +171,7 @@ int main()
         BOOST_TEST_EQ(r, 1);
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
     BOOST_TEST_EQ(handle_some_errors(0).value(), 42);
     BOOST_TEST_EQ(handle_some_errors(1).value(), -2);
@@ -191,7 +195,7 @@ int main()
         BOOST_TEST_EQ(r, 1);
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
     BOOST_TEST_EQ(handle_some_errors_float(0).value(), 42.0f);
     BOOST_TEST_EQ(handle_some_errors_float(2).value(), -2.0f);
@@ -215,7 +219,7 @@ int main()
         BOOST_TEST_EQ(r, 1);
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
     BOOST_TEST(handle_some_errors_void(0));
     BOOST_TEST(handle_some_errors_void(3));
@@ -237,7 +241,7 @@ int main()
         BOOST_TEST_EQ(r, 1);
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
 #ifndef BOOST_LEAF_NO_EXCEPTIONS
     {
@@ -259,7 +263,7 @@ int main()
     }
 #endif
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
     {
         int r = leaf::try_handle_all(
@@ -270,7 +274,7 @@ int main()
             []( info<1> const & i1 )
             {
                 BOOST_TEST_EQ(i1.value, 42);
-                int r = leaf::try_handle_all(
+                int r1 = leaf::try_handle_all(
                     []() -> leaf::result<int>
                     {
                         return leaf::new_error( info<1>{43} );
@@ -279,7 +283,7 @@ int main()
                     {
                         return -1;
                     } );
-                BOOST_TEST_EQ(r, -1);
+                BOOST_TEST_EQ(r1, -1);
                 BOOST_TEST_EQ(i1.value, 42);
                 return 0;
             },
@@ -290,7 +294,7 @@ int main()
         BOOST_TEST_EQ(r, 0);
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
     {
         int r = leaf::try_handle_all(
@@ -301,21 +305,21 @@ int main()
             []( info<1> const & i1 )
             {
                 BOOST_TEST_EQ(i1.value, 42);
-                int r = leaf::try_handle_all(
+                int r1 = leaf::try_handle_all(
                     []() -> leaf::result<int>
                     {
                         return leaf::new_error( info<1>{43} );
                     },
-                    []( info<1> const & i1 )
+                    []( info<1> const & i1_ )
                     {
-                        BOOST_TEST_EQ(i1.value, 43);
+                        BOOST_TEST_EQ(i1_.value, 43);
                         return -1;
                     },
                     []()
                     {
                         return -2;
                     } );
-                BOOST_TEST_EQ(r, -1);
+                BOOST_TEST_EQ(r1, -1);
                 BOOST_TEST_EQ(i1.value, 42);
                 return 0;
             },
@@ -326,7 +330,7 @@ int main()
         BOOST_TEST_EQ(r, 0);
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
     {
         int r = leaf::try_handle_all(
@@ -358,7 +362,7 @@ int main()
         BOOST_TEST_EQ(r, 0);
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
     {
         int r = leaf::try_handle_all(
@@ -369,11 +373,12 @@ int main()
                     {
                         return leaf::new_error( info<1>{1}, info<2>{-2} );
                     },
-                    []( leaf::error_info const & err, info<1> const & i1, info<2> const & i2 )
+                    []( leaf::error_info const & err, info<1> const & i1, info<2> & i2 )
                     {
                         BOOST_TEST_EQ(i1.value, 1);
                         BOOST_TEST_EQ(i2.value, -2);
-                        return err.error().load(info<2>{2});
+                        i2 = info<2>{2};
+                        return err.error();
                     } );
             },
             []( info<1> const & i1, info<2> const & i2 )
@@ -389,7 +394,7 @@ int main()
         BOOST_TEST_EQ(r, 0);
     }
 
-    ///////////////////////////
+    ////////////////////////////////////////
 
     return boost::report_errors();
 }

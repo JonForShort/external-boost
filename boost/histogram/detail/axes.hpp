@@ -17,7 +17,7 @@
 #include <boost/histogram/detail/priority.hpp>
 #include <boost/histogram/detail/relaxed_tuple_size.hpp>
 #include <boost/histogram/detail/static_if.hpp>
-#include <boost/histogram/detail/sub_array.hpp>
+#include <boost/histogram/detail/static_vector.hpp>
 #include <boost/histogram/detail/try_cast.hpp>
 #include <boost/histogram/fwd.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -236,7 +236,7 @@ bool axes_equal_impl(const T& t, const U& u, mp11::index_sequence<Is...>) noexce
 template <class... Ts, class... Us>
 bool axes_equal_impl(const std::tuple<Ts...>& t, const std::tuple<Us...>& u) noexcept {
   return axes_equal_impl(
-      t, u, mp11::make_index_sequence<std::min(sizeof...(Ts), sizeof...(Us))>{});
+      t, u, mp11::make_index_sequence<(std::min)(sizeof...(Ts), sizeof...(Us))>{});
 }
 
 template <class... Ts, class U>
@@ -349,7 +349,21 @@ std::size_t bincount(const T& axes) {
   return n;
 }
 
-// initial offset for the linear index
+/** Initial offset for the linear index.
+
+  This precomputes an offset for the global index so that axis index = -1 addresses the
+  first entry in the storage. Example: one-dim. histogram. The offset is 1, stride is 1,
+  and global_index = offset + axis_index * stride == 0 addresses the first element of
+  the storage.
+
+  Using the offset makes the hot inner loop that computes the global_index simpler and
+  thus faster, because we do not have to branch for each axis to check whether it has
+  an underflow bin.
+
+  The offset is set to an invalid value when the histogram contains at least one growing
+  axis, because this optimization then cannot be used. See detail/linearize.hpp, in this
+  case linearize_growth is called.
+*/
 template <class T>
 std::size_t offset(const T& axes) {
   std::size_t n = 0;
@@ -367,13 +381,13 @@ std::size_t offset(const T& axes) {
 // make default-constructed buffer (no initialization for POD types)
 template <class T, class A>
 auto make_stack_buffer(const A& a) {
-  return sub_array<T, buffer_size<A>::value>(axes_rank(a));
+  return static_vector<T, buffer_size<A>::value>(axes_rank(a));
 }
 
 // make buffer with elements initialized to v
 template <class T, class A>
 auto make_stack_buffer(const A& a, const T& t) {
-  return sub_array<T, buffer_size<A>::value>(axes_rank(a), t);
+  return static_vector<T, buffer_size<A>::value>(axes_rank(a), t);
 }
 
 template <class T>
@@ -419,8 +433,9 @@ using has_non_inclusive_axis = mp11::mp_any_of<axis_types<Axes>, is_not_inclusiv
 
 template <class T>
 constexpr std::size_t type_score() {
-  return sizeof(T) *
-         (std::is_integral<T>::value ? 1 : std::is_floating_point<T>::value ? 10 : 100);
+  return sizeof(T) * (std::is_integral<T>::value         ? 1
+                      : std::is_floating_point<T>::value ? 10
+                                                         : 100);
 }
 
 // arbitrary ordering of types

@@ -11,9 +11,12 @@ if "_%B2_TOOLSET%_" == "_vc12_" call :Config_VC12
 if "_%B2_TOOLSET%_" == "_vc14_" call :Config_VC14
 if "_%B2_TOOLSET%_" == "_vc141_" call :Config_VC141
 if "_%B2_TOOLSET%_" == "_vc142_" call :Config_VC142
+if "_%B2_TOOLSET%_" == "_vc143_" call :Config_VC143
 if "_%B2_TOOLSET%_" == "_borland_" call :Config_BORLAND
 if "_%B2_TOOLSET%_" == "_como_" call :Config_COMO
 if "_%B2_TOOLSET%_" == "_gcc_" call :Config_GCC
+if "_%B2_TOOLSET%_" == "_clang_" call :Config_CLANG
+if "_%B2_TOOLSET%_" == "_clang-win_" call :Config_CLANG_WIN
 if "_%B2_TOOLSET%_" == "_gcc-nocygwin_" call :Config_GCC_NOCYGWIN
 if "_%B2_TOOLSET%_" == "_intel-win32_" call :Config_INTEL_WIN32
 if "_%B2_TOOLSET%_" == "_mingw_" call :Config_MINGW
@@ -33,10 +36,10 @@ call :Call_If_Exists "%B2_TOOLSET_ROOT%bin\VCVARS32.BAT"
 if not "_%B2_TOOLSET_ROOT%_" == "__" (
     set "PATH=%B2_TOOLSET_ROOT%bin;%PATH%"
     )
-set "B2_CXX=%CXX% /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL"
+set "B2_CXX="%CXX%" /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL /EHsc"
 set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
 set "_known_=1"
-goto :eof
+goto :Embed_Minafest_Via_Link
 
 :Config_VC11
 if not defined CXX ( set "CXX=cl" )
@@ -48,10 +51,10 @@ if NOT "_%B2_TOOLSET_ROOT%_" == "__" (
     if "_%VCINSTALLDIR%_" == "__" (
         set "PATH=%B2_TOOLSET_ROOT%bin;%PATH%"
         ) )
-set "B2_CXX=%CXX% /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL"
+set "B2_CXX="%CXX%" /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL /EHsc"
 set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
 set "_known_=1"
-goto :eof
+goto :Embed_Minafest_Via_Link
 
 :Config_VC12
 if not defined CXX ( set "CXX=cl" )
@@ -67,10 +70,10 @@ if NOT "_%B2_TOOLSET_ROOT%_" == "__" (
     if "_%VCINSTALLDIR%_" == "__" (
         set "PATH=%B2_TOOLSET_ROOT%bin;%PATH%"
         ) )
-set "B2_CXX=%CXX% /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL"
+set "B2_CXX="%CXX%" /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL /EHsc"
 set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
 set "_known_=1"
-goto :eof
+goto :Embed_Minafest_Via_Link
 
 :Config_VC14
 if not defined CXX ( set "CXX=cl" )
@@ -87,10 +90,10 @@ if NOT "_%B2_TOOLSET_ROOT%_" == "__" (
     if "_%VCINSTALLDIR%_" == "__" (
         set "PATH=%B2_TOOLSET_ROOT%bin;%PATH%"
         ) )
-set "B2_CXX=%CXX% /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL"
+set "B2_CXX="%CXX%" /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL /EHsc"
 set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
 set "_known_=1"
-goto :eof
+goto :Embed_Minafest_Via_Link
 
 :Config_VC141
 if not defined CXX ( set "CXX=cl" )
@@ -109,10 +112,10 @@ REM return to current directory as vsdevcmd_end.bat switches to %USERPROFILE%\So
 pushd %CD%
 if "_%VSINSTALLDIR%_" == "__" call :Call_If_Exists "%B2_TOOLSET_ROOT%Auxiliary\Build\vcvarsall.bat" %B2_BUILD_ARGS%
 popd
-set "B2_CXX=%CXX% /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL"
+set "B2_CXX="%CXX%" /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL /EHsc"
 set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
 set "_known_=1"
-goto :eof
+goto :Embed_Minafest_Via_Link
 
 :Config_VC142
 if not defined CXX ( set "CXX=cl" )
@@ -131,10 +134,32 @@ REM return to current directory as vsdevcmd_end.bat switches to %USERPROFILE%\So
 pushd %CD%
 if "_%VSINSTALLDIR%_" == "__" call :Call_If_Exists "%B2_TOOLSET_ROOT%Auxiliary\Build\vcvarsall.bat" %B2_BUILD_ARGS%
 popd
-set "B2_CXX=%CXX% /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL"
+set "B2_CXX="%CXX%" /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL /EHsc"
 set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
 set "_known_=1"
-goto :eof
+goto :Embed_Minafest_Via_Link
+
+:Config_VC143
+if not defined CXX ( set "CXX=cl" )
+call vswhere_usability_wrapper.cmd
+REM Reset ERRORLEVEL since from now on it's all based on ENV vars
+ver > nul 2> nul
+if "_%B2_TOOLSET_ROOT%_" == "__" (
+    if NOT "_%VS170COMNTOOLS%_" == "__" (
+        set "B2_TOOLSET_ROOT=%VS170COMNTOOLS%..\..\VC\"
+    ))
+
+if "_%B2_ARCH%_" == "__" set B2_ARCH=%PROCESSOR_ARCHITECTURE%
+set B2_BUILD_ARGS=%B2_BUILD_ARGS% %B2_ARCH%
+
+REM return to current directory as vsdevcmd_end.bat switches to %USERPROFILE%\Source if it exists.
+pushd %CD%
+if "_%VSINSTALLDIR%_" == "__" call :Call_If_Exists "%B2_TOOLSET_ROOT%Auxiliary\Build\vcvarsall.bat" %B2_BUILD_ARGS%
+popd
+set "B2_CXX="%CXX%" /nologo /MP /MT /TP /Feb2 /wd4996 /wd4675 /O2 /GL /EHsc /Zc:wchar_t /Gw"
+set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
+set "_known_=1"
+goto :Embed_Minafest_Via_Link
 
 :Config_VCUNK
 if NOT "_%B2_TOOLSET%_" == "_vcunk_" goto Skip_VCUNK
@@ -153,15 +178,15 @@ REM return to current directory as vsdevcmd_end.bat switches to %USERPROFILE%\So
 pushd %CD%
 if "_%VSINSTALLDIR%_" == "__" call :Call_If_Exists "%B2_TOOLSET_ROOT%Auxiliary\Build\vcvarsall.bat" %B2_BUILD_ARGS%
 popd
-set "B2_CXX=%CXX% /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL"
+set "B2_CXX="%CXX%" /nologo /MP /MT /TP /Feb2 /wd4996 /O2 /GL /EHsc"
 set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
 set "_known_=1"
-goto :eof
+goto :Embed_Minafest_Via_Link
 
 :Config_BORLAND
-if not defined CXX ( set "CXX=bcc32" )
+if not defined CXX ( set "CXX=bcc32c" )
 if "_%B2_TOOLSET_ROOT%_" == "__" (
-    call guess_toolset.bat test_path bcc32.exe )
+    call guess_toolset.bat test_path bcc32c.exe )
 if "_%B2_TOOLSET_ROOT%_" == "__" (
     if not errorlevel 1 (
         set "B2_TOOLSET_ROOT=%FOUND_PATH%..\"
@@ -169,31 +194,49 @@ if "_%B2_TOOLSET_ROOT%_" == "__" (
 if not "_%B2_TOOLSET_ROOT%_" == "__" (
     set "PATH=%B2_TOOLSET_ROOT%Bin;%PATH%"
     )
-set "B2_CXX=%CXX% -tC -P -O2 -w- -I"%B2_TOOLSET_ROOT%Include" -L"%B2_TOOLSET_ROOT%Lib" -Nd -eb2"
+set "B2_CXX="%CXX%" -tC -P -O2 -w- -I"%B2_TOOLSET_ROOT%Include" -L"%B2_TOOLSET_ROOT%Lib" -eb2"
 set "_known_=1"
 goto :eof
 
 :Config_COMO
 if not defined CXX ( set "CXX=como" )
-set "B2_CXX=%CXX% --inlining -o b2.exe"
+set "B2_CXX="%CXX%" --inlining -o b2.exe"
 set "_known_=1"
 goto :eof
 
 :Config_GCC
 if not defined CXX ( set "CXX=g++" )
-set "B2_CXX=%CXX% -x c++ -std=c++11 -s -O3 -o b2.exe"
+set "B2_CXX="%CXX%" -x c++ -std=c++11 -s -O3 -o b2.exe -D_GNU_SOURCE"
 set "_known_=1"
-goto :eof
+goto :Embed_Minafest_Via_Windres
+
+:Config_CLANG
+if not defined CXX ( set "CXX=clang++" )
+set "B2_CXX="%CXX%" -x c++ -std=c++11 -s -O3 -o b2.exe"
+set "_known_=1"
+goto :Embed_Minafest_Via_Windres
+
+:Config_CLANG_WIN
+if not defined CXX ( set "CXX=clang-cl" )
+if "_%ProgramFiles(x86)%_" == "__" (
+    set "PATH=%PATH%;%ProgramFiles%\LLVM\bin"
+) else (
+    set "PATH=%PATH%;%ProgramFiles%\LLVM\bin;%ProgramFiles(x86)%\LLVM\bin"
+)
+set "B2_CXX="%CXX%" /MT /TP /Feb2 /wd4996 /O2 /EHsc /Gw /Zc:inline -fuse-ld=lld"
+set "B2_CXX_LINK=/link kernel32.lib advapi32.lib user32.lib"
+set "_known_=1"
+goto :Embed_Minafest_Via_Link
 
 :Config_GCC_NOCYGWIN
 if not defined CXX ( set "CXX=g++" )
-set "B2_CXX=%CXX% -x c++ -std=c++11 -s -O3 -mno-cygwin -o b2.exe"
+set "B2_CXX="%CXX%" -x c++ -std=c++11 -s -O3 -mno-cygwin -o b2.exe"
 set "_known_=1"
 goto :eof
 
 :Config_INTEL_WIN32
 if not defined CXX ( set "CXX=icl" )
-set "B2_CXX=%CXX% /nologo /MT /O2 /Ob2 /Gy /GF /GA /GB /Feb2"
+set "B2_CXX="%CXX%" /nologo /MT /O2 /Ob2 /Gy /GF /GA /GB /Feb2"
 set "_known_=1"
 goto :eof
 
@@ -203,6 +246,20 @@ if not "_%B2_TOOLSET_ROOT%_" == "__" (
     set "PATH=%B2_TOOLSET_ROOT%bin;%PATH%"
     )
 for /F "delims=" %%I in ("%CXX%") do set "PATH=%PATH%;%%~dpI"
-set "B2_CXX=%CXX% -x c++ -std=c++11 -s -O3 -o b2.exe"
+set "B2_CXX="%CXX%" -x c++ -std=c++11 -s -O3 -static -o b2.exe"
 set "_known_=1"
+goto :Embed_Minafest_Via_Windres
+
+:Embed_Minafest_Via_Link
+if not defined B2_DONT_EMBED_MANIFEST (
+    set "B2_CXX_LINK=%B2_CXX_LINK% /MANIFEST:EMBED /MANIFESTINPUT:b2.exe.manifest"
+)
+goto :eof
+
+:Embed_Minafest_Via_Windres
+if not defined B2_DONT_EMBED_MANIFEST (
+    for /f %%i in ('%B2_CXX% --print-prog-name=windres 2^>NUL') do (
+         set "B2_CXX="%%i" --input res.rc --output res.o && %B2_CXX% -Wl,res.o"
+    )
+)
 goto :eof

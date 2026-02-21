@@ -8,6 +8,7 @@
 <link rel="up" href="../index.html" title="CallableTraits">
 <link rel="prev" href="reference.html" title="Reference Documentation">
 <link rel="next" href="building.html" title="Building the test suite">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -90,8 +91,8 @@
     </h4>
 <p>
       Although arbitrary, the reference collapsing rules are well-defined and already
-      known to many template metaprogrammers. Anything else would be a burden to
-      memorize. This also parallels the metafunctions provided in <code class="computeroutput"><span class="special">&lt;</span><span class="identifier">type_traits</span><span class="special">&gt;</span></code>.
+      known to many C++ developers. Anything else would be a burden to memorize.
+      This also parallels the metafunctions provided in <code class="computeroutput"><span class="special">&lt;</span><span class="identifier">type_traits</span><span class="special">&gt;</span></code>.
     </p>
 <h4>
 <a name="callable_traits.faq.h3"></a>
@@ -102,8 +103,7 @@
     </h4>
 <p>
       Yes. The SFINAE-ability of violated constraints has been tested extensively
-      on supported compilers. Achieving this required some messy code in the public
-      header files.
+      on supported compilers.
     </p>
 <h4>
 <a name="callable_traits.faq.h4"></a>
@@ -111,20 +111,17 @@
       about calling conventions?</a>
     </h4>
 <p>
-      I originally implemented features for these. However, these features necessitated
-      many, many more platform-specific test cases. The code is still designed to
-      accommodate such features, so I would consider adding them in the future if
-      there is sufficient interest.
+      I originally implemented features for various platform-specific calling conventions.
+      However, these features necessitated many more platform-specific test cases.
+      The code is still designed to accommodate such features, so I would consider
+      adding them in the future if there is any interest for these.
     </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2016-2018 Barrett Adair<p>
+<div class="copyright-footer">Copyright © 2016-2021 Barrett Adair<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE.md or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="reference.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="building.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>

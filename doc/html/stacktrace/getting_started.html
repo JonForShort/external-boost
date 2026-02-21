@@ -6,9 +6,10 @@
 <link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
-<link rel="up" href="../stacktrace.html" title="Chapter 37. Boost.Stacktrace 1.0">
-<link rel="prev" href="../stacktrace.html" title="Chapter 37. Boost.Stacktrace 1.0">
+<link rel="up" href="../stacktrace.html" title="Chapter 34. Boost.Stacktrace 1.0">
+<link rel="prev" href="../stacktrace.html" title="Chapter 34. Boost.Stacktrace 1.0">
 <link rel="next" href="configuration_and_build.html" title="Configuration and Build">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -30,9 +31,11 @@
 <div class="toc"><dl class="toc">
 <dt><span class="section"><a href="getting_started.html#stacktrace.getting_started.how_to_print_current_call_stack">How
       to print current call stack</a></span></dt>
-<dt><span class="section"><a href="getting_started.html#stacktrace.getting_started.handle_terminates_aborts_and_seg">Handle
-      terminates, aborts and Segmentation Faults</a></span></dt>
 <dt><span class="section"><a href="getting_started.html#stacktrace.getting_started.better_asserts">Better asserts</a></span></dt>
+<dt><span class="section"><a href="getting_started.html#stacktrace.getting_started.handle_terminates">Handle
+      terminates</a></span></dt>
+<dt><span class="section"><a href="getting_started.html#stacktrace.getting_started.stacktrace_from_arbitrary_except">Stacktrace
+      from arbitrary exception</a></span></dt>
 <dt><span class="section"><a href="getting_started.html#stacktrace.getting_started.exceptions_with_stacktrace">Exceptions
       with stacktrace</a></span></dt>
 <dt><span class="section"><a href="getting_started.html#stacktrace.getting_started.enabling_and_disabling_stacktrac">Enabling
@@ -50,7 +53,7 @@
       to print current call stack</a>
 </h3></div></div></div>
 <p>
-        <code class="computeroutput"><a class="link" href="reference.html#boost.stacktrace.stacktrace">boost::stacktrace::stacktrace</a></code>
+        <code class="computeroutput"><a class="link" href="reference.html#doxygen.stacktrace.reference.stacktrace_2stacktrace_8hpp_1a93d27cb0ab35478d064cb5bf14553def">boost::stacktrace::stacktrace</a></code>
         contains methods for working with call-stack/backtraces/stacktraces. Here's
         a small example:
       </p>
@@ -69,7 +72,7 @@
             stacktraces
           </li>
 <li class="listitem">
-            <code class="computeroutput"><a class="link" href="reference.html#boost.stacktrace.stacktrace">stacktrace()</a></code>
+            <code class="computeroutput"><a class="link" href="reference.html#doxygen.stacktrace.reference.stacktrace_2stacktrace_8hpp_1a93d27cb0ab35478d064cb5bf14553def">stacktrace()</a></code>
             is the default constructor call; constructor stores the current function
             call sequence inside the stacktrace class.
           </li>
@@ -100,110 +103,6 @@
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="stacktrace.getting_started.handle_terminates_aborts_and_seg"></a><a class="link" href="getting_started.html#stacktrace.getting_started.handle_terminates_aborts_and_seg" title="Handle terminates, aborts and Segmentation Faults">Handle
-      terminates, aborts and Segmentation Faults</a>
-</h3></div></div></div>
-<p>
-        Segmentation Faults and <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">terminate</span></code>
-        calls sometimes happen in programs. Programmers usually wish to get as much
-        information as possible on such incidents, so having a stacktrace will significantly
-        improve debugging and fixing.
-      </p>
-<p>
-        <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">terminate</span></code> calls <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">abort</span></code>,
-        so we need to capture stack traces on Segmentation Faults and Abort signals.
-      </p>
-<div class="warning"><table border="0" summary="Warning">
-<tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../../doc/src/images/warning.png"></td>
-<th align="left">Warning</th>
-</tr>
-<tr><td align="left" valign="top"><p>
-          Writing a signal handler requires high attention! Only a few system calls
-          allowed in signal handlers, so there's no cross platform way to print a
-          stacktrace without a risk of deadlocking. The only way to deal with the
-          problem - <span class="bold"><strong>dump raw stacktrace into file/socket and
-          parse it on program restart</strong></span>.
-        </p></td></tr>
-</table></div>
-<div class="warning"><table border="0" summary="Warning">
-<tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../../doc/src/images/warning.png"></td>
-<th align="left">Warning</th>
-</tr>
-<tr><td align="left" valign="top"><p>
-          Not all the platforms provide means for even getting stacktrace in async
-          signal safe way. No stack trace will be saved on such platforms.
-        </p></td></tr>
-</table></div>
-<p>
-        Let's write a handler to safely dump stacktrace:
-      </p>
-<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">signal</span><span class="special">.</span><span class="identifier">h</span><span class="special">&gt;</span>     <span class="comment">// ::signal, ::raise</span>
-<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">stacktrace</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
-
-<span class="keyword">void</span> <span class="identifier">my_signal_handler</span><span class="special">(</span><span class="keyword">int</span> <span class="identifier">signum</span><span class="special">)</span> <span class="special">{</span>
-    <span class="special">::</span><span class="identifier">signal</span><span class="special">(</span><span class="identifier">signum</span><span class="special">,</span> <span class="identifier">SIG_DFL</span><span class="special">);</span>
-    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">::</span><span class="identifier">safe_dump_to</span><span class="special">(</span><span class="string">"./backtrace.dump"</span><span class="special">);</span>
-    <span class="special">::</span><span class="identifier">raise</span><span class="special">(</span><span class="identifier">SIGABRT</span><span class="special">);</span>
-<span class="special">}</span>
-</pre>
-<p>
-        Registering our handler:
-      </p>
-<pre class="programlisting"><span class="special">::</span><span class="identifier">signal</span><span class="special">(</span><span class="identifier">SIGSEGV</span><span class="special">,</span> <span class="special">&amp;</span><span class="identifier">my_signal_handler</span><span class="special">);</span>
-<span class="special">::</span><span class="identifier">signal</span><span class="special">(</span><span class="identifier">SIGABRT</span><span class="special">,</span> <span class="special">&amp;</span><span class="identifier">my_signal_handler</span><span class="special">);</span>
-</pre>
-<p>
-        At program start we check for a file with stacktrace and if it exist - we're
-        writing it in human readable format:
-      </p>
-<pre class="programlisting"><span class="keyword">if</span> <span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">filesystem</span><span class="special">::</span><span class="identifier">exists</span><span class="special">(</span><span class="string">"./backtrace.dump"</span><span class="special">))</span> <span class="special">{</span>
-    <span class="comment">// there is a backtrace</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">ifstream</span> <span class="identifier">ifs</span><span class="special">(</span><span class="string">"./backtrace.dump"</span><span class="special">);</span>
-
-    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">::</span><span class="identifier">stacktrace</span> <span class="identifier">st</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">::</span><span class="identifier">from_dump</span><span class="special">(</span><span class="identifier">ifs</span><span class="special">);</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Previous run crashed:\n"</span> <span class="special">&lt;&lt;</span> <span class="identifier">st</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
-
-    <span class="comment">// cleaning up</span>
-    <span class="identifier">ifs</span><span class="special">.</span><span class="identifier">close</span><span class="special">();</span>
-    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">filesystem</span><span class="special">::</span><span class="identifier">remove</span><span class="special">(</span><span class="string">"./backtrace.dump"</span><span class="special">);</span>
-<span class="special">}</span>
-</pre>
-<p>
-        Now we'll get the following output on <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">terminate</span></code>
-        call after the program restarts:
-      </p>
-<pre class="programlisting"><span class="identifier">Previous</span> <span class="identifier">run</span> <span class="identifier">crashed</span><span class="special">:</span>
- <span class="number">0</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F2EC0A6A8EF</span>
- <span class="number">1</span><span class="special">#</span> <span class="identifier">my_signal_handler</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">37</span>
- <span class="number">2</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F2EBFD84CB0</span>
- <span class="number">3</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F2EBFD84C37</span>
- <span class="number">4</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F2EBFD88028</span>
- <span class="number">5</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F2EC0395BBD</span>
- <span class="number">6</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F2EC0393B96</span>
- <span class="number">7</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F2EC0393BE1</span>
- <span class="number">8</span><span class="special">#</span> <span class="identifier">bar</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">18</span>
- <span class="number">9</span><span class="special">#</span> <span class="identifier">foo</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">22</span>
-<span class="number">10</span><span class="special">#</span> <span class="identifier">bar</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">14</span>
-<span class="number">11</span><span class="special">#</span> <span class="identifier">foo</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">22</span>
-<span class="number">12</span><span class="special">#</span> <span class="identifier">main</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">84</span>
-<span class="number">13</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F2EBFD6FF45</span>
-<span class="number">14</span><span class="special">#</span> <span class="number">0x0000000000402209</span>
-</pre>
-<div class="note"><table border="0" summary="Note">
-<tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
-<th align="left">Note</th>
-</tr>
-<tr><td align="left" valign="top"><p>
-          Function names from shared libraries may not be decoded due to address
-          space layout randomization. Still better than nothing.
-        </p></td></tr>
-</table></div>
-</div>
-<div class="section">
-<div class="titlepage"><div><div><h3 class="title">
 <a name="stacktrace.getting_started.better_asserts"></a><a class="link" href="getting_started.html#stacktrace.getting_started.better_asserts" title="Better asserts">Better asserts</a>
 </h3></div></div></div>
 <p>
@@ -216,7 +115,7 @@
 <p>
         That's not enough to locate the problem without debugger. There may be thousand
         code lines in real world examples and hundred places where that assertion
-        could happen. Let's try to improve the assertions, and make them more informative:
+        can happen. Let's try to improve the assertions, and make them more informative:
       </p>
 <pre class="programlisting"><span class="comment">// BOOST_ENABLE_ASSERT_DEBUG_HANDLER is defined for the whole project</span>
 <span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">stdexcept</span><span class="special">&gt;</span>    <span class="comment">// std::logic_error</span>
@@ -243,7 +142,7 @@
         call our functions <code class="computeroutput"><span class="identifier">assertion_failed</span></code>
         and <code class="computeroutput"><span class="identifier">assertion_failed_msg</span></code>
         in case of failure. In <code class="computeroutput"><span class="identifier">assertion_failed_msg</span></code>
-        we output information that was provided by the assertion macro and <code class="computeroutput"><a class="link" href="reference.html#boost.stacktrace.stacktrace">boost::stacktrace::stacktrace</a></code>:
+        we output information that was provided by the assertion macro and <code class="computeroutput"><a class="link" href="reference.html#doxygen.stacktrace.reference.stacktrace_2stacktrace_8hpp_1a93d27cb0ab35478d064cb5bf14553def">boost::stacktrace::stacktrace</a></code>:
       </p>
 <pre class="programlisting"><span class="identifier">Expression</span> <span class="char">'i &lt; N'</span> <span class="identifier">is</span> <span class="keyword">false</span> <span class="identifier">in</span> <span class="identifier">function</span> <span class="char">'T&amp; boost::array&lt;T, N&gt;::operator[](boost::array&lt;T, N&gt;::size_type) [with T = int; long unsigned int N = 5ul; boost::array&lt;T, N&gt;::reference = int&amp;; boost::array&lt;T, N&gt;::size_type = long unsigned int]'</span><span class="special">:</span> <span class="identifier">out</span> <span class="identifier">of</span> <span class="identifier">range</span><span class="special">.</span>
 <span class="identifier">Backtrace</span><span class="special">:</span>
@@ -260,6 +159,159 @@
 <p>
         Now we do know the steps that led to the assertion and can find the error
         without debugger.
+      </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="stacktrace.getting_started.handle_terminates"></a><a class="link" href="getting_started.html#stacktrace.getting_started.handle_terminates" title="Handle terminates">Handle
+      terminates</a>
+</h3></div></div></div>
+<p>
+        <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">terminate</span></code> calls sometimes happen in programs.
+        Programmers usually wish to get as much information as possible on such incidents,
+        so having a stacktrace significantly improves debugging and fixing.
+      </p>
+<p>
+        Here's how to write a terminate handler that dumps stacktrace:
+      </p>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">cstdlib</span><span class="special">&gt;</span>       <span class="comment">// std::abort</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">exception</span><span class="special">&gt;</span>     <span class="comment">// std::set_terminate</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>      <span class="comment">// std::cerr</span>
+
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">stacktrace</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+
+<span class="keyword">void</span> <span class="identifier">my_terminate_handler</span><span class="special">()</span> <span class="special">{</span>
+    <span class="keyword">try</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cerr</span> <span class="special">&lt;&lt;</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">();</span>
+    <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(...)</span> <span class="special">{}</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">abort</span><span class="special">();</span>
+<span class="special">}</span>
+</pre>
+<p>
+        Here's how to register it:
+      </p>
+<pre class="programlisting"><span class="identifier">std</span><span class="special">::</span><span class="identifier">set_terminate</span><span class="special">(&amp;</span><span class="identifier">my_terminate_handler</span><span class="special">);</span>
+</pre>
+<p>
+        Now we'll get the following output on <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">terminate</span></code>
+        call:
+      </p>
+<pre class="programlisting"><span class="identifier">Previous</span> <span class="identifier">run</span> <span class="identifier">crashed</span><span class="special">:</span>
+ <span class="number">0</span><span class="special">#</span> <span class="identifier">my_terminate_handler</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">37</span>
+ <span class="number">1</span><span class="special">#</span> <span class="identifier">__cxxabiv1</span><span class="special">::</span><span class="identifier">__terminate</span><span class="special">(</span><span class="keyword">void</span> <span class="special">(*)())</span> <span class="identifier">at</span> <span class="special">../../../../</span><span class="identifier">src</span><span class="special">/</span><span class="identifier">libstdc</span><span class="special">++-</span><span class="identifier">v3</span><span class="special">/</span><span class="identifier">libsupc</span><span class="special">++/</span><span class="identifier">eh_terminate</span><span class="special">.</span><span class="identifier">cc</span><span class="special">:</span><span class="number">48</span>
+ <span class="number">2</span><span class="special">#</span> <span class="number">0</span><span class="identifier">x00007F3CE65E5901</span> <span class="identifier">in</span> <span class="special">/</span><span class="identifier">usr</span><span class="special">/</span><span class="identifier">lib</span><span class="special">/</span><span class="identifier">x86_64</span><span class="special">-</span><span class="identifier">linux</span><span class="special">-</span><span class="identifier">gnu</span><span class="special">/</span><span class="identifier">libstdc</span><span class="special">++.</span><span class="identifier">so</span><span class="special">.</span><span class="number">6</span>
+ <span class="number">3</span><span class="special">#</span> <span class="identifier">bar</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">18</span>
+ <span class="number">4</span><span class="special">#</span> <span class="identifier">foo</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">22</span>
+ <span class="number">5</span><span class="special">#</span> <span class="identifier">bar</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">14</span>
+ <span class="number">6</span><span class="special">#</span> <span class="identifier">foo</span><span class="special">(</span><span class="keyword">int</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">22</span>
+ <span class="number">7</span><span class="special">#</span> <span class="identifier">main</span> <span class="identifier">at</span> <span class="special">../</span><span class="identifier">example</span><span class="special">/</span><span class="identifier">terminate_handler</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">84</span>
+ <span class="number">8</span><span class="special">#</span> <span class="identifier">__libc_start_main</span> <span class="identifier">in</span> <span class="special">/</span><span class="identifier">lib</span><span class="special">/</span><span class="identifier">x86_64</span><span class="special">-</span><span class="identifier">linux</span><span class="special">-</span><span class="identifier">gnu</span><span class="special">/</span><span class="identifier">libc</span><span class="special">.</span><span class="identifier">so</span><span class="special">.</span><span class="number">6</span>
+ <span class="number">9</span><span class="special">#</span> <span class="number">0x0000000000402209</span>
+</pre>
+<div class="warning"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../../doc/src/images/warning.png"></td>
+<th align="left">Warning</th>
+</tr>
+<tr><td align="left" valign="top">
+<p>
+          There's a temptation to write a signal handler that prints the stacktrace
+          on <code class="computeroutput"><span class="identifier">SIGSEGV</span></code> or abort. Unfortunately,
+          there's no cross platform way to do that without a risk of deadlocking.
+          Not all the platforms provide means for even getting stacktrace in async
+          signal safe way.
+        </p>
+<p>
+          Signal handler is often invoked on a separate stack and trash is returned
+          on attempt to get a trace!
+        </p>
+<p>
+          Generic recommendation is to <span class="bold"><strong>avoid signal handlers!
+          Use</strong></span> platform specific ways to store and decode <span class="bold"><strong>core
+          files</strong></span>.
+        </p>
+<p>
+          See <a class="link" href="theoretical_async_signal_safety.html" title="Theoretical async signal safety">"Theoretical
+          async signal safety"</a> for more info.
+        </p>
+</td></tr>
+</table></div>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="stacktrace.getting_started.stacktrace_from_arbitrary_except"></a><a class="link" href="getting_started.html#stacktrace.getting_started.stacktrace_from_arbitrary_except" title="Stacktrace from arbitrary exception">Stacktrace
+      from arbitrary exception</a>
+</h3></div></div></div>
+<div class="warning"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../../doc/src/images/warning.png"></td>
+<th align="left">Warning</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          At the moment the functionality is only available for some of the popular
+          C++ runtimes for POSIX systems with <span class="bold"><strong>libbacktrace</strong></span>
+          and for Windows. Make sure that your platform is supported by running some
+          tests.
+        </p></td></tr>
+</table></div>
+<p>
+        The library provides a way to get stacktrace from an exception as if the
+        stacktrace was captured at the point the exception was thrown. Works even
+        if the exception was thrown from a third party binary library.
+      </p>
+<p>
+        Link with <code class="computeroutput"><span class="identifier">boost_stacktrace_from_exception</span></code>
+        library (or just <code class="computeroutput"><span class="identifier">LD_PRELOAD</span></code>
+        it!) and call boost::stacktrace::stacktrace::from_current_exception() to
+        get the trace:
+      </p>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">stdexcept</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">string_view</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">stacktrace</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+
+<span class="keyword">void</span> <span class="identifier">foo</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> <span class="identifier">key</span><span class="special">);</span>
+<span class="keyword">void</span> <span class="identifier">bar</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> <span class="identifier">key</span><span class="special">);</span>
+
+<span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span> <span class="special">{</span>
+  <span class="keyword">try</span> <span class="special">{</span>
+    <span class="identifier">foo</span><span class="special">(</span><span class="string">"test1"</span><span class="special">);</span>
+    <span class="identifier">bar</span><span class="special">(</span><span class="string">"test2"</span><span class="special">);</span>
+  <span class="special">}</span> <span class="keyword">catch</span> <span class="special">(</span><span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">exception</span><span class="special">&amp;</span> <span class="identifier">exc</span><span class="special">)</span> <span class="special">{</span>
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">::</span><span class="identifier">stacktrace</span> <span class="identifier">trace</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">::</span><span class="identifier">stacktrace</span><span class="special">::</span><span class="identifier">from_current_exception</span><span class="special">();</span>  <span class="comment">// &lt;---</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cerr</span> <span class="special">&lt;&lt;</span> <span class="string">"Caught exception: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">exc</span><span class="special">.</span><span class="identifier">what</span><span class="special">()</span> <span class="special">&lt;&lt;</span> <span class="string">", trace:\n"</span> <span class="special">&lt;&lt;</span> <span class="identifier">trace</span><span class="special">;</span>
+  <span class="special">}</span>
+<span class="special">}</span>
+</pre>
+<p>
+        The output of the above sample may be the following:
+      </p>
+<pre class="programlisting"><span class="identifier">Caught</span> <span class="identifier">exception</span><span class="special">:</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">map</span><span class="special">::</span><span class="identifier">at</span><span class="special">,</span> <span class="identifier">trace</span><span class="special">:</span>
+ <span class="number">0</span><span class="special">#</span> <span class="identifier">get_data_from_config</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">/</span><span class="identifier">home</span><span class="special">/</span><span class="identifier">axolm</span><span class="special">/</span><span class="identifier">basic</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">600</span>
+ <span class="number">1</span><span class="special">#</span> <span class="identifier">bar</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">)</span> <span class="identifier">at</span> <span class="special">/</span><span class="identifier">home</span><span class="special">/</span><span class="identifier">axolm</span><span class="special">/</span><span class="identifier">basic</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">6</span>
+ <span class="number">2</span><span class="special">#</span> <span class="identifier">main</span> <span class="identifier">at</span> <span class="special">/</span><span class="identifier">home</span><span class="special">/</span><span class="identifier">axolm</span><span class="special">/</span><span class="identifier">basic</span><span class="special">.</span><span class="identifier">cpp</span><span class="special">:</span><span class="number">17</span>
+</pre>
+<p>
+        With the above technique a developer can locate the source file and the function
+        that has thrown the exception without a debugger help. it is especially useful
+        for testing in containers (github CI, other CIs), where the developer has
+        no direct access to the testing environment and reproducing the issue is
+        complicated.
+      </p>
+<p>
+        Note that linking with <code class="computeroutput"><span class="identifier">boost_stacktrace_from_exception</span></code>
+        may increase memory consumption of the application, as the exceptions now
+        additionally store traces.
+      </p>
+<p>
+        At runtime switch boost::stacktrace::this_thread::set_capture_stacktraces_at_throw()
+        allows to disable/enable capturing and storing traces in exceptions.
+      </p>
+<p>
+        To disable the <code class="computeroutput"><span class="identifier">boost_stacktrace_from_exception</span></code>
+        library builds the <code class="computeroutput"><span class="identifier">boost</span><span class="special">.</span><span class="identifier">stacktrace</span><span class="special">.</span><span class="identifier">from_exception</span><span class="special">=</span><span class="identifier">off</span></code> option,
+        for example <code class="computeroutput"><span class="special">./</span><span class="identifier">b2</span>
+        <span class="identifier">boost</span><span class="special">.</span><span class="identifier">stacktrace</span><span class="special">.</span><span class="identifier">from_exception</span><span class="special">=</span><span class="identifier">off</span></code>.
       </p>
 </div>
 <div class="section">
@@ -333,7 +385,7 @@
 </h3></div></div></div>
 <p>
         At some point arises a requirement to easily enable/disable stacktraces for
-        a whole project. That could be easily achieved.
+        a whole project. That can be easily achieved.
       </p>
 <p>
         Just define <span class="bold"><strong>BOOST_STACKTRACE_LINK</strong></span> for a
@@ -360,10 +412,10 @@
       stacktraces by specified format</a>
 </h3></div></div></div>
 <p>
-        <code class="computeroutput"><a class="link" href="reference.html#boost.stacktrace.stacktrace">boost::stacktrace::stacktrace</a></code>
-        provides access to individual <code class="computeroutput"><a class="link" href="../boost/stacktrace/frame.html" title="Class frame">frames</a></code>
-        of the stacktrace, so that you could save stacktrace information in your
-        own format. Consider the example, that saves only function addresses of each
+        <code class="computeroutput"><a class="link" href="reference.html#doxygen.stacktrace.reference.stacktrace_2stacktrace_8hpp_1a93d27cb0ab35478d064cb5bf14553def">boost::stacktrace::stacktrace</a></code>
+        provides access to individual <code class="computeroutput"><a class="link" href="../doxygen/stacktrace/reference/classboost_1_1stacktrace_1_1frame.html" title="Class frame">frames</a></code>
+        of the stacktrace, so that you can save stacktrace information in your own
+        format. Consider the example, that saves only function addresses of each
         frame:
       </p>
 <pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">stacktrace</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
@@ -390,7 +442,7 @@
       function information from pointer</a>
 </h3></div></div></div>
 <p>
-        <code class="computeroutput"><a class="link" href="../boost/stacktrace/frame.html" title="Class frame">boost::stacktrace::frame</a></code>
+        <code class="computeroutput"><a class="link" href="../doxygen/stacktrace/reference/classboost_1_1stacktrace_1_1frame.html" title="Class frame">boost::stacktrace::frame</a></code>
         provides information about functions. You may construct that class from function
         pointer and get the function name at runtime:
       </p>
@@ -479,14 +531,11 @@
 </pre>
 </div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2016-2020 Antony Polukhin<p>
+<div class="copyright-footer">Copyright © 2016-2025 Antony Polukhin<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="../stacktrace.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../stacktrace.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="configuration_and_build.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>

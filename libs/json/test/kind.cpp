@@ -10,19 +10,20 @@
 // Test that header file is self-contained.
 #include <boost/json/kind.hpp>
 
+#include <boost/core/detail/static_assert.hpp>
 #include <boost/json/string_view.hpp>
 
 #include <type_traits>
 
 #include "test_suite.hpp"
 
-BOOST_JSON_NS_BEGIN
+namespace boost {
+namespace json {
 
 class kind_test
 {
 public:
-    BOOST_STATIC_ASSERT(
-        std::is_enum<kind>::value);
+    BOOST_CORE_STATIC_ASSERT( std::is_enum<kind>::value );
 
     void
     check(kind k, string_view s)
@@ -50,4 +51,5 @@ public:
 
 TEST_SUITE(kind_test, "boost.json.kind");
 
-BOOST_JSON_NS_END
+} // namespace json
+} // namespace boost

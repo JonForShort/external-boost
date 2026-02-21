@@ -8,6 +8,7 @@
 <link rel="up" href="../index.html" title="Chapter 1. Context">
 <link rel="prev" href="requirements.html" title="Requirements">
 <link rel="next" href="ff/implementations__fcontext_t__ucontext_t_and_winfiber.html" title="Implementations: fcontext_t, ucontext_t and WinFiber">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -209,7 +210,7 @@
     </h4>
 <p>
       If the function executed inside a <span class="emphasis"><em>context-function</em></span> emits
-      ans exception, the application is terminated by calling <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">terminate</span><span class="special">()</span></code>. <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span></code>
+      an exception, the application is terminated by calling <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">terminate</span><span class="special">()</span></code>. <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span></code>
       can be used to transfer exceptions between different fibers.
     </p>
 <div class="important"><table border="0" summary="Important">
@@ -218,8 +219,7 @@
 <th align="left">Important</th>
 </tr>
 <tr><td align="left" valign="top"><p>
-        Do not jump from inside a catch block and then re-throw the exception in
-        another fiber.
+        Do not jump from inside a catch block.
       </p></td></tr>
 </table></div>
 <a name="ff_ontop"></a><h4>
@@ -230,7 +230,7 @@
 <p>
       Sometimes it is useful to execute a new function on top of a resumed fiber.
       For this purpose <span class="emphasis"><em>continuation::resume_with()</em></span> has to be
-      used. The function passed as argument must accept a rvalue reference to <a class="link" href="ff.html#ff"><span class="emphasis"><em>fiber</em></span></a> and return <code class="computeroutput"><span class="keyword">void</span></code>.
+      used. The function passed as argument must accept a rvalue reference to <a class="link" href="ff.html#ff"><span class="emphasis"><em>fiber</em></span></a> and return <a class="link" href="ff.html#ff"><span class="emphasis"><em>fiber</em></span></a>.
     </p>
 <pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">ctx</span><span class="special">=</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">context</span><span class="special">;</span>
 <span class="keyword">int</span> <span class="identifier">data</span><span class="special">=</span><span class="number">0</span><span class="special">;</span>
@@ -250,7 +250,7 @@
 <span class="identifier">f1</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f1</span><span class="special">).</span><span class="identifier">resume</span><span class="special">();</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f1: returned second time: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
 <span class="identifier">data</span><span class="special">+=</span><span class="number">1</span><span class="special">;</span>
-<span class="identifier">f1</span><span class="special">=</span><span class="identifier">f1</span><span class="special">.</span><span class="identifier">resume_with</span><span class="special">([&amp;</span><span class="identifier">data</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">fiber</span><span class="special">&amp;&amp;</span> <span class="identifier">f2</span><span class="special">){</span>
+<span class="identifier">f1</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f1</span><span class="special">).</span><span class="identifier">resume_with</span><span class="special">([&amp;</span><span class="identifier">data</span><span class="special">](</span><span class="identifier">ctx</span><span class="special">::</span><span class="identifier">fiber</span><span class="special">&amp;&amp;</span> <span class="identifier">f2</span><span class="special">){</span>
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"f2: entered: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">data</span> <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
     <span class="identifier">data</span><span class="special">=-</span><span class="number">1</span><span class="special">;</span>
     <span class="keyword">return</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f2</span><span class="special">);</span>
@@ -488,7 +488,7 @@
 <span class="identifier">source</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">source</span><span class="special">).</span><span class="identifier">resume</span><span class="special">();</span>
 <span class="keyword">while</span><span class="special">(!</span><span class="identifier">done</span><span class="special">){</span>
     <span class="identifier">printf</span><span class="special">(</span><span class="string">"Parsed: %c\n"</span><span class="special">,</span><span class="identifier">c</span><span class="special">);</span>
-    <span class="identifier">source</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">Move</span><span class="special">(</span><span class="identifier">source</span><span class="special">).</span><span class="identifier">resume</span><span class="special">();</span>
+    <span class="identifier">source</span><span class="special">=</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">source</span><span class="special">).</span><span class="identifier">resume</span><span class="special">();</span>
 <span class="special">}</span>
 
 <span class="identifier">output</span><span class="special">:</span>
@@ -506,14 +506,11 @@
       The data (character) is transferred between the two fibers.
     </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2014 Oliver Kowalke<p>
+<div class="copyright-footer">Copyright © 2014 Oliver Kowalke<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="requirements.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="ff/implementations__fcontext_t__ucontext_t_and_winfiber.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>

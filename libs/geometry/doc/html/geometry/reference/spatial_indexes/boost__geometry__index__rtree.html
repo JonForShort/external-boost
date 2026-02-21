@@ -8,6 +8,7 @@
 <link rel="up" href="../spatial_indexes.html" title="Spatial Indexes">
 <link rel="prev" href="../spatial_indexes.html" title="Spatial Indexes">
 <link rel="next" href="boost__geometry__index__rtree/rtree__.html" title="rtree()">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -95,7 +96,7 @@
 <dt><span class="section"><a href="boost__geometry__index__rtree/get_allocator__.html">get_allocator()</a></span></dt>
 </dl></div>
 <p>
-          <a class="indexterm" name="idm45353171459792"></a><a class="indexterm" name="idm45353171459104"></a><a class="indexterm" name="idm45353171458416"></a><a class="indexterm" name="idm45353171457728"></a>
+          <a class="indexterm" name="id83503"></a><a class="indexterm" name="id83505"></a><a class="indexterm" name="id83507"></a><a class="indexterm" name="id83509"></a>
 The R-tree spatial index.
         </p>
 <h6>
@@ -148,13 +149,12 @@ The R-tree spatial index.
           <span class="phrase"><a name="geometry.reference.spatial_indexes.boost__geometry__index__rtree.indexablegetter"></a></span><a class="link" href="boost__geometry__index__rtree.html#geometry.reference.spatial_indexes.boost__geometry__index__rtree.indexablegetter">IndexableGetter</a>
         </h6>
 <p>
-          The object of IndexableGetter type translates from Value to Indexable each
-          time r-tree requires it. This means that this operation is done for each
-          Value access. Therefore the IndexableGetter should return the Indexable
-          by a reference type. The Indexable should not be calculated since it could
-          harm the performance. The default IndexableGetter can translate all types
-          adapted to Point, Box or Segment concepts (called Indexables). Furthermore,
-          it can handle <code class="literal"><code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">pair</span><span class="special">&lt;</span><span class="identifier">Indexable</span><span class="special">,</span> <span class="identifier">T</span><span class="special">&gt;</span></code></code>,
+          An object of IndexableGetter type translates from Value to Indexable each
+          time r-tree requires it. This operation is done for each Value access.
+          The Indexable should not be calculated each time since it could harm the
+          performance. The default IndexableGetter can translate all types adapted
+          to Point, Box or Segment concepts (called Indexables). Furthermore, it
+          can handle <code class="literal"><code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">pair</span><span class="special">&lt;</span><span class="identifier">Indexable</span><span class="special">,</span> <span class="identifier">T</span><span class="special">&gt;</span></code></code>,
           <code class="literal"><code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="identifier">Indexable</span><span class="special">,</span>
           <span class="special">...&gt;</span></code></code> and <code class="literal"><code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="identifier">Indexable</span><span class="special">,</span>
           <span class="special">...&gt;</span></code></code>. For example,
@@ -366,7 +366,7 @@ The R-tree spatial index.
 <tr>
 <td>
                   <p>
-                    <a name="classboost_1_1geometry_1_1index_1_1rtree_1a28e88e55d260a454688fe1bd5e5af96b"></a><code class="computeroutput"><span class="identifier">indexable_type</span></code>
+                    <a name="classboost_1_1geometry_1_1index_1_1rtree_1a9354ae77fb1cf24bac978e568f40aa80"></a><code class="computeroutput"><span class="identifier">indexable_type</span></code>
                   </p>
                 </td>
 <td>
@@ -378,7 +378,7 @@ The R-tree spatial index.
 <tr>
 <td>
                   <p>
-                    <a name="classboost_1_1geometry_1_1index_1_1rtree_1a12e80f9da4c68e0e687f1c2012321147"></a><code class="computeroutput"><span class="identifier">bounds_type</span></code>
+                    <a name="classboost_1_1geometry_1_1index_1_1rtree_1a43b41434a34123f08c3b1d02bc5e2227"></a><code class="computeroutput"><span class="identifier">bounds_type</span></code>
                   </p>
                 </td>
 <td>
@@ -765,7 +765,7 @@ The R-tree spatial index.
                 </td>
 <td>
                   <p>
-                    <a class="link" href="boost__geometry__index__rtree/operator__rtree_const___.html#classboost_1_1geometry_1_1index_1_1rtree_1ad0db5e9e41e1553f944b7e740dbbb883"><code class="computeroutput"><span class="keyword">operator</span><span class="special">=(</span><span class="identifier">rtree</span> <span class="keyword">const</span>
+                    <a class="link" href="boost__geometry__index__rtree/operator__rtree_const___.html#classboost_1_1geometry_1_1index_1_1rtree_1a35c340df0ef416e514e21b6ac61b315f"><code class="computeroutput"><span class="keyword">operator</span><span class="special">=(</span><span class="identifier">rtree</span> <span class="keyword">const</span>
                     <span class="special">&amp;)</span></code></a>
                   </p>
                 </td>
@@ -780,7 +780,7 @@ The R-tree spatial index.
                 </td>
 <td>
                   <p>
-                    <a class="link" href="boost__geometry__index__rtree/operator__rtree____.html#classboost_1_1geometry_1_1index_1_1rtree_1af0bf9622ed3e901580b73ed39b746fb7"><code class="computeroutput"><span class="keyword">operator</span><span class="special">=(</span><span class="identifier">rtree</span> <span class="special">&amp;&amp;)</span></code></a>
+                    <a class="link" href="boost__geometry__index__rtree/operator__rtree____.html#classboost_1_1geometry_1_1index_1_1rtree_1a8e58cdd13c2a184cefd7bdd54c00c83c"><code class="computeroutput"><span class="keyword">operator</span><span class="special">=(</span><span class="identifier">rtree</span> <span class="special">&amp;&amp;)</span></code></a>
                   </p>
                 </td>
 <td>
@@ -1139,15 +1139,12 @@ The R-tree spatial index.
 </tbody>
 </table></div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2009-2019 Barend Gehrels, Bruno Lalande, Mateusz Loskot, Adam
+<div class="copyright-footer">Copyright © 2009-2024 Barend Gehrels, Bruno Lalande, Mateusz Loskot, Adam
       Wulkiewicz, Oracle and/or its affiliates<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="../spatial_indexes.html"><img src="../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../spatial_indexes.html"><img src="../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="boost__geometry__index__rtree/rtree__.html"><img src="../../../../../../../doc/src/images/next.png" alt="Next"></a>

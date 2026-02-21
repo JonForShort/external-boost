@@ -1,18 +1,22 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 // Robustness Test
 
-// Copyright (c) 2012-2020 Barend Gehrels, Amsterdam, the Netherlands.
+// Copyright (c) 2012-2021 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2015.
-// Modifications copyright (c) 2015 Oracle and/or its affiliates.
-
+// This file was modified by Oracle on 2015-2021.
+// Modifications copyright (c) 2015-2021 Oracle and/or its affiliates.
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
 #define BOOST_GEOMETRY_NO_BOOST_TEST
+
+#ifndef BOOST_GEOMETRY_TEST_ONLY_ONE_TYPE
+#define BOOST_GEOMETRY_TEST_ONLY_ONE_TYPE
+#endif
 
 #if defined(_MSC_VER)
 #  pragma warning( disable : 4244 )
@@ -23,12 +27,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <boost/foreach.hpp>
 #include <boost/program_options.hpp>
-#include <boost/random/linear_congruential.hpp>
-#include <boost/random/uniform_int.hpp>
-#include <boost/random/uniform_real.hpp>
-#include <boost/random/variate_generator.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
@@ -39,14 +38,17 @@
 #include <boost/geometry/strategies/buffer.hpp>
 
 #include <geometry_test_common.hpp>
-#include <common/common_settings.hpp>
-#include <common/make_square_polygon.hpp>
+#include <geometry_to_crc.hpp>
+#include <robustness/common/common_settings.hpp>
+#include <robustness/common/make_random_generator.hpp>
+#include <robustness/common/make_square_polygon.hpp>
 
 
 struct buffer_settings : public common_settings
 {
-    int join_code;
-    double distance;
+    int join_code{1};
+    double distance{1.0};
+    int points_per_circle{32}; // MySQL also uses 32 points in a circle for buffer
 };
 
 namespace bg = boost::geometry;
@@ -54,11 +56,9 @@ namespace bg = boost::geometry;
 template <typename Geometry1, typename Geometry2>
 void create_svg(std::string const& filename
                 , Geometry1 const& mp
-                , Geometry2 const& buffer
-                )
+                , Geometry2 const& buffer)
 {
     typedef typename boost::geometry::point_type<Geometry1>::type point_type;
-
 
     std::ofstream svg(filename.c_str());
     boost::geometry::svg_mapper<point_type> mapper(svg, 800, 800);
@@ -77,86 +77,44 @@ void create_svg(std::string const& filename
 
     mapper.map(mp, "fill-opacity:0.5;fill:rgb(153,204,0);stroke:rgb(153,204,0);stroke-width:3");
     mapper.map(buffer, "stroke-opacity:0.9;stroke:rgb(0,0,0);fill:none;stroke-width:1");
-
-    //mapper.map(intersection,"opacity:0.6;stroke:rgb(0,128,0);stroke-width:5");
 }
 
-
-
-
-template <typename MultiPolygon, typename Settings>
-bool verify(std::string const& caseid, MultiPolygon const& mp, MultiPolygon const& buffer, Settings const& settings)
+template <typename Geometry, typename Buffer>
+bool verify_buffer(Geometry const& geometry, Buffer const& buffer, std::string& reason)
 {
-    bool result = true;
+    if (buffer.empty())
+    {
+        reason = "Buffer is empty";
+        return false;
+    }
 
     // Area of buffer must be larger than of original polygon
-    auto const area_mp = bg::area(mp);
+    auto const area_mp = bg::area(geometry);
     auto const area_buf = bg::area(buffer);
-
     if (area_buf < area_mp)
     {
-        result = false;
+        reason = "Buffer area is smaller than input area";
+        return false;    
     }
 
     // Verify if all points are IN the buffer
-    if (result)
+    bool all_within = true;
+    bg::for_each_point(geometry, [&all_within, &buffer](auto const& point)
     {
-        typedef typename boost::range_value<MultiPolygon const>::type polygon_type;
-        BOOST_FOREACH(polygon_type const& polygon, mp)
-        {
-            typename bg::point_type<polygon_type>::type point;
-            bg::point_on_border(point, polygon);
             if (! bg::within(point, buffer))
             {
-                result = false;
+                all_within = false;
             }
         }
-    }
+    );
 
-    if (result && settings.check_validity)
+    if (! all_within)
     {
-        bg::validity_failure_type failure;
-        if (! bg::is_valid(buffer, failure)
-            && failure != bg::failure_intersecting_interiors)
-        {
-            std::cout << "Buffer is not valid: " << bg::validity_failure_type_message(failure) << std::endl;
-            result = false;
-        }
+        reason = "Not all points are within buffer";
+        return false;
     }
 
-    bool svg = settings.svg;
-    bool wkt = settings.wkt;
-    if (! result)
-    {
-        // The result is wrong, override settings to create a SVG and WKT
-        svg = true;
-        wkt = true;
-    }
-
-    if (svg)
-    {
-        std::ostringstream filename;
-        filename << caseid << "_"
-            << string_from_type<typename bg::coordinate_type<MultiPolygon>::type>::name()
-#if defined(BOOST_GEOMETRY_USE_RESCALING)
-            << "_rescaled"
-#endif
-            << ".svg";
-        create_svg(filename.str(), mp, buffer);
-    }
-
-    if (wkt)
-    {
-        std::ostringstream filename;
-        filename << caseid << "_"
-            << typeid(typename bg::coordinate_type<MultiPolygon>::type).name()
-            << ".wkt";
-        std::ofstream stream(filename.str().c_str());
-        stream << bg::wkt(mp) << std::endl;
-        stream << bg::wkt(buffer) << std::endl;
-    }
-
-    return result;
+    return bg::is_valid(buffer, reason);
 }
 
 template <typename MultiPolygon, typename Generator, typename Settings>
@@ -178,6 +136,7 @@ bool test_buffer(MultiPolygon& result, int& index,
     }
     else
     {
+        // Recursive call
         bg::correct(p);
         bg::correct(q);
         if (! test_buffer(p, index, generator, level - 1, settings)
@@ -213,9 +172,9 @@ bool test_buffer(MultiPolygon& result, int& index,
     bg::strategy::buffer::end_round end_strategy;
     bg::strategy::buffer::point_circle point_strategy;
     bg::strategy::buffer::side_straight side_strategy;
-    bg::strategy::buffer::join_round join_round_strategy(32); // Compatible with MySQL
+    bg::strategy::buffer::join_round join_round_strategy(settings.points_per_circle);
     bg::strategy::buffer::join_miter join_miter_strategy;
-
+    
     try
     {
         switch(settings.join_code)
@@ -241,12 +200,42 @@ bool test_buffer(MultiPolygon& result, int& index,
         MultiPolygon empty;
         std::cout << out.str() << std::endl;
         std::cout << "Exception " << e.what() << std::endl;
-        verify(out.str(), mp, empty, settings);
         return false;
     }
 
+    if (settings.verbose)
+    {
+        std::cout << " [" << bg::area(mp) << " " << bg::area(buffered) << "]";
+    }
 
-    return verify(out.str(), mp, buffered, settings);
+    std::string verification_message;
+    if (verify_buffer(mp, buffered, verification_message))
+    {
+        if (settings.svg)
+        {
+            create_svg(out.str() + ".svg", mp, buffered);
+        }
+        return true;
+    }
+
+    std::string filename;
+
+    {
+        // Generate a unique name
+        std::ostringstream out;
+        out << "rec_pol_buffer_" << geometry_to_crc(mp)
+            << "_" << string_from_type<typename bg::coordinate_type<MultiPolygon>::type>::name()
+            << ".";
+        filename = out.str();
+    }
+
+    std::cout << "Failure" << " " << filename << " : " << verification_message << std::endl;
+    std::ofstream stream(filename + "wkt");
+    // Stream input WKT
+    stream << bg::wkt(mp) << std::endl;
+    // If you need the output WKT, then stream bg::wkt(buffer)
+
+    return false;
 }
 
 
@@ -255,20 +244,13 @@ void test_all(int seed, int count, int level, Settings const& settings)
 {
     auto const t0 = std::chrono::high_resolution_clock::now();
 
-    typedef boost::minstd_rand base_generator_type;
-
-    base_generator_type generator(seed);
-
-    boost::uniform_int<> random_coordinate(0, settings.field_size - 1);
-    boost::variate_generator<base_generator_type&, boost::uniform_int<> >
-        coordinate_generator(generator, random_coordinate);
+    auto coordinate_generator = make_int_generator(seed, settings.field_size - 1);
 
     typedef bg::model::polygon
         <
             bg::model::d2::point_xy<T>, Clockwise, Closed
         > polygon;
     typedef bg::model::multi_polygon<polygon> mp;
-
 
     int index = 0;
     int errors = 0;
@@ -283,7 +265,7 @@ void test_all(int seed, int count, int level, Settings const& settings)
 
     auto const t = std::chrono::high_resolution_clock::now();
     auto const elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t - t0).count();
-    std::cout
+    std::cout << std::endl
         << "geometries: " << index
         << " errors: " << errors
         << " type: " << string_from_type<T>::name()
@@ -299,7 +281,7 @@ int main(int argc, char** argv)
         po::options_description description("=== recursive_polygons_buffer ===\nAllowed options");
 
         int count = 1;
-        int seed = static_cast<unsigned int>(std::time(0));
+        int seed = -1;
         int level = 3;
         bool ccw = false;
         bool open = false;
@@ -310,17 +292,19 @@ int main(int argc, char** argv)
         description.add_options()
             ("help", "Help message")
             ("seed", po::value<int>(&seed), "Initialization seed for random generator")
-            ("count", po::value<int>(&count)->default_value(1), "Number of tests")
+            ("count", po::value<int>(&count), "Number of tests")
             ("validity", po::value<bool>(&settings.check_validity)->default_value(true), "Include testing on validity")
-            ("level", po::value<int>(&level)->default_value(3), "Level to reach (higher->slower)")
+            ("level", po::value<int>(&level), "Level to reach (higher -> slower)")
             ("distance", po::value<double>(&settings.distance)->default_value(1.0), "Distance (1.0)")
+            ("ppc", po::value<int>(&settings.points_per_circle)->default_value(32), "Points per circle (32)")
             ("form", po::value<std::string>(&form)->default_value("box"), "Form of the polygons (box, triangle)")
             ("join", po::value<std::string>(&join)->default_value("round"), "Form of the joins (round, miter)")
-            ("ccw", po::value<bool>(&ccw)->default_value(false), "Counter clockwise polygons")
-            ("open", po::value<bool>(&open)->default_value(false), "Open polygons")
+            ("ccw", po::value<bool>(&ccw), "Counter clockwise polygons")
+            ("open", po::value<bool>(&open), "Open polygons")
             ("size", po::value<int>(&settings.field_size)->default_value(10), "Size of the field")
-            ("wkt", po::value<bool>(&settings.wkt)->default_value(false), "Create a WKT of the inputs, for all tests")
-            ("svg", po::value<bool>(&settings.svg)->default_value(false), "Create a SVG for all tests")
+            ("verbose", po::value<bool>(&settings.verbose), "Verbose")
+            ("wkt", po::value<bool>(&settings.wkt), "Create a WKT of the inputs, for all tests")
+            ("svg", po::value<bool>(&settings.svg), "Create a SVG for all tests")
         ;
 
         po::variables_map varmap;

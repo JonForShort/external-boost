@@ -6,8 +6,9 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="../../../../index.html" title="Chapter 1. Geometry">
 <link rel="up" href="../equals.html" title="equals">
-<link rel="prev" href="equals_3_with_strategy.html" title="equals (with strategy)">
-<link rel="next" href="../expand.html" title="expand">
+<link rel="prev" href="../equals.html" title="equals">
+<link rel="next" href="equals_3_with_strategy.html" title="equals (with strategy)">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -20,14 +21,14 @@
 </tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="equals_3_with_strategy.html"><img src="../../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../equals.html"><img src="../../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../expand.html"><img src="../../../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="../equals.html"><img src="../../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../equals.html"><img src="../../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="equals_3_with_strategy.html"><img src="../../../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="geometry.reference.algorithms.equals.equals_2"></a><a class="link" href="equals_2.html" title="equals">equals</a>
 </h5></div></div></div>
 <p>
-            <a class="indexterm" name="idm45353191119376"></a>
+            <a class="indexterm" name="id45395"></a>
 Checks if a geometry are spatially equal.
           </p>
 <h6>
@@ -833,17 +834,13 @@ Checks if a geometry are spatially equal.
 
 <span class="identifier">BOOST_GEOMETRY_REGISTER_BOOST_TUPLE_CS</span><span class="special">(</span><span class="identifier">cs</span><span class="special">::</span><span class="identifier">cartesian</span><span class="special">)</span>
 
-<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">assign</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
-
 <span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span>
 <span class="special">{</span>
-    <span class="keyword">using</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">assign</span><span class="special">::</span><span class="identifier">tuple_list_of</span><span class="special">;</span>
-
-    <span class="keyword">typedef</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span> <span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">point</span><span class="special">;</span>
+    <span class="keyword">using</span> <span class="identifier">point</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span> <span class="keyword">int</span><span class="special">&gt;;</span>
 
     <span class="identifier">boost</span><span class="special">::</span><span class="identifier">geometry</span><span class="special">::</span><span class="identifier">model</span><span class="special">::</span><span class="identifier">polygon</span><span class="special">&lt;</span><span class="identifier">point</span><span class="special">&gt;</span> <span class="identifier">poly1</span><span class="special">,</span> <span class="identifier">poly2</span><span class="special">;</span>
-    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">geometry</span><span class="special">::</span><span class="identifier">exterior_ring</span><span class="special">(</span><span class="identifier">poly1</span><span class="special">)</span> <span class="special">=</span> <span class="identifier">tuple_list_of</span><span class="special">(</span><span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">)(</span><span class="number">0</span><span class="special">,</span> <span class="number">5</span><span class="special">)(</span><span class="number">5</span><span class="special">,</span> <span class="number">5</span><span class="special">)(</span><span class="number">5</span><span class="special">,</span> <span class="number">0</span><span class="special">)(</span><span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">);</span>
-    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">geometry</span><span class="special">::</span><span class="identifier">exterior_ring</span><span class="special">(</span><span class="identifier">poly2</span><span class="special">)</span> <span class="special">=</span> <span class="identifier">tuple_list_of</span><span class="special">(</span><span class="number">5</span><span class="special">,</span> <span class="number">0</span><span class="special">)(</span><span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">)(</span><span class="number">0</span><span class="special">,</span> <span class="number">5</span><span class="special">)(</span><span class="number">5</span><span class="special">,</span> <span class="number">5</span><span class="special">)(</span><span class="number">5</span><span class="special">,</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">geometry</span><span class="special">::</span><span class="identifier">exterior_ring</span><span class="special">(</span><span class="identifier">poly1</span><span class="special">)</span> <span class="special">=</span> <span class="special">{{</span><span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">},</span> <span class="special">{</span><span class="number">0</span><span class="special">,</span> <span class="number">5</span><span class="special">},</span> <span class="special">{</span><span class="number">5</span><span class="special">,</span> <span class="number">5</span><span class="special">},</span> <span class="special">{</span><span class="number">5</span><span class="special">,</span> <span class="number">0</span><span class="special">},</span> <span class="special">{</span><span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">}};</span>
+    <span class="identifier">boost</span><span class="special">::</span><span class="identifier">geometry</span><span class="special">::</span><span class="identifier">exterior_ring</span><span class="special">(</span><span class="identifier">poly2</span><span class="special">)</span> <span class="special">=</span> <span class="special">{{</span><span class="number">5</span><span class="special">,</span> <span class="number">0</span><span class="special">},</span> <span class="special">{</span><span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">},</span> <span class="special">{</span><span class="number">0</span><span class="special">,</span> <span class="number">5</span><span class="special">},</span> <span class="special">{</span><span class="number">5</span><span class="special">,</span> <span class="number">5</span><span class="special">},</span> <span class="special">{</span><span class="number">5</span><span class="special">,</span> <span class="number">0</span><span class="special">}};</span>
 
     <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span>
         <span class="special">&lt;&lt;</span> <span class="string">"polygons are spatially "</span>
@@ -858,7 +855,6 @@ Checks if a geometry are spatially equal.
         <span class="special">&lt;&lt;</span> <span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">geometry</span><span class="special">::</span><span class="identifier">equals</span><span class="special">(</span><span class="identifier">box</span><span class="special">,</span> <span class="identifier">poly2</span><span class="special">)</span> <span class="special">?</span> <span class="string">"equal"</span> <span class="special">:</span> <span class="string">"not equal"</span><span class="special">)</span>
         <span class="special">&lt;&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">endl</span><span class="special">;</span>
 
-
     <span class="keyword">return</span> <span class="number">0</span><span class="special">;</span>
 <span class="special">}</span>
 </pre>
@@ -871,18 +867,15 @@ Checks if a geometry are spatially equal.
 polygon and box are spatially equal
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2009-2019 Barend Gehrels, Bruno Lalande, Mateusz Loskot, Adam
+<div class="copyright-footer">Copyright © 2009-2024 Barend Gehrels, Bruno Lalande, Mateusz Loskot, Adam
       Wulkiewicz, Oracle and/or its affiliates<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="equals_3_with_strategy.html"><img src="../../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../equals.html"><img src="../../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../expand.html"><img src="../../../../../../../../doc/src/images/next.png" alt="Next"></a>
+<a accesskey="p" href="../equals.html"><img src="../../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../equals.html"><img src="../../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="equals_3_with_strategy.html"><img src="../../../../../../../../doc/src/images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

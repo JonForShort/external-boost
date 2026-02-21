@@ -10,15 +10,18 @@
 // Test that header file is self-contained.
 #include <boost/json/static_resource.hpp>
 
+#include <boost/core/detail/static_assert.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <iostream>
 
 #include "test_suite.hpp"
 
-BOOST_JSON_NS_BEGIN
+namespace boost {
+namespace json {
 
-BOOST_STATIC_ASSERT( std::is_nothrow_destructible<static_resource>::value );
+BOOST_CORE_STATIC_ASSERT(
+    std::is_nothrow_destructible<static_resource>::value);
 
 class static_resource_test
 {
@@ -126,4 +129,5 @@ public:
 
 TEST_SUITE(static_resource_test, "boost.json.static_resource");
 
-BOOST_JSON_NS_END
+} // namespace json
+} // namespace boost

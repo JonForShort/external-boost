@@ -1,7 +1,7 @@
 [/
-  Copyright 2011 - 2020 John Maddock.
+  Copyright 2011 - 2025 John Maddock.
   Copyright 2013 - 2019 Paul A. Bristow.
-  Copyright 2013 Christopher Kormanyos.
+  Copyright 2013 - 2025 Christopher Kormanyos.
 
   Distributed under the Boost Software License, Version 1.0.
   (See accompanying file LICENSE_1_0.txt or copy at
@@ -13,8 +13,11 @@
 In order to use this library you need to make two choices:
 
 * What kind of number do I want ([link boost_multiprecision.tut.ints integer],
-[link boost_multiprecision.tut.floats floating-point], [link boost_multiprecision.tut.rational rational], or [link boost_multiprecision.tut.complex complex]).
-* Which back-end do I want to perform the actual arithmetic (Boost-supplied, GMP, MPFR, MPC, Tommath etc)?
+[link boost_multiprecision.tut.floats floating-point], [link boost_multiprecision.tut.rational rational], or [link boost_multiprecision.tut.complex complex])?
+* Which back-end do I want to perform the actual arithmetic (Boost-supplied, GMP, MPFR, MPC, Tommath etc.)?
+
+A practical, comprehensive, instructive, clear and very helpful video regarding the use of Multiprecision
+can be found [@https://www.youtube.com/watch?v=mK4WjpvLj4c here].
 
 [include tutorial_integer.qbk]
 [include tutorial_floats.qbk]
@@ -22,6 +25,7 @@ In order to use this library you need to make two choices:
 [include tutorial_complex.qbk]
 [include tutorial_rational.qbk]
 [include tutorial_misc_backends.qbk]
+[include tutorial_fwd.qbk]
 [include tutorial_conversions.qbk]
 [include tutorial_random.qbk]
 [include tutorial_primality.qbk]
@@ -29,6 +33,7 @@ In order to use this library you need to make two choices:
 [include tutorial_import_export.qbk]
 [include tutorial_rounding.qbk]
 [include tutorial_mixed_precision.qbk]
+[include tutorial_variable_precision.qbk]
 [include tutorial_integer_ops.qbk]
 [include tutorial_serialization.qbk]
 [include tutorial_numeric_limits.qbk]

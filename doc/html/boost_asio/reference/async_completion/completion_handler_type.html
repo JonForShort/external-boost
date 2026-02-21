@@ -8,6 +8,7 @@
 <link rel="up" href="../async_completion.html" title="async_completion">
 <link rel="prev" href="completion_handler.html" title="async_completion::completion_handler">
 <link rel="next" href="result.html" title="async_completion::result">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -31,7 +32,7 @@
 The
           real handler type to be used for the asynchronous operation.
         </p>
-<pre class="programlisting">typedef boost::asio::async_result&lt; typename decay&lt; CompletionToken &gt;::type, Signature &gt;::completion_handler_type completion_handler_type;
+<pre class="programlisting"><span class="keyword">typedef</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">async_result</span><span class="special">&lt;</span> <span class="identifier">decay_t</span><span class="special">&lt;</span> <span class="identifier">CompletionToken</span> <span class="special">&gt;,</span> <span class="identifier">Signatures</span><span class="special">...</span> <span class="special">&gt;::</span><span class="identifier">completion_handler_type</span> <span class="identifier">completion_handler_type</span><span class="special">;</span>
 </pre>
 <h6>
 <a name="boost_asio.reference.async_completion.completion_handler_type.h0"></a>
@@ -63,7 +64,8 @@ The
                 </td>
 <td>
                   <p>
-                    The concrete completion handler type for the specific signature.
+                    (Legacy.) The concrete completion handler type for the specific
+                    signature.
                   </p>
                 </td>
 </tr>
@@ -75,7 +77,7 @@ The
                 </td>
 <td>
                   <p>
-                    The return type of the initiating function.
+                    (Legacy.) The return type of the initiating function.
                   </p>
                 </td>
 </tr>
@@ -112,7 +114,7 @@ The
                 </td>
 <td>
                   <p>
-                    Construct an async result from a given handler.
+                    (Legacy.) Construct an async result from a given handler.
                   </p>
                 </td>
 </tr>
@@ -124,7 +126,8 @@ The
                 </td>
 <td>
                   <p>
-                    Obtain the value to be returned from the initiating function.
+                    (Legacy.) Obtain the value to be returned from the initiating
+                    function.
                   </p>
                 </td>
 </tr>
@@ -144,8 +147,27 @@ The
 </tbody>
 </table></div>
 <p>
-          The <a class="link" href="../async_result.html" title="async_result"><code class="computeroutput">async_result</code></a>
-          traits class is used for determining:
+          The <a class="link" href="../async_result.html" title="async_result"><code class="computeroutput"><span class="identifier">async_result</span></code></a>
+          trait is a customisation point that is used within the initiating function
+          for an <a class="link" href="../../overview/model/async_ops.html" title="Asynchronous Operations">asynchronous
+          operation</a>. The trait combines:
+        </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+              the completion signature (or signatures) that describe the arguments
+              that an asynchronous operation will pass to a completion handler;
+            </li>
+<li class="listitem">
+              the <a class="link" href="../../overview/model/completion_tokens.html" title="Completion Tokens">completion
+              token</a> type supplied by the caller; and
+            </li>
+<li class="listitem">
+              the operation's internal implementation.
+            </li>
+</ul></div>
+<p>
+          Specialisations of the trait must satisfy the <a class="link" href="../asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers">async_result
+          requirements</a>, and are reponsible for determining:
         </p>
 <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
 <li class="listitem">
@@ -153,23 +175,43 @@ The
               asynchronous operation;
             </li>
 <li class="listitem">
-              the initiating function return type; and
+              the initiating function return type;
             </li>
 <li class="listitem">
-              how the return value of the initiating function is obtained.
+              how the return value of the initiating function is obtained; and
+            </li>
+<li class="listitem">
+              how and when to launch the operation by invoking the supplied initiation
+              function object.
             </li>
 </ul></div>
 <p>
-          The trait allows the handler and return types to be determined at the point
-          where the specific completion handler signature is known.
-        </p>
-<p>
           This template may be specialised for user-defined completion token types.
-          The primary template assumes that the CompletionToken is the completion
-          handler.
+          The primary template assumes that the CompletionToken is the already a
+          concrete completion handler.
         </p>
 <h6>
 <a name="boost_asio.reference.async_completion.completion_handler_type.h2"></a>
+          <span class="phrase"><a name="boost_asio.reference.async_completion.completion_handler_type.remarks"></a></span><a class="link" href="completion_handler_type.html#boost_asio.reference.async_completion.completion_handler_type.remarks">Remarks</a>
+        </h6>
+<p>
+          For backwards compatibility, the primary template implements member types
+          and functions that are associated with legacy forms of the <a class="link" href="../async_result.html" title="async_result"><code class="computeroutput"><span class="identifier">async_result</span></code></a> trait. These are
+          annotated as "Legacy" in the documentation below. User specialisations
+          of this trait do not need to implement these in order to satisfy the <a class="link" href="../asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers">async_result
+          requirements</a>.
+        </p>
+<p>
+          In general, implementers of asynchronous operations should use the async_initiate
+          function rather than using the <a class="link" href="../async_result.html" title="async_result"><code class="computeroutput"><span class="identifier">async_result</span></code></a> trait directly.
+        </p>
+<p>
+          For a more detailed discussion of the role of <a class="link" href="../async_result.html" title="async_result"><code class="computeroutput"><span class="identifier">async_result</span></code></a> and async_initiate,
+          see the overview documentation for <a class="link" href="../../overview/model/completion_tokens.html" title="Completion Tokens">completion
+          token</a>.
+        </p>
+<h6>
+<a name="boost_asio.reference.async_completion.completion_handler_type.h3"></a>
           <span class="phrase"><a name="boost_asio.reference.async_completion.completion_handler_type.requirements"></a></span><a class="link" href="completion_handler_type.html#boost_asio.reference.async_completion.completion_handler_type.requirements">Requirements</a>
         </h6>
 <p>
@@ -179,15 +221,12 @@ The
           <span class="emphasis"><em>Convenience header: </em></span><code class="literal">boost/asio.hpp</code>
         </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2020 Christopher M.
+<div class="copyright-footer">Copyright © 2003-2025 Christopher M.
       Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="completion_handler.html"><img src="../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../async_completion.html"><img src="../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../boost_asio.html"><img src="../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="result.html"><img src="../../../../../doc/src/images/next.png" alt="Next"></a>

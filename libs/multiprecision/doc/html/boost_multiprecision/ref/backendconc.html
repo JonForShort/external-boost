@@ -8,6 +8,7 @@
 <link rel="up" href="../ref.html" title="Reference">
 <link rel="prev" href="internals.html" title="Internal Support Code">
 <link rel="next" href="headers.html" title="Header File Structure">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -107,7 +108,7 @@
               </td>
 <td>
                 <p>
-                  <code class="computeroutput"><span class="identifier">mpl</span><span class="special">::</span><span class="identifier">list</span><span class="special">&lt;</span><span class="identifier">type</span><span class="special">-</span><span class="identifier">list</span><span class="special">&gt;</span></code>
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="identifier">type</span><span class="special">-</span><span class="identifier">list</span><span class="special">&gt;</span></code>
                 </p>
               </td>
 <td>
@@ -131,7 +132,7 @@
               </td>
 <td>
                 <p>
-                  <code class="computeroutput"><span class="identifier">mpl</span><span class="special">::</span><span class="identifier">list</span><span class="special">&lt;</span><span class="identifier">type</span><span class="special">-</span><span class="identifier">list</span><span class="special">&gt;</span></code>
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="identifier">type</span><span class="special">-</span><span class="identifier">list</span><span class="special">&gt;</span></code>
                 </p>
               </td>
 <td>
@@ -155,7 +156,7 @@
               </td>
 <td>
                 <p>
-                  <code class="computeroutput"><span class="identifier">mpl</span><span class="special">::</span><span class="identifier">list</span><span class="special">&lt;</span><span class="identifier">type</span><span class="special">-</span><span class="identifier">list</span><span class="special">&gt;</span></code>
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="identifier">type</span><span class="special">-</span><span class="identifier">list</span><span class="special">&gt;</span></code>
                 </p>
               </td>
 <td>
@@ -932,7 +933,7 @@
               </td>
 <td>
                 <p>
-                  <code class="computeroutput"><span class="identifier">mpl</span><span class="special">::</span><span class="identifier">int_</span><span class="special">&lt;</span><span class="identifier">N</span><span class="special">&gt;</span></code>
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">integral_constant</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span> <span class="identifier">N</span><span class="special">&gt;</span></code>
                 </p>
               </td>
 <td>
@@ -1581,7 +1582,7 @@
                   function returns <code class="computeroutput"><span class="identifier">cb</span><span class="special">.</span><span class="identifier">compare</span><span class="special">(</span><span class="identifier">ui_type</span><span class="special">(</span><span class="number">0</span><span class="special">))</span> <span class="special">==</span>
                   <span class="number">0</span></code>, where <code class="computeroutput"><span class="identifier">ui_type</span></code>
                   is <code class="computeroutput"><span class="identifier">ui_type</span></code> is
-                  <code class="computeroutput"><span class="keyword">typename</span> <span class="identifier">mpl</span><span class="special">::</span><span class="identifier">front</span><span class="special">&lt;</span><span class="keyword">typename</span>
+                  <code class="computeroutput"><span class="keyword">typename</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple_element</span><span class="special">&lt;</span><span class="number">0</span><span class="special">,</span> <span class="keyword">typename</span>
                   <span class="identifier">B</span><span class="special">::</span><span class="identifier">unsigned_types</span><span class="special">&gt;::</span><span class="identifier">type</span></code>.
                 </p>
               </td>
@@ -1609,7 +1610,7 @@
                   is positive, and zero if <code class="computeroutput"><span class="identifier">cb</span></code>
                   is zero. The default version of this function returns <code class="computeroutput"><span class="identifier">cb</span><span class="special">.</span><span class="identifier">compare</span><span class="special">(</span><span class="identifier">ui_type</span><span class="special">(</span><span class="number">0</span><span class="special">))</span></code>,
                   where <code class="computeroutput"><span class="identifier">ui_type</span></code> is
-                  <code class="computeroutput"><span class="identifier">ui_type</span></code> is <code class="computeroutput"><span class="keyword">typename</span> <span class="identifier">mpl</span><span class="special">::</span><span class="identifier">front</span><span class="special">&lt;</span><span class="keyword">typename</span>
+                  <code class="computeroutput"><span class="identifier">ui_type</span></code> is <code class="computeroutput"><span class="keyword">typename</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple_element</span><span class="special">&lt;</span><span class="number">0</span><span class="special">,</span> <span class="keyword">typename</span>
                   <span class="identifier">B</span><span class="special">::</span><span class="identifier">unsigned_types</span><span class="special">&gt;::</span><span class="identifier">type</span></code>.
                 </p>
               </td>
@@ -2337,7 +2338,7 @@
                   by one. When not provided, does the equivalent of <code class="computeroutput"><span class="identifier">eval_add</span><span class="special">(</span><span class="identifier">b</span><span class="special">,</span>
                   <span class="keyword">static_cast</span><span class="special">&lt;</span><span class="identifier">ui_type</span><span class="special">&gt;(</span><span class="number">1u</span><span class="special">))</span></code>.
                   Where <code class="computeroutput"><span class="identifier">ui_type</span></code> is
-                  <code class="computeroutput"><span class="keyword">typename</span> <span class="identifier">mpl</span><span class="special">::</span><span class="identifier">front</span><span class="special">&lt;</span><span class="keyword">typename</span>
+                  <code class="computeroutput"><span class="keyword">typename</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple_element</span><span class="special">&lt;</span><span class="number">0</span><span class="special">,</span> <span class="keyword">typename</span>
                   <span class="identifier">B</span><span class="special">::</span><span class="identifier">unsigned_types</span><span class="special">&gt;::</span><span class="identifier">type</span></code>.
                 </p>
               </td>
@@ -2364,7 +2365,7 @@
                   by one. When not provided, does the equivalent of <code class="computeroutput"><span class="identifier">eval_subtract</span><span class="special">(</span><span class="identifier">b</span><span class="special">,</span>
                   <span class="keyword">static_cast</span><span class="special">&lt;</span><span class="identifier">ui_type</span><span class="special">&gt;(</span><span class="number">1u</span><span class="special">))</span></code>.
                   Where <code class="computeroutput"><span class="identifier">ui_type</span></code> is
-                  <code class="computeroutput"><span class="keyword">typename</span> <span class="identifier">mpl</span><span class="special">::</span><span class="identifier">front</span><span class="special">&lt;</span><span class="keyword">typename</span>
+                  <code class="computeroutput"><span class="keyword">typename</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple_element</span><span class="special">&lt;</span><span class="number">0</span><span class="special">,</span> <span class="keyword">typename</span>
                   <span class="identifier">B</span><span class="special">::</span><span class="identifier">unsigned_types</span><span class="special">&gt;::</span><span class="identifier">type</span></code>.
                 </p>
               </td>
@@ -4642,7 +4643,7 @@
         of these functions is:
       </p>
 <pre class="programlisting"><span class="keyword">int</span>           <span class="identifier">sign</span>       <span class="special">(</span><span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;);</span>
-<span class="keyword">int</span>           <span class="identifier">signbit</span>    <span class="special">(</span><span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;);</span>
+<span class="keyword">bool</span>          <span class="identifier">signbit</span>    <span class="special">(</span><span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;);</span>
 <span class="emphasis"><em>number</em></span>        <span class="identifier">changesign</span> <span class="special">(</span><span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;);</span>
 <span class="emphasis"><em>number</em></span>        <span class="identifier">copysign</span>   <span class="special">(</span><span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;,</span> <span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;);</span>
 <span class="emphasis"><em>number</em></span>        <span class="identifier">asinh</span>      <span class="special">(</span><span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;);</span>
@@ -4661,15 +4662,12 @@
 <span class="emphasis"><em>number</em></span>        <span class="identifier">nexttoward</span> <span class="special">(</span><span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;,</span> <span class="keyword">const</span> <span class="emphasis"><em>number-or-expression-template-type</em></span><span class="special">&amp;);</span>
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2002-2020 John
+<div class="copyright-footer">Copyright © 2002-2020 John
       Maddock and Christopher Kormanyos<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="internals.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../ref.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="headers.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>

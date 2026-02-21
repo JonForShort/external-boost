@@ -8,6 +8,7 @@
 <link rel="up" href="../spatial_indexes.html" title="Spatial Indexes">
 <link rel="prev" href="creation_and_modification.html" title="Creation and Modification">
 <link rel="next" href="rtree_examples.html" title="Examples">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -27,7 +28,7 @@
 <a name="geometry.spatial_indexes.queries"></a><a class="link" href="queries.html" title="Queries">Queries</a>
 </h3></div></div></div>
 <p>
-        Queries returns <code class="computeroutput">Value</code>s which meets some predicates. Currently
+        Queries return <code class="computeroutput">Value</code>s which meet some predicates. Currently
         supported are three types of predicates:
       </p>
 <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
@@ -65,7 +66,7 @@
       </h5>
 <p>
         There are various ways to perform a query. They are presented below. All
-        of them returns <code class="computeroutput">Value</code>s intersecting some region defined as a
+        of them return <code class="computeroutput">Value</code>s intersecting some region defined as a
         <code class="computeroutput">Box</code>.
       </p>
 <p>
@@ -109,7 +110,7 @@ Box <span class="identifier">box_region</span><span class="special">(...);</span
         queries</a>
       </h5>
 <p>
-        Queries using spatial predicates returns <code class="computeroutput">Value</code>s which are related
+        Queries using spatial predicates return <code class="computeroutput">Value</code>s which are related
         somehow to some Geometry - box, polygon, etc. Names of spatial predicates
         correspond to names of Boost.Geometry algorithms (boolean operations). Examples
         of some basic queries may be found in the tables below. The query region
@@ -266,8 +267,8 @@ Box <span class="identifier">box_region</span><span class="special">(...);</span
         neighbours queries</a>
       </h5>
 <p>
-        Nearest neighbours queries returns <code class="computeroutput">Value</code>s which are closest
-        to some Geometry. The examples of k-NN queries are presented below. 5 <code class="computeroutput">Value</code>s
+        Nearest neighbours queries return <code class="computeroutput">Value</code>s which are closest to
+        some Geometry. The examples of k-NN queries are presented below. 5 <code class="computeroutput">Value</code>s
         nearest to the Geometry are orange.
       </p>
 <div class="informaltable"><table class="table">
@@ -455,10 +456,8 @@ Point <span class="identifier">pt</span><span class="special">(/*...*/);</span>
 <span class="identifier">rt</span><span class="special">.</span><span class="identifier">query</span><span class="special">(</span><span class="identifier">index</span><span class="special">::</span><span class="identifier">intersects</span><span class="special">(</span><span class="identifier">box</span><span class="special">)</span> <span class="special">&amp;&amp;</span> <span class="identifier">index</span><span class="special">::</span><span class="identifier">satisfies</span><span class="special">(</span><span class="identifier">is_red_o</span><span class="special">()),</span>
          <span class="identifier">std</span><span class="special">::</span><span class="identifier">back_inserter</span><span class="special">(</span><span class="identifier">result</span><span class="special">));</span>
 
-<span class="preprocessor">#ifndef</span> <span class="identifier">BOOST_NO_CXX11_LAMBDAS</span>
 <span class="identifier">rt</span><span class="special">.</span><span class="identifier">query</span><span class="special">(</span><span class="identifier">index</span><span class="special">::</span><span class="identifier">intersects</span><span class="special">(</span><span class="identifier">box</span><span class="special">)</span> <span class="special">&amp;&amp;</span> <span class="identifier">index</span><span class="special">::</span><span class="identifier">satisfies</span><span class="special">([](</span>Value <span class="keyword">const</span><span class="special">&amp;</span> <span class="identifier">v</span><span class="special">)</span> <span class="special">{</span> <span class="keyword">return</span> <span class="identifier">v</span><span class="special">.</span><span class="identifier">is_red</span><span class="special">();</span> <span class="special">}),</span>
          <span class="identifier">std</span><span class="special">::</span><span class="identifier">back_inserter</span><span class="special">(</span><span class="identifier">result</span><span class="special">));</span>
-<span class="preprocessor">#endif</span>
 </pre>
 <p>
         <code class="computeroutput"><span class="identifier">satisfies</span><span class="special">()</span></code>
@@ -576,15 +575,12 @@ Point <span class="identifier">pt</span><span class="special">(/*...*/);</span>
 <pre class="programlisting"><span class="identifier">RTree</span> <span class="identifier">rt4</span><span class="special">(</span><span class="identifier">rt1</span> <span class="special">|</span> <span class="identifier">bgi</span><span class="special">::</span><span class="identifier">adaptors</span><span class="special">::</span><span class="identifier">queried</span><span class="special">(</span><span class="identifier">bgi</span><span class="special">::</span><span class="identifier">intersects</span><span class="special">(</span><span class="identifier">Box</span><span class="special">(/*...*/)))));</span>
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2009-2019 Barend Gehrels, Bruno Lalande, Mateusz Loskot, Adam
+<div class="copyright-footer">Copyright © 2009-2024 Barend Gehrels, Bruno Lalande, Mateusz Loskot, Adam
       Wulkiewicz, Oracle and/or its affiliates<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="creation_and_modification.html"><img src="../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../spatial_indexes.html"><img src="../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="rtree_examples.html"><img src="../../../../../../doc/src/images/next.png" alt="Next"></a>

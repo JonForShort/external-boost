@@ -1,6 +1,7 @@
 // Boost.Bimap
 //
 // Copyright (c) 2006-2007 Matias Capeletto
+// Copyright (c) 2024 Joaquin M Lopez Munoz
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
@@ -189,7 +190,6 @@ void test_associative_container(Container & c, const Data & d)
     BOOST_TEST( c.equal_range(*da).first == c.end() );
 }
 
-
 template< class Container >
 void test_mapped_container(Container &)
 {
@@ -253,6 +253,40 @@ void test_pair_associative_container(Container & c, const Data & d)
     BOOST_TEST( c.equal_range(da->first).first == c.end() );
 }
 
+template < class CompatibleKey, class Container, class Data >
+void test_pair_heterogeneous_associative_container(Container & c, Data & d)
+{
+    c.clear();
+    c.insert(d.begin(),d.end());
+
+    for( typename Data::const_iterator di = d.begin(), de = d.end();
+         di != de; ++di )
+    {
+        BOOST_TEST( c.find(CompatibleKey(di->first)) == c.find(di->first) );
+    }
+
+    typename Data::const_iterator da =   d.begin();
+    typename Data::const_iterator db = ++d.begin();
+
+    // erase does not support heterogeneous lookup
+    // as Boost.MultiIndex doesn't either
+    c.erase(da->first);
+
+    BOOST_TEST( c.size() == d.size()-1 );
+
+    BOOST_TEST( c.count(CompatibleKey(da->first)) == 0 );
+    BOOST_TEST( c.count(CompatibleKey(db->first)) == 1 );
+
+    BOOST_TEST( c.find(CompatibleKey(da->first)) == c.end() );
+    BOOST_TEST( c.find(CompatibleKey(db->first)) == c.find(db->first) );
+
+    BOOST_TEST( c.equal_range(CompatibleKey(db->first)).first == 
+                c.equal_range(db->first).first );
+
+    c.clear();
+
+    BOOST_TEST( c.equal_range(CompatibleKey(da->first)).first == c.end() );
+}
 
 template< class Container, class Data >
 void test_simple_ordered_associative_container_equality(Container & c, const Data & d)
@@ -389,6 +423,24 @@ void test_pair_ordered_associative_container(Container & c, const Data & d)
     );
 }
 
+template < class CompatibleKey, class Container, class Data >
+void test_pair_heterogeneous_ordered_associative_container(
+  Container & c, Data & d)
+{
+    test_pair_heterogeneous_associative_container<CompatibleKey>(c,d);
+
+    c.clear();
+    c.insert(d.begin(),d.end());
+
+    for( typename Data::const_iterator di = d.begin(), de = d.end();
+         di != de; ++di )
+    {
+        BOOST_TEST( c.lower_bound(CompatibleKey(di->first)) ==
+                    c.lower_bound(di->first) );
+        BOOST_TEST( c.upper_bound(CompatibleKey(di->first)) ==
+                    c.upper_bound(di->first) );
+    }
+}
 
 template< class Container, class Data >
 void test_pair_unordered_associative_container(Container & c, const Data & d)
@@ -414,7 +466,18 @@ void test_pair_unordered_associative_container(Container & c, const Data & d)
         {
             const Container & const_c = c;
 
-            BOOST_TEST( const_c.bucket_size(const_c.bucket(di->first)) == 1 );
+            // This used to test that the bucket size was equal to 1, but
+            // it failed with the old boost::hash for msvc/x86, and failed
+            // with the new boost::hash for msvc/x64, because of a bucket
+            // collision. E.g.
+            //
+            // "c": hash = 3a10055ae7ea9884, hash mod 53 = 8
+            // "a": hash = d53c452e09f39b66, hash mod 53 = 8
+            // "b": hash = fb6a785761bd4e37, hash mod 53 = 16
+            // "d": hash = adb5bf47769d562b, hash mod 53 = 27
+
+            BOOST_TEST_GE( const_c.bucket_size(const_c.bucket(di->first)), 1 );
+            BOOST_TEST_LE( const_c.bucket_size(const_c.bucket(di->first)), 2 );
 
             typename Container::size_type nb =
                 const_c.bucket(const_c.find(di->first)->first);
@@ -451,8 +514,6 @@ void test_non_unique_container(Container & c, Data & d)
     c.insert(*d.begin());
     BOOST_TEST( c.size() == (d.size()+1) );
 }
-
-
 
 template< class Bimap, class Data, class LeftData, class RightData >
 void test_basic_bimap( Bimap & b,

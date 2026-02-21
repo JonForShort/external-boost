@@ -8,6 +8,7 @@
 <link rel="up" href="../sort_hpp.html" title="Spreadsort">
 <link rel="prev" href="integer_sort.html" title="Integer Sort">
 <link rel="next" href="string_sort.html" title="String Sort">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr>
@@ -28,9 +29,9 @@
           Sort</a>
 </h5></div></div></div>
 <p>
-            <code class="literal"><code class="computeroutput"><a class="link" href="../../../../boost/sort/spreadsort/float_so_idm45398947679120.html" title="Function template float_sort">float_sort</a></code></code>
+            <code class="literal"><code class="computeroutput"><a class="link" href="../../../../doxygen/boost_sort_c___reference/namespaceboost_1_1sort_1_1spreadsort_1a48eb6c87a87c6a13048e60ed7595d32f.html" title="Function template float_sort">float_sort</a></code></code>
             is a fast templated in-place hybrid radix/comparison algorithm much like
-            <code class="literal"><code class="computeroutput"><a class="link" href="../../../../boost/sort/spreadsort/integer__idm45398946485152.html" title="Function template integer_sort">integer_sort</a></code></code>,
+            <code class="literal"><code class="computeroutput"><a class="link" href="../../../../doxygen/boost_sort_c___reference/namespaceboost_1_1sort_1_1spreadsort_1a52c38ef0d053ecdf4428dd5d0ad97070.html" title="Function template integer_sort">integer_sort</a></code></code>,
             but sorts IEEE floating-point numbers (positive, zero, NaN, and negative)
             into ascending order by casting them to integers. This works because
             positive IEEE floating-point numbers sort like integers with the same
@@ -55,7 +56,7 @@
             a custom rightshift functor for float_sort, when one is needed. Only
             IEEE floating-point numbers of the same size as the integer type being
             cast to should be used in this specialized method call. Worst-case performance
-            is <span class="emphasis"><em>𝑶(N * (log2(range)/s + s))</em></span>, so <code class="literal"><code class="computeroutput"><a class="link" href="../../../../boost/sort/spreadsort/float_so_idm45398947679120.html" title="Function template float_sort">float_sort</a></code></code>
+            is <span class="emphasis"><em>𝑶(N * (log2(range)/s + s))</em></span>, so <code class="literal"><code class="computeroutput"><a class="link" href="../../../../doxygen/boost_sort_c___reference/namespaceboost_1_1sort_1_1spreadsort_1a48eb6c87a87c6a13048e60ed7595d32f.html" title="Function template float_sort">float_sort</a></code></code>
             is asymptotically faster than pure comparison-based algorithms. <span class="emphasis"><em>s</em></span>
             is <span class="emphasis"><em>max_splits</em></span>, which defaults to 11, so its worst-case
             with default settings for 32-bit integers is <span class="emphasis"><em>𝑶(N * ((32/11)</em></span>
@@ -119,15 +120,12 @@
             </p>
 </div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2014-2017 Steven
+<div class="copyright-footer">Copyright © 2014-2017 Steven
       Ross, Francisco Tapia, Orson Peters<p>
         Distributed under the <a href="http://boost.org/LICENSE_1_0.txt" target="_top">Boost
         Software License, Version 1.0</a>.
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="integer_sort.html"><img src="../../../../../../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../sort_hpp.html"><img src="../../../../../../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../../../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="string_sort.html"><img src="../../../../../../../../doc/src/images/next.png" alt="Next"></a>

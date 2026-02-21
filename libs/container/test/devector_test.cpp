@@ -14,9 +14,10 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <boost/container/list.hpp>
+#include <boost/container/allocator.hpp>
 #include <boost/container/vector.hpp>
-#include <boost/core/no_exceptions_support.hpp>
 #include <boost/type_traits/is_default_constructible.hpp>
 #include <boost/type_traits/is_nothrow_move_constructible.hpp>
 #include "dummy_test_allocator.hpp"
@@ -24,7 +25,7 @@
 #include "check_equal_containers.hpp"
 #include "movable_int.hpp"
 
-#include <boost/algorithm/cxx14/equal.hpp>
+#include <boost/container/detail/algorithm.hpp> //algo_equal(), algo_lexicographical_compare
 
 #define BOOST_CONTAINER_DEVECTOR_ALLOC_STATS
 #include <boost/container/devector.hpp>
@@ -33,6 +34,9 @@
 #include "test_util.hpp"
 #include "test_elem.hpp"
 #include "input_iterator.hpp"
+#include "vector_test.hpp"
+#include "default_init_test.hpp"
+#include "../../intrusive/test/iterator_test.hpp"
 
 using namespace boost::container;
 
@@ -109,7 +113,8 @@ template <class Devector> void test_constructor_reserve_only_front_back()
   {
     Devector a(8, 8, reserve_only_tag_t());
     BOOST_TEST(a.size() == 0u);
-    BOOST_TEST(a.capacity() >= 16u);
+    BOOST_TEST(a.front_free_capacity() >= 8u);
+    BOOST_TEST(a.back_free_capacity() >= 8u);
 
     for (int i = 8; i; --i)
     {
@@ -224,23 +229,22 @@ template <class Devector> void test_constructor_input_range()
    }
 
    BOOST_TEST(test_elem_base::no_living_elem());
-/* //if move_if_noexcept is implemented
-   #ifndef BOOST_NO_EXCEPTIONS
-   if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
-      devector<T> input; get_range<devector<T> >(16, input);
+   //if move_if_noexcept is implemented
+   //#ifndef BOOST_NO_EXCEPTIONS
+   //if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
+   //{
+      //devector<T> input; get_range<devector<T> >(16, input);
 
-      input_iterator<Devector> input_begin = make_input_iterator(input, input.begin());
-      input_iterator<Devector> input_end   = make_input_iterator(input, input.end());
+      //input_iterator<Devector> input_begin = make_input_iterator(input, input.begin());
+      //input_iterator<Devector> input_end   = make_input_iterator(input, input.end());
 
-      test_elem_throw::on_copy_after(4);
+      //test_elem_throw::on_copy_after(4);
 
-      BOOST_TEST_THROWS(Devector c(input_begin, input_end), test_exception);
-   }
+      //BOOST_TEST_THROWS(Devector c(input_begin, input_end), test_exception);
+   //}
 
-   BOOST_TEST(test_elem_base::no_living_elem());
-   #endif   //#ifndef BOOST_NO_EXCEPTIONS
-*/
+   //BOOST_TEST(test_elem_base::no_living_elem());
+   //#endif   //#ifndef BOOST_NO_EXCEPTIONS
 }
 
 
@@ -474,23 +478,24 @@ template <class Devector> void test_assignment()
       BOOST_TEST(a.get_alloc_count() == alloc_count);
    }
 
-   #ifndef BOOST_NO_EXCEPTIONS
-   typedef typename Devector::value_type T;
-   BOOST_IF_CONSTEXPR (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
+
+   //#ifndef BOOST_NO_EXCEPTIONS
+   //typedef typename Devector::value_type T;
+   //BOOST_IF_CONSTEXPR (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
+   //{
       // strong guarantee if reallocation is needed (no guarantee otherwise)
-      Devector a; get_range<Devector>(6, a);
-      Devector c; get_range<Devector>(12, c);
-      const Devector &b = c;
+      //Devector a; get_range<Devector>(6, a);
+      //Devector c; get_range<Devector>(12, c);
+      //const Devector &b = c;
 
-      test_elem_throw::on_copy_after(3);
-      BOOST_TEST_THROWS(a = b, test_exception);
-      test_elem_throw::do_not_throw();
+      //test_elem_throw::on_copy_after(3);
+      //BOOST_TEST_THROWS(a = b, test_exception);
+      //test_elem_throw::do_not_throw();
 
-      const int expected[] = {1, 2, 3, 4, 5, 6};
-      test_equal_range(a, expected);
-   }
-   #endif   //#ifndef BOOST_NO_EXCEPTIONS
+      //const int expected[] = {1, 2, 3, 4, 5, 6};
+      //test_equal_range(a, expected);
+   //}
+   //#endif   //#ifndef BOOST_NO_EXCEPTIONS
 }
 
 template <class Devector> void test_move_assignment_throwing(dtl::true_)
@@ -551,7 +556,7 @@ template <class Devector> void test_move_assignment()
     test_equal_range(b);
   }
 
-  typedef typename Devector::value_type T;
+   typedef typename Devector::value_type T;
    test_move_assignment_throwing<Devector>
       (boost::move_detail::bool_<! boost::move_detail::is_nothrow_copy_constructible<T>::value>());
 }
@@ -566,12 +571,15 @@ template <class Devector> void test_il_assignment()
       test_equal_range(a, {1, 2, 3, 4, 5, 6});
    }
 
+   //Visual 2013 has some problems with empty initializer lists.
+   #if defined(_MSC_VER) && (_MSC_VER > 1800)
    { // assign from empty
       Devector a; get_range<Devector>(6, a);
       a = {};
 
       test_equal_range(a);
    }
+   #endif
 
    { // assign to non-empty
       Devector a; get_range<Devector>(11, 15, 15, 19, a);
@@ -615,27 +623,27 @@ template <class Devector> void test_il_assignment()
       BOOST_TEST(a.get_alloc_count() == 0u);
    }
 
-   #ifndef BOOST_NO_EXCEPTIONS
-   typedef typename Devector::value_type T;
-   if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
+   //#ifndef BOOST_NO_EXCEPTIONS
+   //typedef typename Devector::value_type T;
+   //BOOST_IF_CONSTEXPR (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
+   //{
       // strong guarantee if reallocation is needed (no guarantee otherwise)
-      Devector a; get_range<Devector>(6, a);
+      //Devector a; get_range<Devector>(6, a);
 
-      test_elem_throw::on_copy_after(3);
+      //test_elem_throw::on_copy_after(3);
 
-      BOOST_TRY
-      {
-         a = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-         BOOST_TEST(false);
-      }
-      BOOST_CATCH(const test_exception&) {}
-      BOOST_CATCH_END
-      test_elem_throw::do_not_throw();
+      //BOOST_CONTAINER_TRY
+      //{
+         //a = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+         //BOOST_TEST(false);
+      //}
+      //BOOST_CONTAINER_CATCH(const test_exception&) {}
+      //BOOST_CONTAINER_CATCH_END
+      //test_elem_throw::do_not_throw();
 
-      test_equal_range(a, {1, 2, 3, 4, 5, 6});
-   }
-   #endif   //BOOST_NO_EXCEPTIONS
+      //test_equal_range(a, {1, 2, 3, 4, 5, 6});
+   //}
+   //#endif   //BOOST_NO_EXCEPTIONS
    #endif   //#if !defined(BOOST_NO_CXX11_HDR_INITIALIZER_LIST)
 }
 
@@ -734,25 +742,26 @@ template <class Devector> void test_assign_input_range()
       test_equal_range(a, expected);
    }
 
-   #ifndef BOOST_NO_EXCEPTIONS
-   if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
+
+   //#ifndef BOOST_NO_EXCEPTIONS
+   //BOOST_IF_CONSTEXPR (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
+   //{
       // strong guarantee if reallocation is needed (no guarantee otherwise)
 
-      devector<T> input; get_range<devector<T> >(12, input);
-      input_iterator<Devector> input_begin = make_input_iterator(input, input.begin());
-      input_iterator<Devector> input_end   = make_input_iterator(input, input.end());
+      //devector<T> input; get_range<devector<T> >(12, input);
+      //input_iterator<Devector> input_begin = make_input_iterator(input, input.begin());
+      //input_iterator<Devector> input_end   = make_input_iterator(input, input.end());
 
-      Devector a; get_range<Devector>(6, a);
+      //Devector a; get_range<Devector>(6, a);
 
-      test_elem_throw::on_copy_after(3);
-      BOOST_TEST_THROWS(a.assign(input_begin, input_end), test_exception);
-      test_elem_throw::do_not_throw();
+      //test_elem_throw::on_copy_after(3);
+      //BOOST_TEST_THROWS(a.assign(input_begin, input_end), test_exception);
+      //test_elem_throw::do_not_throw();
 
-      const int expected[] = {1, 2, 3, 4, 5, 6};
-      test_equal_range(a, expected);
-   }
-   #endif   //#ifndef BOOST_NO_EXCEPTIONS
+      //const int expected[] = {1, 2, 3, 4, 5, 6};
+      //test_equal_range(a, expected);
+   //}
+   //#endif   //#ifndef BOOST_NO_EXCEPTIONS
 }
 
 template <class Devector> void test_assign_forward_range_throwing(dtl::false_)
@@ -848,20 +857,20 @@ template <class Devector> void test_assign_forward_range()
     BOOST_TEST(a.get_alloc_count() == 0u);
   }
 
-   #ifndef BOOST_NO_EXCEPTIONS
-   BOOST_IF_CONSTEXPR(! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
+  //#ifndef BOOST_NO_EXCEPTIONS
+   //BOOST_IF_CONSTEXPR(! boost::move_detail::is_nothrow_copy_constructible<T>::value)
+   //{
       // strong guarantee if reallocation is needed (no guarantee otherwise)
-      Devector a; get_range<Devector>(6, a);
+      //Devector a; get_range<Devector>(6, a);
 
-      test_elem_throw::on_copy_after(3);
-      BOOST_TEST_THROWS(a.assign(one, twelve), test_exception);
-      test_elem_throw::do_not_throw();
+      //test_elem_throw::on_copy_after(3);
+      //BOOST_TEST_THROWS(a.assign(one, twelve), test_exception);
+      //test_elem_throw::do_not_throw();
 
-      const int expected [] = {1, 2, 3, 4, 5, 6};
-      test_equal_range(a, expected);
-   }
-   #endif   //#ifndef BOOST_NO_EXCEPTIONS
+      //const int expected [] = {1, 2, 3, 4, 5, 6};
+      //test_equal_range(a, expected);
+   //}
+   //#endif   //#ifndef BOOST_NO_EXCEPTIONS
 }
 
 template <class Devector> void test_assign_pointer_range()
@@ -936,20 +945,20 @@ template <class Devector> void test_assign_pointer_range()
       BOOST_TEST(a.get_alloc_count() == 0u);
    }
 
-   #ifndef BOOST_NO_EXCEPTIONS
-   if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
+   //#ifndef BOOST_NO_EXCEPTIONS
+   //BOOST_IF_CONSTEXPR (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
+   //{
       // strong guarantee if reallocation is needed (no guarantee otherwise)
-      Devector a; get_range<Devector>(6, a);
+      //Devector a; get_range<Devector>(6, a);
 
-      test_elem_throw::on_copy_after(3);
-      BOOST_TEST_THROWS(a.assign(one, twelve), test_exception);
-      test_elem_throw::do_not_throw();
+      //test_elem_throw::on_copy_after(3);
+      //BOOST_TEST_THROWS(a.assign(one, twelve), test_exception);
+      //test_elem_throw::do_not_throw();
 
-      const int expected[] = {1, 2, 3, 4, 5, 6};
-      test_equal_range(a, expected);
-   }
-   #endif   //#ifndef BOOST_NO_EXCEPTIONS
+      //const int expected[] = {1, 2, 3, 4, 5, 6};
+      //test_equal_range(a, expected);
+   //}
+   //#endif   //#ifndef BOOST_NO_EXCEPTIONS
 }
 
 template <class Devector> void test_assign_n()
@@ -1019,20 +1028,21 @@ template <class Devector> void test_assign_n()
       BOOST_TEST(a.get_alloc_count() == 0u);
    }
 
-   #ifndef BOOST_NO_EXCEPTIONS
-   if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
+   //#ifndef BOOST_NO_EXCEPTIONS
+   //BOOST_IF_CONSTEXPR (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
+   //{
       // strong guarantee if reallocation is needed (no guarantee otherwise)
-      Devector a; get_range<Devector>(6, a);
+      //Devector a; get_range<Devector>(6, a);
 
-      test_elem_throw::on_copy_after(3);
-      BOOST_TEST_THROWS(a.assign(32, T(9)), test_exception);
-      test_elem_throw::do_not_throw();
+      //test_elem_throw::on_copy_after(3);
+      //BOOST_TEST_THROWS(a.assign(32, T(9)), test_exception);
+      //test_elem_throw::do_not_throw();
 
-      const int expected[] = {1, 2, 3, 4, 5, 6};
-      test_equal_range(a, expected);
-   }
-   #endif   //#ifndef BOOST_NO_EXCEPTIONS
+      //const int expected[] = {1, 2, 3, 4, 5, 6};
+      //test_equal_range(a, expected);
+   //}
+   //#endif   //#ifndef BOOST_NO_EXCEPTIONS
+
 }
 
 template <class Devector> void test_assign_il()
@@ -1097,20 +1107,20 @@ template <class Devector> void test_assign_il()
       BOOST_TEST(a.get_alloc_count() == 0u);
    }
 
-   #ifndef BOOST_NO_EXCEPTIONS
-   typedef typename Devector::value_type T;
-   if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
+   //#ifndef BOOST_NO_EXCEPTIONS
+   //typedef typename Devector::value_type T;
+   //BOOST_IF_CONSTEXPR (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
+   //{
       // strong guarantee if reallocation is needed (no guarantee otherwise)
-      Devector a; get_range<Devector>(6, a);
+      //Devector a; get_range<Devector>(6, a);
 
-      test_elem_throw::on_copy_after(3);
-      BOOST_TEST_THROWS(a.assign({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}), test_exception);
-      test_elem_throw::do_not_throw();
+      //test_elem_throw::on_copy_after(3);
+      //BOOST_TEST_THROWS(a.assign({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}), test_exception);
+      //test_elem_throw::do_not_throw();
 
-      test_equal_range(a, {1, 2, 3, 4, 5, 6});
-   }
-   #endif   //#ifndef BOOST_NO_EXCEPTIONS
+      //test_equal_range(a, {1, 2, 3, 4, 5, 6});
+   //}
+   //#endif   //#ifndef BOOST_NO_EXCEPTIONS
    #endif   //#if !defined(BOOST_NO_CXX11_HDR_INITIALIZER_LIST)
 }
 
@@ -1126,17 +1136,17 @@ template <class Devector> void test_begin_end()
    {
       Devector actual; get_range<Devector>(10, actual);
 
-      BOOST_TEST(boost::algorithm::equal(expected.begin(), expected.end(), actual.begin(), actual.end()));
-      BOOST_TEST(boost::algorithm::equal(expected.rbegin(), expected.rend(), actual.rbegin(), actual.rend()));
-      BOOST_TEST(boost::algorithm::equal(expected.cbegin(), expected.cend(), actual.cbegin(), actual.cend()));
-      BOOST_TEST(boost::algorithm::equal(expected.crbegin(), expected.crend(), actual.crbegin(), actual.crend()));
+      BOOST_TEST(::boost::container::algo_equal(expected.begin(), expected.end(), actual.begin(), actual.end()));
+      BOOST_TEST(::boost::container::algo_equal(expected.rbegin(), expected.rend(), actual.rbegin(), actual.rend()));
+      BOOST_TEST(::boost::container::algo_equal(expected.cbegin(), expected.cend(), actual.cbegin(), actual.cend()));
+      BOOST_TEST(::boost::container::algo_equal(expected.crbegin(), expected.crend(), actual.crbegin(), actual.crend()));
    }
 
    {
       Devector cactual; get_range<Devector>(10, cactual);
 
-      BOOST_TEST(boost::algorithm::equal(expected.begin(), expected.end(), cactual.begin(), cactual.end()));
-      BOOST_TEST(boost::algorithm::equal(expected.rbegin(), expected.rend(), cactual.rbegin(), cactual.rend()));
+      BOOST_TEST(::boost::container::algo_equal(expected.begin(), expected.end(), cactual.begin(), cactual.end()));
+      BOOST_TEST(::boost::container::algo_equal(expected.rbegin(), expected.rend(), cactual.rbegin(), cactual.rend()));
    }
 }
 
@@ -1164,30 +1174,32 @@ template <class Devector> void test_empty()
 //using gp_devector = devector<unsigned, different_growth_policy>;
 
 void test_max_size()
-{/*
-  gp_devector<unsigned char> a;
-  BOOST_TEST(a.max_size() == (std::numeric_limits<unsigned char>::max)());
+{
+   #if 0
+   gp_devector<unsigned char> a;
+   BOOST_TEST(a.max_size() == (std::numeric_limits<unsigned char>::max)());
 
-  gp_devector<unsigned short> b;
-  BOOST_TEST(b.max_size() == (std::numeric_limits<unsigned short>::max)());
+   gp_devector<unsigned short> b;
+   BOOST_TEST(b.max_size() == (std::numeric_limits<unsigned short>::max)());
 
-  gp_devector<unsigned int> c;
-  BOOST_TEST(c.max_size() >= b.max_size());
+   gp_devector<unsigned int> c;
+   BOOST_TEST(c.max_size() >= b.max_size());
 
-  gp_devector<std::size_t> d;
-  BOOST_TEST(d.max_size() >= c.max_size());
-*/
+   gp_devector<std::size_t> d;
+   BOOST_TEST(d.max_size() >= c.max_size());
+   #endif
 }
 
 void test_exceeding_max_size()
-{/*
+{
+   #if 0
    #ifndef BOOST_NO_EXCEPTIONS
    using Devector = gp_devector<unsigned char>;
 
    Devector a((std::numeric_limits<typename Devector::size_type>::max)());
    BOOST_TEST_THROWS(a.emplace_back(404), std::length_error);
    #endif   //#ifndef BOOST_NO_EXCEPTIONS
-*/
+   #endif
 }
 
 template <class Devector> void test_size()
@@ -1264,7 +1276,7 @@ template <class Devector> void test_resize_front()
       const int expected [] = {0, 0, 0, 1, 2, 3, 4, 5};
       test_equal_range(b, expected);
    }
-   /*
+   #if 0
    // size < required, move would throw
    if (! boost::is_nothrow_move_constructible<T>::value && std::is_copy_constructible<T>::value)
    {
@@ -1276,7 +1288,7 @@ template <class Devector> void test_resize_front()
 
       test_equal_range(c, {0, 0, 0, 1, 2, 3, 4, 5});
    }
-   */
+   #endif
 
    test_resize_front_throwing<Devector>
       (dtl::bool_<! boost::move_detail::is_nothrow_default_constructible<T>::value>());
@@ -1394,7 +1406,7 @@ template <class Devector> void test_resize_front_copy()
    // size < required, tmp is already inserted
    {
       Devector f; get_range<Devector>(8, f);
-      const T& tmp = *(f.begin() + 1);
+      T tmp = *(f.begin() + 1);
       f.resize_front(16, tmp);
       const int expected[] = {2,2,2,2,2,2,2,2,1,2,3,4,5,6,7,8};
       test_equal_range(f, expected);
@@ -1443,7 +1455,7 @@ template <class Devector> void test_resize_back()
       const int expected [] = {1, 2, 3, 4, 5, 0, 0, 0};
       test_equal_range(b, expected);
    }
-   /*
+   #if 0
    // size < required, move would throw
    if (! boost::is_nothrow_move_constructible<T>::value && std::is_copy_constructible<T>::value)
    {
@@ -1455,7 +1467,7 @@ template <class Devector> void test_resize_back()
 
       test_equal_range(c, {1, 2, 3, 4, 5, 0, 0, 0});
    }
-   */
+   #endif
 
    test_resize_back_throwing<Devector>
       (dtl::bool_<! boost::move_detail::is_nothrow_default_constructible<T>::value>());
@@ -1587,134 +1599,12 @@ template <class Devector> void test_resize_back_copy()
    // size < required, tmp is already inserted
    {
       Devector f; get_range<Devector>(8, f);
-      const T& tmp = *(f.begin() + 1);
+      T tmp = *(f.begin() + 1);
       f.resize_back(16, tmp);
       const int expected [] = {1,2,3,4,5,6,7,8,2,2,2,2,2,2,2,2};
       test_equal_range(f, expected);
    }
 }
-
-/*
-template <class Devector> void test_constructor_unsafe_uninitialized()
-{
-  {
-    Devector a(8, unsafe_uninitialized_tag_t());
-    BOOST_TEST(a.size() == 8u);
-
-    for (int i = 0; i < 8; ++i)
-    {
-      new (a.data() + i) T(i+1);
-    }
-
-    const int expected [] = {1, 2, 3, 4, 5, 6, 7, 8};
-    test_equal_range(a, expected);
-  }
-
-  {
-    Devector b(0, unsafe_uninitialized_tag_t());
-    BOOST_TEST(b.get_alloc_count() == 0u);
-  }
-}
-*/
-
-/*
-template <class Devector> void test_unsafe_uninitialized_resize_front()
-{
-  typedef typename Devector::value_type T;
-
-  { // noop
-    Devector a; get_range<Devector>(8, a);
-    a.reset_alloc_stats();
-
-    a.unsafe_uninitialized_resize_front(a.size());
-
-    const int expected [] = {1, 2, 3, 4, 5, 6, 7, 8};
-    test_equal_range(a, expected);
-    BOOST_TEST(a.get_alloc_count() == 0u);
-  }
-
-  { // grow (maybe has enough capacity)
-    Devector b; get_range<Devector>(0, 0, 5, 9, b);
-
-    b.unsafe_uninitialized_resize_front(8);
-
-    for (int i = 0; i < 4; ++i)
-    {
-      new (b.data() + i) T(i+1);
-    }
-
-   const int expected [] = {1, 2, 3, 4, 5, 6, 7, 8};
-    test_equal_range(b, expected);
-  }
-
-  { // shrink uninitialized
-    Devector c; get_range<Devector>(8, c);
-
-    c.unsafe_uninitialized_resize_front(16);
-    c.unsafe_uninitialized_resize_front(8);
-
-      const int expected [] = {1, 2, 3, 4, 5, 6, 7, 8};
-    test_equal_range(c, expected );
-  }
-
-  if (std::is_trivially_destructible<T>::value)
-  {
-    // shrink
-    Devector d; get_range<Devector>(8, d);
-
-    d.unsafe_uninitialized_resize_front(4);
-
-    test_equal_range(d, {5, 6, 7, 8});
-  }
-}
-
-template <class Devector> void test_unsafe_uninitialized_resize_back()
-{
-  typedef typename Devector::value_type T;
-
-  { // noop
-    Devector a; get_range<Devector>(8, a);
-    a.reset_alloc_stats();
-
-    a.unsafe_uninitialized_resize_back(a.size());
-
-    test_equal_range(a, {1, 2, 3, 4, 5, 6, 7, 8});
-    BOOST_TEST(a.get_alloc_count() == 0u);
-  }
-
-  { // grow (maybe has enough capacity)
-    Devector b; get_range<Devector>(1, 5, 0, 0, b);
-
-    b.unsafe_uninitialized_resize_back(8);
-
-    for (int i = 0; i < 4; ++i)
-    {
-      new (b.data() + 4 + i) T(i+5);
-    }
-
-    test_equal_range(b, {1, 2, 3, 4, 5, 6, 7, 8});
-  }
-
-  { // shrink uninitialized
-    Devector c; get_range<Devector>(8, c);
-
-    c.unsafe_uninitialized_resize_back(16);
-    c.unsafe_uninitialized_resize_back(8);
-
-    test_equal_range(c, {1, 2, 3, 4, 5, 6, 7, 8});
-  }
-
-  if (std::is_trivially_destructible<T>::value)
-  {
-    // shrink
-    Devector d; get_range<Devector>(8, d);
-
-    d.unsafe_uninitialized_resize_back(4);
-
-    test_equal_range(d, {1, 2, 3, 4});
-  }
-}
-*/
 
 template <class Devector> void test_reserve_front()
 {
@@ -1722,7 +1612,7 @@ template <class Devector> void test_reserve_front()
   Devector a;
 
   a.reserve_front(100);
-  for (unsigned i = 0; i < 100u; ++i)
+  for (int i = 0; i < 100; ++i)
   {
     a.push_front(value_type(i));
   }
@@ -1742,7 +1632,7 @@ template <class Devector> void test_reserve_back()
   Devector a;
   typedef typename Devector::value_type value_type;
   a.reserve_back(100);
-  for (unsigned i = 0; i < 100; ++i)
+  for (int i = 0; i < 100; ++i)
   {
     a.push_back(value_type(i));
   }
@@ -1760,19 +1650,20 @@ template <class Devector> void test_reserve_back()
 template <typename Devector>
 void test_shrink_to_fit_always()
 {
+   typedef typename Devector::value_type value_type;
    Devector a;
-   a.reserve(100);
+   a.reserve(100u);
 
-   a.push_back(1);
-   a.push_back(2);
-   a.push_back(3);
+   a.push_back(value_type(1));
+   a.push_back(value_type(2));
+   a.push_back(value_type(3));
 
    a.shrink_to_fit();
 
    boost::container::vector<unsigned> expected;
-   expected.push_back(1);
-   expected.push_back(2);
-   expected.push_back(3);
+   expected.push_back(1u);
+   expected.push_back(2u);
+   expected.push_back(3u);
    test_equal_range(a, expected);
 
    std::size_t exp_capacity = 3u;
@@ -1844,7 +1735,7 @@ template <class Devector> void test_at()
       a.at(0) = T(100);
       BOOST_TEST(a.at(0) == 100);
 
-      BOOST_TEST_THROWS(a.at(3), std::out_of_range);
+      BOOST_TEST_THROWS((void)a.at(3), out_of_range_t);
    }
 
    { // const at
@@ -1853,7 +1744,7 @@ template <class Devector> void test_at()
 
       BOOST_TEST(a.at(0) == 1);
 
-      BOOST_TEST_THROWS(a.at(3), std::out_of_range);
+      BOOST_TEST_THROWS((void)a.at(3), out_of_range_t);
    }
    #endif   //#ifndef BOOST_NO_EXCEPTIONS
 }
@@ -1996,7 +1887,7 @@ template <class Devector> void test_push_front()
    // test when tmp is already inserted
    {
       Devector c; get_range<Devector>(4, c);
-      const T& tmp = *(c.begin() + 1);
+      T tmp = *(c.begin() + 1);
       c.push_front(tmp);
       const int expected[] = {2, 1, 2, 3, 4};
       test_equal_range(c, expected);
@@ -2044,7 +1935,7 @@ template <class Devector> void test_push_front_rvalue()
     test_equal_range(a, expected);
   }
 
-  test_push_front_rvalue_throwing<Devector>(dtl::bool_<! boost::is_nothrow_move_constructible<T>::value>());
+  //test_push_front_rvalue_throwing<Devector>(dtl::bool_<! boost::is_nothrow_move_constructible<T>::value>());
 }
 
 template <class Devector> void test_pop_front()
@@ -2103,8 +1994,6 @@ template <class Devector> void test_emplace_back_throwing(dtl::false_)
 
 template <class Devector> void test_emplace_back()
 {
-  typedef typename Devector::value_type T;
-
   {
     Devector a;
 
@@ -2116,9 +2005,9 @@ template <class Devector> void test_emplace_back()
 
     test_equal_range<Devector>(a, expected);
   }
-
-   test_emplace_back_throwing<Devector>
-      (dtl::bool_<! boost::move_detail::is_nothrow_default_constructible<T>::value>());
+  //typedef typename Devector::value_type T;
+   //test_emplace_back_throwing<Devector>
+      //(dtl::bool_<! boost::move_detail::is_nothrow_default_constructible<T>::value>());
 }
 
 template <class Devector> void test_push_back_throwing(dtl::true_)
@@ -2156,18 +2045,19 @@ template <class Devector> void test_push_back()
       for (int i = 1; i <= 16; ++i)
       {
          T elem(i);
+
          a.push_back(elem);
       }
 
       test_equal_range(a, expected);
    }
 
-   test_push_back_throwing<Devector>(dtl::bool_<! boost::move_detail::is_nothrow_copy_constructible<T>::value>());
+   //test_push_back_throwing<Devector>(dtl::bool_<! boost::move_detail::is_nothrow_copy_constructible<T>::value>());
 
    // test when tmp is already inserted
    {
       Devector c; get_range<Devector>(4, c);
-      const T& tmp = *(c.begin() + 1);
+      T tmp = *(c.begin() + 1);
       c.push_back(tmp);
       const int expected[] = {1, 2, 3, 4, 2};
       test_equal_range(c, expected);
@@ -2214,131 +2104,9 @@ template <class Devector> void test_push_back_rvalue()
     test_equal_range(a, expected);
   }
 
-  test_push_back_rvalue_throwing<Devector>(dtl::bool_<! boost::is_nothrow_move_constructible<T>::value>());
+  //test_push_back_rvalue_throwing<Devector>(dtl::bool_<! boost::is_nothrow_move_constructible<T>::value>());
 }
 
-/*
-template <class Devector> void test_unsafe_push_front()
-{
-   typedef typename Devector::value_type T;
-   typedef typename Devector::iterator iterator;
-
-   {
-      boost::container::vector<int> expected; get_range<boost::container::vector<int> >(16, expected);
-      std::reverse(expected.begin(), expected.end());
-      Devector a;
-      a.reserve_front(16);
-
-      for (std::size_t i = 1; i <= 16; ++i)
-      {
-      T elem(i);
-      a.unsafe_push_front(elem);
-      }
-
-      test_equal_range(a, expected);
-   }
-
-   #ifndef BOOST_NO_EXCEPTIONS
-   if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
-      Devector b; get_range<Devector>(4, b);
-      b.reserve_front(5);
-      iterator origi_begin = b.begin();
-
-      const T elem(404);
-
-      test_elem_throw::on_copy_after(1);
-      BOOST_TEST_THROWS(b.unsafe_push_front(elem), test_exception);
-      test_elem_throw::do_not_throw();
-
-      iterator new_begin = b.begin();
-
-      BOOST_TEST(origi_begin == new_begin);
-      BOOST_TEST(b.size() == 4u);
-   }
-   #endif   //#ifndef BOOST_NO_EXCEPTIONS
-}
-
-template <class Devector> void test_unsafe_push_front_rvalue()
-{
-  typedef typename Devector::value_type T;
-
-  {
-    boost::container::vector<int> expected; get_range<boost::container::vector<int> >(16, expected);
-    std::reverse(expected.begin(), expected.end());
-    Devector a;
-    a.reserve_front(16);
-
-    for (std::size_t i = 1; i <= 16; ++i)
-    {
-      T elem(i);
-      a.unsafe_push_front(boost::move(elem));
-    }
-
-    test_equal_range(a, expected);
-  }
-}
-*/
-/*
-template <class Devector> void test_unsafe_push_back()
-{
-   typedef typename Devector::value_type T;
-   typedef typename Devector::iterator iterator;
-
-   {
-      boost::container::vector<int> expected; get_range<boost::container::vector<int> >(16, expected);
-      Devector a;
-      a.reserve(16);
-
-      for (std::size_t i = 1; i <= 16; ++i)
-      {
-      T elem(i);
-      a.unsafe_push_back(elem);
-      }
-
-      test_equal_range(a, expected);
-   }
-
-   #ifndef BOOST_NO_EXCEPTIONS
-   if (! boost::move_detail::is_nothrow_copy_constructible<T>::value)
-   {
-      Devector b; get_range<Devector>(4, b);
-      b.reserve(5);
-      iterator origi_begin = b.begin();
-
-      const T elem(404);
-
-      test_elem_throw::on_copy_after(1);
-      BOOST_TEST_THROWS(b.unsafe_push_back(elem), test_exception);
-      test_elem_throw::do_not_throw();
-
-      iterator new_begin = b.begin();
-
-      BOOST_TEST(origi_begin == new_begin);
-      BOOST_TEST(b.size() == 4u);
-   }
-   #endif
-}
-
-template <class Devector> void test_unsafe_push_back_rvalue()
-{
-  typedef typename Devector::value_type T;
-
-  {
-    boost::container::vector<int> expected; get_range<boost::container::vector<int> >(16, expected);
-    Devector a;
-    a.reserve(16);
-
-    for (std::size_t i = 1; i <= 16; ++i)
-    {
-      T elem(i);
-      a.unsafe_push_back(boost::move(elem));
-    }
-
-    test_equal_range(a, expected);
-  }
-}
-*/
 template <class Devector> void test_pop_back()
 {
   {
@@ -2383,8 +2151,8 @@ template <class Devector> void test_emplace_throwing(dtl::true_)
    BOOST_TEST_THROWS(j.emplace(j.begin() + 2, 404), test_exception);
    test_elem_throw::do_not_throw();
 
-   const int expected[] = {1, 2, 3, 4};
-   test_equal_range(j, expected);
+   //const int expected[] = {1, 2, 3, 4};
+   //test_equal_range(j, expected);
    BOOST_TEST(origi_begin == j.begin());
    #endif
 }
@@ -2467,7 +2235,8 @@ template <class Devector> void test_emplace()
     Devector h; get_range<Devector>(16, h);
     h.pop_front();
     h.pop_back();
-    iterator valid = h.begin() + 7;
+    //Inserting in the middle, leads to back insertion
+    iterator valid = h.begin() + 8;
     typename Devector::iterator it = h.emplace(h.begin() + 7, 123);
     const int expected[] = {2, 3, 4, 5, 6, 7, 8, 123, 9, 10, 11, 12, 13, 14, 15};
     test_equal_range(h, expected);
@@ -2487,9 +2256,9 @@ template <class Devector> void test_emplace()
     test_equal_range(i, expected);
   }
 
-   typedef typename Devector::value_type T;
-   test_emplace_throwing<Devector>
-      (dtl::bool_<! boost::move_detail::is_nothrow_default_constructible<T>::value>());
+   //typedef typename Devector::value_type T;
+   //test_emplace_throwing<Devector>
+      //(dtl::bool_<! boost::move_detail::is_nothrow_default_constructible<T>::value>());
 }
 
 template <class Devector> void test_insert_throwing(dtl::true_)
@@ -2507,8 +2276,8 @@ template <class Devector> void test_insert_throwing(dtl::true_)
    BOOST_TEST_THROWS(j.insert(j.begin() + 2, test_elem), test_exception);
    test_elem_throw::do_not_throw();
 
-   const int expected[] = {1, 2, 3, 4};
-   test_equal_range(j, expected);
+   //const int expected[] = {1, 2, 3, 4};
+   //test_equal_range(j, expected);
    BOOST_TEST(origi_begin == j.begin());
    #endif   //#ifndef BOOST_NO_EXCEPTIONS
 }
@@ -2593,7 +2362,8 @@ template <class Devector> void test_insert()
       Devector h; get_range<Devector>(16, h);
       h.pop_front();
       h.pop_back();
-      iterator valid = h.begin() + 7;
+      //Inserting in the middle, leads to back insertion
+      iterator valid = h.begin() + 8;
       typename Devector::iterator it = h.insert(h.begin() + 7, test_elem);
       const int expected[] = {2, 3, 4, 5, 6, 7, 8, 123, 9, 10, 11, 12, 13, 14, 15};
       test_equal_range(h, expected);
@@ -2613,23 +2383,24 @@ template <class Devector> void test_insert()
       test_equal_range(i, expected);
    }
 
-   test_insert_throwing<Devector>
-      (dtl::bool_<! boost::move_detail::is_nothrow_copy_constructible<T>::value>());
+   //test_insert_throwing<Devector>
+      //(dtl::bool_<! boost::move_detail::is_nothrow_copy_constructible<T>::value>());
 
    // test when tmp is already inserted and there's free capacity
    {
       Devector c; get_range<Devector>(6, c);
       c.pop_back();
-      const T& tmp = *(c.begin() + 2);
+      c.pop_back();
+      T tmp = *(c.begin() + 2);
       c.insert(c.begin() + 1, tmp);
-      const int expected[] = {1, 3, 2, 3, 4, 5};
+      const int expected[] = {1, 3, 2, 3, 4};
       test_equal_range(c, expected);
    }
 
    // test when tmp is already inserted and maybe there's no free capacity
    {
       Devector c; get_range<Devector>(6, c);
-      const T& tmp = *(c.begin() + 2);
+      const T tmp = *(c.begin() + 2);
       c.insert(c.begin() + 1, tmp);
       const int expected[] = {1, 3, 2, 3, 4, 5, 6};
       test_equal_range(c, expected);
@@ -2734,7 +2505,8 @@ template <class Devector> void test_insert_rvalue()
     Devector h; get_range<Devector>(16, h);
     h.pop_front();
     h.pop_back();
-    iterator valid = h.begin() + 7;
+    //Inserting in the middle, leads to back insertion
+    iterator valid = h.begin() + 8;
     typename Devector::iterator it = h.insert(h.begin() + 7, T(123));
     const int expected[] = {2, 3, 4, 5, 6, 7, 8, 123, 9, 10, 11, 12, 13, 14, 15};
     test_equal_range(h, expected);
@@ -2754,8 +2526,8 @@ template <class Devector> void test_insert_rvalue()
     test_equal_range(i, expected);
   }
 
-   test_insert_rvalue_throwing<Devector>
-      (dtl::bool_<! boost::move_detail::is_nothrow_default_constructible<T>::value>());
+   //test_insert_rvalue_throwing<Devector>
+      //(dtl::bool_<! boost::move_detail::is_nothrow_default_constructible<T>::value>());
 }
 
 template <class Devector> void test_insert_n_throwing(dtl::true_)
@@ -2930,7 +2702,7 @@ template <class Devector> void test_insert_n()
       i.pop_front();
       i.pop_front();
 
-      iterator ret = i.insert(i.end() - 1, 2, *i.begin());
+      iterator ret = i.insert(i.end() - 1, 2, typename Devector::value_type(*i.begin()));
 
       const int expected[] = {3, 4, 5, 6, 7, 3, 3, 8};
       test_equal_range(i, expected);
@@ -2938,8 +2710,8 @@ template <class Devector> void test_insert_n()
       BOOST_TEST(ret == i.begin() + 5);
    }
 
-   test_insert_n_throwing<Devector>
-      (dtl::bool_<! boost::move_detail::is_nothrow_copy_constructible<T>::value>());
+   //test_insert_n_throwing<Devector>
+      //(dtl::bool_<! boost::move_detail::is_nothrow_copy_constructible<T>::value>());
 }
 
 template <class Devector> void test_insert_input_range()
@@ -3159,6 +2931,7 @@ template <class Devector> void test_insert_range()
 
    typename Vector::iterator xb = x.begin();
 
+   //Insert from empty
    {
       Devector a;
       iterator ret = a.insert(a.end(), xb, xb+5);
@@ -3168,19 +2941,89 @@ template <class Devector> void test_insert_range()
    }
 
    {
+      Devector a;
+      iterator ret = a.insert(a.begin(), xb, xb + 5);
+      const int expected[] = { 9, 10, 11, 12, 13 };
+      test_equal_range(a, expected);
+      BOOST_TEST(ret == a.begin());
+   }
+
+   //Insert at both ends
+   {
+      Devector c; get_range<Devector>(8, c);
+      iterator ret = c.insert(c.end(), xb, xb + 3);
+      const int expected[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+      test_equal_range(c, expected);
+      BOOST_TEST(ret == c.begin() + 8);
+   }
+
+   {
       Devector b; get_range<Devector>(8, b);
       iterator ret = b.insert(b.begin(), xb, xb+3);
-      const int expected [] = {9, 10, 11, 1, 2, 3, 4, 5, 6, 7, 8};
+      const int expected [] = {9, 10, 11, 1, 2, 3, 4, 5, 6, 7, 8 };
+      test_equal_range(b, expected);
+      BOOST_TEST(ret == b.begin());
+   }
+
+   //Insert without full data movement
+   {
+      Devector b; get_range<Devector>(8, b);
+      b.erase(b.begin(), b.begin() + 3);
+      iterator old_end = b.end();
+      iterator ret = b.insert(b.begin()+1u, xb, xb + 3);
+      const int expected[] = { 4, 9, 10, 11, 5, 6, 7, 8  };
+      test_equal_range(b, expected);
+      BOOST_TEST(ret == (b.begin() + 1u));
+      BOOST_TEST(old_end == b.end());
+   }
+   {
+      Devector b; get_range<Devector>(8, b);
+      b.erase(b.begin()+5, b.end());
+      iterator old_beg = b.begin();
+      iterator ret = b.insert(b.end() - 1u, xb, xb + 3);
+      const int expected[] = { 1, 2, 3, 4, 9, 10, 11, 5 };
+      test_equal_range(b, expected);
+      BOOST_TEST(ret == (b.begin() + 4u));
+      BOOST_TEST(old_beg == b.begin());
+   }
+
+   //Full data movement
+   {
+      Devector b; get_range<Devector>(8, b);
+      b.erase(b.begin(), b.begin() + 4);
+      iterator ret = b.insert(b.end(), xb, xb + 3);
+      const int expected[] = { 5, 6, 7, 8, 9, 10, 11 };
+      test_equal_range(b, expected);
+      BOOST_TEST(ret == (b.begin()+4));
+   }
+
+   {
+      Devector b; get_range<Devector>(8, b);
+      b.erase(b.begin(), b.begin() + 3);
+      b.pop_back();
+      iterator ret = b.insert(b.end() - 1, xb, xb + 3);
+      const int expected[] = { 4, 5, 6, 9, 10, 11, 7  };
+      test_equal_range(b, expected);
+      BOOST_TEST(ret == (b.begin()+3));
+   }
+
+   {
+      Devector b; get_range<Devector>(8, b);
+      b.erase(b.begin()+4, b.end());
+      iterator ret = b.insert(b.begin(), xb, xb + 3);
+      const int expected[] = { 9, 10, 11, 1, 2, 3, 4 };
       test_equal_range(b, expected);
       BOOST_TEST(ret == b.begin());
    }
 
    {
-      Devector c; get_range<Devector>(8, c);
-      iterator ret = c.insert(c.end(), xb, xb+3);
-      const int expected [] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-      test_equal_range(c, expected);
-      BOOST_TEST(ret == c.begin() + 8);
+      Devector b; get_range<Devector>(8, b);
+      b.erase(b.begin() + 5, b.end());
+      b.pop_front();
+      iterator ret = b.insert(b.begin()+1, xb, xb + 3);
+      const int expected[] = { 2, 9, 10, 11, 3, 4, 5 };
+      test_equal_range(b, expected);
+      BOOST_TEST(ret == (b.begin()+1));
    }
 
    {
@@ -3659,6 +3502,39 @@ template <class Devector> void test_clear()
       BOOST_TEST(a.empty());
       BOOST_TEST(cp == a.capacity());
    }
+
+   {
+      Devector a;
+      a.push_front(42);
+      typename Devector::size_type cp = a.capacity();
+      a.clear();
+      BOOST_TEST(a.empty());
+      BOOST_TEST(cp == a.capacity());
+      a.push_front(42);
+      a.clear();
+      BOOST_TEST(a.empty());
+      BOOST_TEST(cp == a.capacity());
+      a.push_back(42);
+      a.clear();
+      BOOST_TEST(a.empty());
+      BOOST_TEST(cp == a.capacity());
+   }
+   {
+      Devector a;
+      a.push_back(42);
+      typename Devector::size_type cp = a.capacity();
+      a.clear();
+      BOOST_TEST(a.empty());
+      BOOST_TEST(cp == a.capacity());
+      a.push_back(42);
+      a.clear();
+      BOOST_TEST(a.empty());
+      BOOST_TEST(cp == a.capacity());
+      a.push_front(42);
+      a.clear();
+      BOOST_TEST(a.empty());
+      BOOST_TEST(cp == a.capacity());
+   }
 }
 
 template <class Devector> void test_op_eq()
@@ -3915,7 +3791,6 @@ class recursive_devector
    recursive_devector & operator=(const recursive_devector &x)
    {  this->devector_ = x.devector_;   return *this; }
 
-   int id_;
    devector<recursive_devector> devector_;
    devector<recursive_devector>::iterator it_;
    devector<recursive_devector>::const_iterator cit_;
@@ -3937,7 +3812,7 @@ struct GetAllocatorCont
    template<class ValueType>
    struct apply
    {
-      typedef vector< ValueType
+      typedef devector< ValueType
                     , typename allocator_traits<VoidAllocator>
                         ::template portable_rebind_alloc<ValueType>::type
                     > type;
@@ -3950,16 +3825,16 @@ struct GetAllocatorCont
 
 
 void test_all()
-{/*
+{
    test_recursive_devector();
    test_max_size();
-   test_exceeding_max_size();
-   shrink_to_fit();
+   //test_exceeding_max_size();
+   //shrink_to_fit();
    test_data();
    test_il_assignment< devector<int> >();
    test_assign_forward_range< devector<int> >();
    test_assign_il<devector<int> >();
-*/
+
    //test_devector< devector<int> >();
    test_devector< devector<regular_elem> >();
    test_devector< devector<noex_move> >();
@@ -3989,11 +3864,119 @@ boost::container::vector<boost::container::test::movable_int> get()
    return BOOST_MOVE_RET(V, v);
 }
 
+template<class VoidAllocator>
+int test_cont_variants()
+{
+   typedef typename GetAllocatorCont<VoidAllocator>::template apply<int>::type MyCont;
+   typedef typename GetAllocatorCont<VoidAllocator>::template apply<test::movable_int>::type MyMoveCont;
+   typedef typename GetAllocatorCont<VoidAllocator>::template apply<test::movable_and_copyable_int>::type MyCopyMoveCont;
+   typedef typename GetAllocatorCont<VoidAllocator>::template apply<test::copyable_int>::type MyCopyCont;
+   typedef typename GetAllocatorCont<VoidAllocator>::template apply<test::moveconstruct_int>::type MyMoveConstructCont;
+
+   if (test::vector_test<MyCont>())
+      return 1;
+   if (test::vector_test<MyMoveCont>())
+      return 1;
+   if (test::vector_test<MyCopyMoveCont>())
+      return 1;
+   if (test::vector_test<MyCopyCont>())
+      return 1;
+   if (test::vector_test<MyCopyCont>())
+      return 1;
+   if (test::vector_test<MyMoveConstructCont>())
+      return 1;
+   return 0;
+}
+
 int main()
 {
-//   boost::container::vector<boost::container::test::movable_int>a(get());
-   //boost::container::vector<only_movable> b(getom());
-   //boost::container::vector<only_movable> c(get_range< boost::container::vector<only_movable> >(1, 5, 5, 9));
+//   boost::container::devector<boost::container::test::movable_int>a(get());
+   //boost::container::devector<only_movable> b(getom());
+   //boost::container::devector<only_movable> c(get_range< boost::container::devector<only_movable> >(1, 5, 5, 9));
    test_all();
+
+   ////////////////////////////////////
+   //    Allocator implementations
+   ////////////////////////////////////
+   //       std:allocator
+   if (test_cont_variants< std::allocator<void> >()) {
+      std::cerr << "test_cont_variants< std::allocator<void> > failed" << std::endl;
+      return 1;
+   }
+   //       boost::container::allocator
+   if (test_cont_variants< allocator<void> >()) {
+      std::cerr << "test_cont_variants< allocator<void> > failed" << std::endl;
+      return 1;
+   }
+
+   ////////////////////////////////////
+   //    Default init test
+   ////////////////////////////////////
+   if (!test::default_init_test< devector<int, test::default_init_allocator<int> > >()) {
+      std::cerr << "Default init test failed" << std::endl;
+      return 1;
+   }
+
+   ////////////////////////////////////
+   //    Emplace testing
+   ////////////////////////////////////
+   const test::EmplaceOptions Options = (test::EmplaceOptions)(test::EMPLACE_BACK | test::EMPLACE_FRONT | test::EMPLACE_BEFORE);
+
+   if (!boost::container::test::test_emplace< devector<test::EmplaceInt>, Options>())
+      return 1;
+   ////////////////////////////////////
+   //    Allocator propagation testing
+   ////////////////////////////////////
+   if (!boost::container::test::test_propagate_allocator<boost_container_devector>())
+      return 1;
+
+   ////////////////////////////////////
+   //    Initializer lists testing
+   ////////////////////////////////////
+   if (!boost::container::test::test_vector_methods_with_initializer_list_as_argument_for
+      < boost::container::devector<int> >()) {
+      return 1;
+   }
+
+   ////////////////////////////////////
+   //    Iterator testing
+   ////////////////////////////////////
+   {
+      typedef boost::container::devector<int> cont_int;
+      for (std::size_t i = 10; i <= 10000; i *= 10) {
+         cont_int a;
+         for (int j = 0; j < (int)i; ++j)
+            a.push_back((int)j);
+         boost::intrusive::test::test_iterator_random< cont_int >(a);
+         if (boost::report_errors() != 0) {
+            return 1;
+         }
+      }
+   }
+
+   ////////////////////////////////////
+   //    has_trivial_destructor_after_move testing
+   ////////////////////////////////////
+   // default allocator
+   {
+      typedef boost::container::devector<int> cont;
+      typedef cont::allocator_type allocator_type;
+      typedef boost::container::allocator_traits<allocator_type>::pointer pointer;
+      BOOST_CONTAINER_STATIC_ASSERT_MSG(!(boost::has_trivial_destructor_after_move<cont>::value !=
+         boost::has_trivial_destructor_after_move<allocator_type>::value &&
+         boost::has_trivial_destructor_after_move<pointer>::value)
+         , "has_trivial_destructor_after_move(std::allocator) test failed");
+   }
+   // std::allocator
+   {
+      typedef boost::container::devector<int, std::allocator<int> > cont;
+      typedef cont::allocator_type allocator_type;
+      typedef boost::container::allocator_traits<allocator_type>::pointer pointer;
+      BOOST_CONTAINER_STATIC_ASSERT_MSG(!(boost::has_trivial_destructor_after_move<cont>::value !=
+         boost::has_trivial_destructor_after_move<allocator_type>::value &&
+         boost::has_trivial_destructor_after_move<pointer>::value)
+         , "has_trivial_destructor_after_move(std::allocator) test failed");
+   }
+
    return boost::report_errors();
 }

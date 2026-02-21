@@ -8,8 +8,8 @@
  * Copyright 2001-2004 David Abrahams.
  * Copyright 2005 Rene Rivera.
  * Distributed under the Boost Software License, Version 1.0.
- * (See accompanying file LICENSE_1_0.txt or copy at
- * http://www.boost.org/LICENSE_1_0.txt)
+ * (See accompanying file LICENSE.txt or copy at
+ * https://www.bfgroup.xyz/b2/LICENSE.txt)
  */
 
 /*
@@ -62,13 +62,13 @@ int file_collect_dir_content_( file_info_t * const d )
     string pathspec[ 1 ];
     string pathname[ 1 ];
     LIST * files = L0;
-    int d_length;
+    int32_t d_length;
 
     assert( d );
     assert( d->is_dir );
     assert( list_empty( d->files ) );
 
-    d_length = strlen( object_str( d->name ) );
+    d_length = int32_t(strlen( object_str( d->name ) ));
 
     memset( (char *)&f, '\0', sizeof( f ) );
     f.f_dir.ptr = object_str( d->name );
@@ -112,7 +112,7 @@ int file_collect_dir_content_( file_info_t * const d )
             OBJECT * pathname_obj;
 
             f.f_base.ptr = finfo.cFileName;
-            f.f_base.len = strlen( finfo.cFileName );
+            f.f_base.len = int32_t(strlen( finfo.cFileName ));
 
             string_truncate( pathname, 0 );
             path_build( &f, pathname );
@@ -185,7 +185,7 @@ void file_dirscan_( file_info_t * const d, scanback func, void * closure )
              * There will be no trailing slash in $(p), but there will be one in
              * $(p2). But, that seems rather fragile.
              */
-            OBJECT * const dir_no_slash = object_new_range( name, 2 );
+            OBJECT * dir_no_slash = object_new_range( name, 2 );
             (*func)( closure, d->name, 1 /* stat()'ed */, &d->time );
             (*func)( closure, dir_no_slash, 1 /* stat()'ed */, &d->time );
             object_free( dir_no_slash );
@@ -276,7 +276,7 @@ void file_query_( file_info_t * const info )
 
     if ( ( dir = strrchr( pathstr, '\\' ) ) )
     {
-        parent = object_new_range( pathstr, dir - pathstr );
+        parent = object_new_range( pathstr, int32_t(dir - pathstr) );
     }
     else
     {
@@ -367,7 +367,6 @@ void file_archscan( char const * arch, scanback func, void * closure )
     {
         FILELISTITER iter = filelist_begin( archive->members );
         FILELISTITER const end = filelist_end( archive->members );
-        char buf[ MAXJPATH ];
 
         for ( ; iter != end ; iter = filelist_next( iter ) )
         {
@@ -375,11 +374,10 @@ void file_archscan( char const * arch, scanback func, void * closure )
 
             /* Construct member path: 'archive-path(member-name)'
              */
-            sprintf( buf, "%s(%s)",
-                object_str( archive->file->name ),
-                object_str( member_file->name ) );
             {
-                OBJECT * const member = object_new( buf );
+                OBJECT * member = b2::value::format( "%s(%s)",
+                    object_str( archive->file->name ),
+                    object_str( member_file->name ) );
                 (*func)( closure, member, 1 /* time valid */, &member_file->time );
                 object_free( member );
             }
@@ -424,7 +422,7 @@ int file_collect_archive_content_( file_archive_info_t * const archive )
 
     offset = SARMAG;
 
-    if ( DEBUG_BINDSCAN )
+    if ( is_debug_bindscan() )
         out_printf( "scan archive %s\n", path );
 
     while ( ( read( fd, &ar_hdr, SARHDR ) == SARHDR ) &&
@@ -486,9 +484,9 @@ int file_collect_archive_content_( file_archive_info_t * const archive )
                 name = c + 1;
         }
 
-        sprintf( buf, "%.*s", int(endname - name), name );
+        auto member_name = b2::value::format( "%.*s", int(endname - name), name );
 
-        if ( strcmp( buf, "") != 0 )
+        if ( member_name->as_string().size > 0 )
         {
             file_info_t * member = 0;
 
@@ -497,7 +495,7 @@ int file_collect_archive_content_( file_archive_info_t * const archive )
              * Here we reverse the stored sequence by pushing members to front of
              * member file list to get the intended members order.
              */
-            archive->members = filelist_push_front( archive->members, object_new( buf ) );
+            archive->members = filelist_push_front( archive->members, member_name );
             member = filelist_front( archive->members );
             member->is_file = 1;
             member->is_dir = 0;

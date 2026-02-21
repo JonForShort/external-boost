@@ -3,7 +3,7 @@
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
- * Copyright (c) 2018 Andrey Semashev
+ * Copyright (c) 2018, 2025 Andrey Semashev
  */
 /*!
  * \file   atomic/detail/addressof.hpp
@@ -38,7 +38,11 @@ namespace atomics {
 namespace detail {
 
 template< typename T >
-BOOST_FORCEINLINE T* addressof(T& value) BOOST_NOEXCEPT
+BOOST_FORCEINLINE
+#if defined(BOOST_ATOMIC_DETAIL_HAS_BUILTIN_ADDRESSOF)
+constexpr
+#endif
+T* addressof(T& value) noexcept
 {
 #if defined(BOOST_ATOMIC_DETAIL_HAS_BUILTIN_ADDRESSOF)
     return __builtin_addressof(value);

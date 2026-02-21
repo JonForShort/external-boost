@@ -404,7 +404,7 @@ bool flat_tree_extract_adopt_test()
          fset.insert(static_cast<int>(i));
       }
 
-      flat_set<int> fset_copy(fset);
+      const flat_set<int> fset_copy(fset);
       flat_set<int>::sequence_type seq(fset.extract_sequence());
       if(!fset.empty())
          return false;
@@ -415,6 +415,8 @@ bool flat_tree_extract_adopt_test()
       boost::container::test::random_shuffle(seq.begin(), seq.end());
       fset.adopt_sequence(boost::move(seq));
       if(!CheckEqualContainers(fset, fset_copy))
+         return false;
+      if (!CheckEqualContainers(fset.sequence(), fset_copy.sequence()))
          return false;
    }
 
@@ -427,7 +429,7 @@ bool flat_tree_extract_adopt_test()
          fset.insert(static_cast<int>(i));
       }
 
-      flat_set<int> fset_copy(fset);
+      const flat_set<int> fset_copy(fset);
       flat_set<int>::sequence_type seq(fset.extract_sequence());
       if(!fset.empty())
          return false;
@@ -436,6 +438,8 @@ bool flat_tree_extract_adopt_test()
 
       fset.adopt_sequence(ordered_unique_range, boost::move(seq));
       if(!CheckEqualContainers(fset, fset_copy))
+         return false;
+      if (!CheckEqualContainers(fset.sequence(), fset_copy.sequence()))
          return false;
    }
 
@@ -449,7 +453,7 @@ bool flat_tree_extract_adopt_test()
          fmset.insert(static_cast<int>(i));
       }
 
-      flat_multiset<int> fmset_copy(fmset);
+      const flat_multiset<int> fmset_copy(fmset);
       flat_multiset<int>::sequence_type seq(fmset.extract_sequence());
       if(!fmset.empty())
          return false;
@@ -459,6 +463,8 @@ bool flat_tree_extract_adopt_test()
       boost::container::test::random_shuffle(seq.begin(), seq.end());
       fmset.adopt_sequence(boost::move(seq));
       if(!CheckEqualContainers(fmset, fmset_copy))
+         return false;
+      if (!CheckEqualContainers(fmset.sequence(), fmset_copy.sequence()))
          return false;
    }
 
@@ -472,7 +478,7 @@ bool flat_tree_extract_adopt_test()
          fmset.insert(static_cast<int>(i));
       }
 
-      flat_multiset<int> fmset_copy(fmset);
+      const flat_multiset<int> fmset_copy(fmset);
       flat_multiset<int>::sequence_type seq(fmset.extract_sequence());
       if(!fmset.empty())
          return false;
@@ -481,6 +487,8 @@ bool flat_tree_extract_adopt_test()
 
       fmset.adopt_sequence(ordered_range, boost::move(seq));
       if(!CheckEqualContainers(fmset, fmset_copy))
+         return false;
+      if (!CheckEqualContainers(fmset.sequence(), fmset_copy.sequence()))
          return false;
    }
 
@@ -862,7 +870,7 @@ int main()
       {
          typedef boost::container::flat_set<int> cont;
          typedef boost::container::dtl::flat_tree<int, key_of_value_t, std::less<int>, void> tree;
-         BOOST_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
+         BOOST_CONTAINER_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
                                    boost::has_trivial_destructor_after_move<tree>::value
                                  , "has_trivial_destructor_after_move(flat_set, default) test failed");
       }
@@ -871,7 +879,7 @@ int main()
          typedef boost::container::vector<int> alloc_or_cont_t;
          typedef boost::container::flat_set<int, std::less<int>, alloc_or_cont_t> cont;
          typedef boost::container::dtl::flat_tree<int, key_of_value_t, std::less<int>, alloc_or_cont_t> tree;
-         BOOST_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
+         BOOST_CONTAINER_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
                                    boost::has_trivial_destructor_after_move<tree>::value
                                  , "has_trivial_destructor_after_move(flat_set, vector) test failed");
       }
@@ -880,7 +888,7 @@ int main()
          typedef std::vector<int> alloc_or_cont_t;
          typedef boost::container::flat_set<int, std::less<int>, alloc_or_cont_t> cont;
          typedef boost::container::dtl::flat_tree<int, key_of_value_t, std::less<int>, alloc_or_cont_t> tree;
-         BOOST_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
+         BOOST_CONTAINER_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
                                    boost::has_trivial_destructor_after_move<tree>::value
                                  , "has_trivial_destructor_after_move(flat_set, std::vector) test failed");
       }
@@ -888,7 +896,7 @@ int main()
       {
          typedef boost::container::flat_multiset<int> cont;
          typedef boost::container::dtl::flat_tree<int, key_of_value_t, std::less<int>, void> tree;
-         BOOST_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
+         BOOST_CONTAINER_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
                                    boost::has_trivial_destructor_after_move<tree>::value
                                  , "has_trivial_destructor_after_move(flat_multiset, default) test failed");
       }
@@ -897,7 +905,7 @@ int main()
          typedef boost::container::vector<int> alloc_or_cont_t;
          typedef boost::container::flat_multiset<int, std::less<int>, alloc_or_cont_t> cont;
          typedef boost::container::dtl::flat_tree<int, key_of_value_t, std::less<int>, alloc_or_cont_t> tree;
-         BOOST_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
+         BOOST_CONTAINER_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
                                    boost::has_trivial_destructor_after_move<tree>::value
                                  , "has_trivial_destructor_after_move(flat_multiset, vector) test failed");
       }
@@ -906,7 +914,7 @@ int main()
          typedef std::vector<int> alloc_or_cont_t;
          typedef boost::container::flat_multiset<int, std::less<int>, alloc_or_cont_t> cont;
          typedef boost::container::dtl::flat_tree<int, key_of_value_t, std::less<int>, alloc_or_cont_t> tree;
-         BOOST_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
+         BOOST_CONTAINER_STATIC_ASSERT_MSG ( boost::has_trivial_destructor_after_move<cont>::value ==
                                    boost::has_trivial_destructor_after_move<tree>::value
                                  , "has_trivial_destructor_after_move(flat_multiset, std::vector) test failed");
       }

@@ -11,7 +11,6 @@
 
 #include <boost/assert.hpp>
 
-#include "boost/fiber/algo/round_robin.hpp"
 #include "boost/fiber/context.hpp"
 #include "boost/fiber/exceptions.hpp"
 
@@ -72,7 +71,7 @@ scheduler::sleep2ready_() noexcept {
     sleep_queue_type::iterator e = sleep_queue_.end();
     for ( sleep_queue_type::iterator i = sleep_queue_.begin(); i != e;) {
         context * ctx = & ( * i);
-        // dipatcher context must never be pushed to sleep-queue
+        // dispatcher context must never be pushed to sleep-queue
         BOOST_ASSERT( ! ctx->is_context( type::dispatcher_context) );
         BOOST_ASSERT( main_ctx_ == ctx || ctx->worker_is_linked() );
         BOOST_ASSERT( ! ctx->ready_is_linked() );
@@ -94,8 +93,8 @@ scheduler::sleep2ready_() noexcept {
     }
 }
 
-scheduler::scheduler() noexcept :
-    algo_{ new algo::round_robin() } {
+scheduler::scheduler(algo::algorithm::ptr_t algo) noexcept :
+    algo_{algo} {
 }
 
 scheduler::~scheduler() {
@@ -321,7 +320,7 @@ scheduler::has_ready_fibers() const noexcept {
 
 void
 scheduler::set_algo( algo::algorithm::ptr_t algo) noexcept {
-    // move remaining cotnext in current scheduler to new one
+    // move remaining context in current scheduler to new one
     while ( algo_->has_ready_fibers() ) {
         algo->awakened( algo_->pick_next() );
     }
